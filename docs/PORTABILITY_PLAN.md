@@ -1,0 +1,91 @@
+# Portability Plan
+
+This project should stay easy to run in a browser while becoming easier to move
+to a packaged app, WebView shell, WASM core, or native renderer later. The safe
+path is incremental: first define a headless simulation boundary, then migrate
+files behind that boundary.
+
+## Current Shape
+
+The app is still loaded as ordered classic browser scripts. That keeps the page
+simple, but it means core simulation, DOM input, canvas rendering, and local
+storage currently share one global scope.
+
+Do not convert everything to modules or TypeScript in one pass. The water and
+granular rules are sensitive, and large rewrites make visual regressions hard to
+diagnose.
+
+## Target Boundary
+
+The long-term core should be usable without `document`, `canvas`, CSS, pointer
+events, or `localStorage`. It should expose commands and buffers:
+
+```txt
+createWorld(cols, rows, options)
+stepWorld(world)
+applyCommand(world, command)
+serializeWorld(world)
+deserializeWorld(payload, options)
+buildLightMask(world)
+buildRenderBuffer(world)
+```
+
+The browser app should become an adapter:
+
+```txt
+DOM pointer/toolbar input -> command objects -> core world -> render buffer -> canvas/WebGL
+```
+
+## Migration Order
+
+1. Keep `index.html` and `material_sim.html` working with the current script
+   order.
+2. Add and maintain headless Node regressions for fragile behavior. Start with
+   `tests/headless-regression.js`.
+3. Move pure material definitions and save/load codecs first. These are the
+   easiest to test without a browser.
+4. Move lighting into a core render-prep module. Lighting must remain
+   presentation-only and must not mutate physics state.
+5. Move grid allocation and command application next. Replace direct DOM tool
+   handlers with command objects such as `paint`, `erase`, `source`, `tint`,
+   `fill`, and `force`.
+6. Only after the command boundary exists, migrate to TypeScript or a bundler
+   such as Vite.
+7. If more speed is needed later, the headless core can be ported to Rust/WASM
+   or another native target while the browser adapter stays mostly unchanged.
+
+## Core Candidates
+
+- `src/00-materials.js`
+- `src/02-flow-and-water.js`
+- `src/02-erosion.js`
+- The non-DOM parts of `src/01-editing-and-bodies.js`
+- The encode/decode and restore logic in `src/04-save-load.js`
+- `buildLightMask()` and base render-buffer creation from
+  `src/03-runtime-render-input.js`
+
+## Web Adapter Candidates
+
+- DOM handles in `src/00-core-state.js`
+- Toolbar state and material editor UI in `src/03-runtime-render-input.js`
+- Canvas drawing and overlays in `src/03-runtime-render-input.js`
+- `localStorage` calls in `src/04-save-load.js`
+- CSS and HTML entry points
+
+## Invariants For Future Agents
+
+- Same-size save/load must restore cell arrays exactly.
+- Resampled save/load must not duplicate one-cell fixed-stone rows.
+- Side light is one cell only: directly lit cells can light their immediate
+  right neighbor only when that neighbor is a shadowed fixed or granular solid.
+- Air and fluid do not receive side light.
+- Lighting never changes material ids, mass, velocity, source cells, tint, or
+  stable state.
+- Editing and loading reset transient flow state, but ordinary movement must
+  move particle tint with the material cell.
+
+Run this before and after each migration step:
+
+```powershell
+node tests/headless-regression.js
+```

@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Material Force Lab</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="src/00-materials.js" defer></script>
+  <script src="src/00-core-state.js" defer></script>
+  <script src="src/01-editing-and-bodies.js" defer></script>
+  <script src="src/02-sources.js" defer></script>
+  <script src="src/02-flow-and-water.js" defer></script>
+  <script src="src/02-erosion.js" defer></script>
+  <script src="src/04-save-load.js" defer></script>
+  <script src="src/03-runtime-render-input.js" defer></script>
+</head>
+<body>
+<main class="app">
+  <section class="toolbar">
+    <div class="group">
+      <button class="btn active" data-tool="brush">Brush</button>
+      <button class="btn" data-tool="source">Source</button>
+      <button class="btn" data-tool="color">Color</button>
+      <button class="btn" data-tool="fill">Fill</button>
+      <button class="btn" data-tool="force">Force</button>
+      <button class="btn" data-tool="eraser">Erase</button>
+    </div>
+    <div class="group material-picker">
+      <button class="btn active" id="material-button" type="button"><span class="swatch" id="material-swatch"></span><span id="material-label">Water</span></button>
+      <div class="material-menu hidden" id="material-menu">
+        <div class="material-list" id="material-list"></div>
+        <div class="menu-actions">
+          <button class="btn" id="add-fluid" type="button">Add Fluid</button>
+          <button class="btn" id="add-granular" type="button">Add Granular</button>
+        </div>
+        <div class="material-editor hidden" id="material-editor">
+          <label class="field">Name <input id="material-name" type="text" maxlength="24"></label>
+          <label class="field">Color <input id="material-color" type="color" value="#24a8c6"></label>
+          <label class="field">Density <input id="material-density" type="number" min="1" max="98" step="1" value="1"></label>
+          <label class="field checkbox-field">Blocks Light <input id="material-blocks-light" type="checkbox"></label>
+          <label class="field checkbox-field">Emissive <input id="material-emissive" type="checkbox"></label>
+          <label class="field" id="material-slope-row">Max Slope <input id="material-slope" type="number" min="0" max="32" step="1" value="1"></label>
+          <label class="field" id="material-erosion-row">Erosion <input id="material-erosion" type="number" min="1" max="999" step="1" value="24"></label>
+          <div class="menu-actions">
+            <button class="btn primary" id="save-material" type="button">Save</button>
+            <button class="btn warn" id="delete-material" type="button">Delete</button>
+            <button class="btn" id="cancel-material" type="button">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="group">
+      <button class="btn primary" id="play">Play</button>
+      <button class="btn" id="step">Step</button>
+      <button class="btn" id="save-canvas">Save</button>
+      <button class="btn" id="load-canvas">Load</button>
+      <button class="btn" id="debug-basins">Basins</button>
+      <button class="btn warn" id="clear">Clear</button>
+    </div>
+    <details class="group settings-picker">
+      <summary class="btn">Settings</summary>
+      <div class="settings-menu">
+        <label class="label">Brush <input id="brush-size" type="range" min="0" max="10" value="4"><input id="brush-size-number" class="size-number" type="number" min="0" max="10" step="1" value="4"></label>
+        <label class="label">Erase <input id="eraser-size" type="range" min="0" max="10" value="3"><input id="eraser-size-number" class="size-number" type="number" min="0" max="10" step="1" value="3"></label>
+        <label class="label">Source <input id="source-rate" type="range" min="1" max="60" value="1"><input id="source-rate-number" class="size-number" type="number" min="1" max="60" step="1" value="1"></label>
+        <label class="label">Tint <input id="tint-color" type="color" value="#ef4444"></label>
+        <button class="btn" id="fill-air-color" type="button">Fill Air</button>
+        <label class="label">Light <input id="lighting-enabled" type="checkbox" checked></label>
+        <label class="label">Lit <input id="light-strength" type="range" min="0" max="100" value="18"><input id="light-strength-number" class="size-number" type="number" min="0" max="100" step="1" value="18"></label>
+        <label class="label">Side <input id="side-light-strength" type="range" min="0" max="200" value="100"><input id="side-light-strength-number" class="size-number" type="number" min="0" max="200" step="1" value="100"></label>
+        <label class="label">Shade <input id="shadow-strength" type="range" min="0" max="100" value="16"><input id="shadow-strength-number" class="size-number" type="number" min="0" max="100" step="1" value="16"></label>
+      </div>
+    </details>
+    <div class="status" id="status">Brush: paint material directly</div>
+  </section>
+  <section class="stage">
+    <canvas id="canvas"></canvas>
+  </section>
+</main>
+</body>
+</html>
