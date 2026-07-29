@@ -45,6 +45,9 @@ escape logic, stable/wake logic, and the optional legacy basin code.
 `src/04-save-load.js` owns the single-slot local save/load format. Keep new
 material data out of algorithm files unless the material needs a genuinely new
 algorithm.
+`src/03-lighting.js` owns DOM-free render preparation such as base material
+color, light masks, and simple light/shadow blending. Canvas drawing and UI
+remain in `src/03-runtime-render-input.js`.
 
 The Material menu can register up to `MAX_CUSTOM_MATERIALS` temporary materials
 per page load. Custom fluid inputs are name, color, and integer density

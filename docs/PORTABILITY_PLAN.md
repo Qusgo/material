@@ -61,8 +61,8 @@ DOM pointer/toolbar input -> command objects -> core world -> render buffer -> c
 - `src/02-erosion.js`
 - The non-DOM parts of `src/01-editing-and-bodies.js`
 - The encode/decode and restore logic in `src/04-save-load.js`
-- `buildLightMask()` and base render-buffer creation from
-  `src/03-runtime-render-input.js`
+- `src/03-lighting.js` for light masks, base colors, and simple light/shadow
+  blending
 
 ## Web Adapter Candidates
 

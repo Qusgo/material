@@ -12,6 +12,7 @@ const RUNTIME_FILES=[
   'src/02-flow-and-water.js',
   'src/02-erosion.js',
   'src/04-save-load.js',
+  'src/03-lighting.js',
   'src/03-runtime-render-input.js'
 ];
 
@@ -57,7 +58,7 @@ function randDir(){return 1}
 }
 
 function lightingRegression(){
-  const runtime=read('src/03-runtime-render-input.js');
+  const lighting=read('src/03-lighting.js');
   const source=sharedPrelude()+read('src/00-materials.js')+`
 let cols=6,rows=4,count=cols*rows;
 let material=new Uint8Array(count),mass=new Float32Array(count),vx=new Float32Array(count),vy=new Float32Array(count),flowDir=new Int8Array(count),lightMask=new Uint8Array(count);
@@ -66,7 +67,7 @@ function idx(c,r){return r*cols+c}
 function normalizeMaterialCell(i){return isKnownMaterial(material[i])?material[i]:EMPTY}
 function testAssert(condition,message){if(!condition)throw new Error(message)}
 function reset(){material.fill(EMPTY);lightMask.fill(0)}
-${extractFunction(runtime,'buildLightMask')}
+${extractFunction(lighting,'buildLightMask')}
 
 reset();
 material[idx(1,0)]=FIXED_STONE;
