@@ -71,7 +71,7 @@ the current arrays into an RGBA buffer without touching `canvas` or `document`.
 point/line `paint`, `source`, `tint`, `erase`, plus `fill`, `fillAir`, `clear`,
 and `force`. The browser pointer handlers now route ordinary strokes through
 these commands. The material editor, save/load buttons, dynamic stone placement,
-and simulation stepping are still browser/runtime responsibilities.
+and browser storage wrapper are still browser/runtime responsibilities.
 `src/02-force.js` owns DOM-free force application for flow cells and dynamic
 bodies.
 
@@ -193,7 +193,10 @@ while normal physics deletion and movement leave source cells intact.
 
 ## Update Order
 
-One simulation step is:
+`src/02-step-world.js` owns the current `stepWorld(world)` wrapper. It still
+uses the legacy global-compatible world shell internally, but it gives browser
+and future non-browser adapters a single physics-tick entry point. One
+simulation step is:
 
 1. Rebuild the dynamic body mask.
 2. Update dynamic bodies.

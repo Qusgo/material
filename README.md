@@ -44,12 +44,14 @@ between save and load.
   bodies.
 - `src/02-erosion.js` - Lightweight carried-particle erosion for granular
   materials.
+- `src/02-step-world.js` - DOM-free simulation tick wrapper preserving update
+  order.
 - `src/04-save-codec.js` - DOM-free snapshot encoding and editable-array restore.
 - `src/04-save-load.js` - One-slot `localStorage` save/load wrapper.
 - `src/03-lighting.js` - DOM-free base color and light-mask helpers.
 - `src/03-render-buffer.js` - DOM-free RGBA buffer construction from material
   color, tint, and lighting state.
-- `src/03-runtime-render-input.js` - Dynamic body updates, force tool, render
+- `src/03-runtime-render-input.js` - Dynamic body updates, render
   pipeline, basin debug overlay, pointer input, and app bootstrap.
 - `app.js` - Legacy note only. Do not reintroduce runtime code there unless the
   HTML entry points are changed back.
@@ -77,8 +79,8 @@ all-at-once TypeScript or engine rewrite.
 The code is still loaded as classic scripts and still shares global typed
 arrays. `src/00-world-state.js` is a compatibility shell, not a full portable
 engine yet: it creates a world object, installs its arrays into the existing
-global names, and lets later work move physics toward `stepWorld(world)` without
-changing gameplay in the same step.
+global names, and lets `stepWorld(world)` preserve the current physics update
+order without changing gameplay in the same step.
 
 When changing water behavior, read `docs/ARCHITECTURE.md` first. Most previous
 bugs came from local water rules fighting the component-level water stabilizer.

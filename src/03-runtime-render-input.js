@@ -78,7 +78,7 @@ function updateBodies(){
   for(const b of bodies)displaceGridUnderBody(b);
   bodies=bodies.filter(b=>b.y-b.radius<viewH+160&&b.x+b.radius>-160&&b.x-b.radius<viewW+160);
 }
-function simulationStep(){simTick++;rebuildBodyMask();updateBodies();rebuildBodyMask();updateGridMaterials();rebuildBodyMask()}
+function simulationStep(){return stepWorld()}
 
 // Rendering is separated from simulation state: the grid draws to a tiny
 // offscreen canvas first, then scales up with image smoothing disabled.

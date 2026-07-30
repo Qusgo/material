@@ -16,6 +16,7 @@ const RUNTIME_FILES=[
   'src/02-force.js',
   'src/01-edit-commands.js',
   'src/02-erosion.js',
+  'src/02-step-world.js',
   'src/04-save-codec.js',
   'src/04-save-load.js',
   'src/03-lighting.js',
@@ -210,6 +211,28 @@ installWorldState(replacement);
 testAssert(currentWorldState()===replacement&&cols===2&&rows===3&&material.length===6,'replacement world install failed');
 `;
   runIsolated('world state regression',source);
+}
+
+function stepWorldRegression(){
+  const source=sharedPrelude()+read('src/00-materials.js')+read('src/00-world-arrays.js')+read('src/00-world-state.js')+read('src/02-step-world.js')+`
+let cols=1,rows=1,count=1,cellSize=1,simTick=4;
+let material,mass,vx,vy,bodyMask,flowDir,restAge,stableMask,tintR,tintG,tintB,tintA,bgTintR,bgTintG,bgTintB,bgTintA,sourceMat,lightMask;
+let moveHistory,moveFlip,horizontalDir,horizontalTurns,escapeDir,escapeTarget,carriedBy,carriedTTL,lastMoveTick;
+let waterSeen,waterSpaceMark,waterComponentMark,waterBasinMark,waterSleepBlockMark,waterTargetMark,waterWakeMark,waterQueue,rowCounts;
+let waterSpaceToken=1,waterComponentToken=1,waterBasinToken=1,waterTargetToken=1,waterWakeToken=1;
+const calls=[];
+function rebuildBodyMask(){calls.push('mask')}
+function updateBodies(){calls.push('bodies')}
+function updateGridMaterials(){calls.push('grid')}
+function testAssert(condition,message){if(!condition)throw new Error(message)}
+const world=createWorldState(2,2,{cellSize:3});
+stepWorld(world);
+testAssert(simTick===5,'stepWorld should increment simTick once');
+testAssert(calls.join(',')==='mask,bodies,mask,grid,mask','stepWorld update order changed');
+testAssert(cols===2&&rows===2&&count===4&&cellSize===3,'stepWorld should install supplied world');
+testAssert(currentWorldState()===world,'stepWorld should leave supplied world active');
+`;
+  runIsolated('step world regression',source);
 }
 
 function renderColorRegression(){
@@ -431,6 +454,7 @@ runtimeBootstrapRegression();
 materialRegistryRegression();
 worldArrayRegression();
 worldStateRegression();
+stepWorldRegression();
 lightingRegression();
 renderColorRegression();
 sourceRegression();
