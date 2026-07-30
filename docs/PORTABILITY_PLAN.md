@@ -42,7 +42,9 @@ The current branch has started that boundary without changing gameplay:
 `src/02-sources.js` are DOM-free. `src/02-force.js` and
 `src/02-step-world.js` are DOM-free. `src/01-edit-commands.js` exposes command
 wrappers for point/line paint/source/tint/erase, fill/fillAir/clear, and force
-edits.
+edits. `src/04-save-codec.js` exposes portable
+`serializeWorldSnapshot()`/`restoreWorldSnapshot()` APIs; `src/04-save-load.js`
+is only the browser `localStorage` adapter.
 
 ## Migration Order
 
@@ -58,7 +60,7 @@ edits.
 5. Move grid allocation and command application next. Grid typed-array
    allocation and whole-grid clearing now live in `src/00-world-arrays.js`, and
    a compatibility world shell now lives in `src/00-world-state.js`. Continue by
-   moving save/load and dynamic stone placement behind portable APIs.
+   moving dynamic stone placement behind portable APIs.
 6. Only after the command boundary exists, migrate to TypeScript or a bundler
    such as Vite.
 7. If more speed is needed later, the headless core can be ported to Rust/WASM
@@ -74,7 +76,8 @@ edits.
 - `src/02-step-world.js` for physics tick order
 - `src/02-erosion.js`
 - The non-DOM parts of `src/01-editing-and-bodies.js`
-- `src/04-save-codec.js` for snapshot encode/decode and restore logic
+- `src/04-save-codec.js` for portable snapshot serialize/restore and
+  editable-array resampling
 - `src/03-lighting.js` for light masks, base colors, and simple light/shadow
   blending
 - `src/03-render-buffer.js` for DOM-free RGBA buffer construction

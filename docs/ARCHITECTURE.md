@@ -59,8 +59,9 @@ overlay for those source cells. `src/02-flow-and-water.js` owns algorithms:
 gravity/sliding, slope relaxation, water's surface-jitter escape logic,
 stable/wake logic, and the optional legacy basin code.
 `src/02-erosion.js` owns lightweight carried-particle erosion.
-`src/04-save-codec.js` owns DOM-free snapshot encoding and editable-array
-restore. `src/04-save-load.js` owns only the browser `localStorage` wrapper.
+`src/04-save-codec.js` owns DOM-free snapshot serialization, restore, and
+editable-array resampling. `src/04-save-load.js` owns only the browser
+`localStorage` wrapper and user-facing messages.
 Keep new material data out of algorithm files unless the material needs a
 genuinely new algorithm.
 `src/03-lighting.js` owns DOM-free render preparation such as base material
@@ -70,8 +71,8 @@ the current arrays into an RGBA buffer without touching `canvas` or `document`.
 `src/01-edit-commands.js` is the command-style boundary for editor operations:
 point/line `paint`, `source`, `tint`, `erase`, plus `fill`, `fillAir`, `clear`,
 and `force`. The browser pointer handlers now route ordinary strokes through
-these commands. The material editor, save/load buttons, dynamic stone placement,
-and browser storage wrapper are still browser/runtime responsibilities.
+these commands. The material editor, dynamic stone placement, browser storage
+wrapper, and button synchronization are still browser/runtime responsibilities.
 `src/02-force.js` owns DOM-free force application for flow cells and dynamic
 bodies.
 
@@ -89,8 +90,12 @@ id.
 
 ## Persistence
 
-Save/load is intentionally a one-slot local browser feature. `Save` overwrites
-`CANVAS_SAVE_KEY` in `localStorage`; `Load` restores that one snapshot.
+The snapshot format is portable. `serializeWorldSnapshot()` creates the saved
+payload, and `restoreWorldSnapshot(saved)` validates the version, restores
+custom material definitions, restores editable arrays, resets transient runtime
+state, and returns a structured result. Browser save/load is intentionally a
+one-slot feature: `Save` overwrites `CANVAS_SAVE_KEY` in `localStorage`; `Load`
+parses that one snapshot and passes it to `restoreWorldSnapshot()`.
 
 Saved state includes:
 
@@ -110,9 +115,10 @@ carried-particle state, dynamic bodies, fill previews, placements, and force
 preview. This is deliberate. Loading should behave like drawing that page again
 and then starting the simulation from a clean initial state.
 
+`restoreWorldSnapshot()` must call `restoreEditableArrays()`, and
 `restoreEditableArrays()` must call `clearEditableGridState()` before writing
-saved cells. Do not duplicate the clearing sequence in save/load code; otherwise
-future typed-array additions will be easy to miss.
+saved cells. Do not duplicate the clearing sequence in browser storage code;
+otherwise future typed-array additions will be easy to miss.
 
 If `cols` or `rows` differ between save and load, `restoreEditableArrays()` in
 `src/04-save-codec.js` must project each saved non-empty cell to one current

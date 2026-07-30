@@ -3,6 +3,28 @@
 // DOM-free save/load codecs and editable-array restore logic. Browser storage
 // wrappers live in 04-save-load.js.
 
+const WORLD_SNAPSHOT_VERSION=1;
+
+function serializeWorldSnapshot(){
+  return{
+    version:WORLD_SNAPSHOT_VERSION,
+    cols,
+    rows,
+    sourceInterval,
+    selected,
+    airColor:airColor.slice(0,3),
+    lightingEnabled,
+    lightStrength,
+    sideLightStrength,
+    shadowStrength,
+    customMaterials:exportCustomMaterials(),
+    material:encodeRuns(material),
+    sourceMat:encodeRuns(sourceMat),
+    particleTint:encodeTintCells(tintR,tintG,tintB,tintA),
+    backgroundTint:encodeTintCells(bgTintR,bgTintG,bgTintB,bgTintA)
+  };
+}
+
 function encodeRuns(array){
   const runs=[];
   if(!array||!array.length)return runs;
@@ -166,4 +188,28 @@ function restoreEditableArrays(saved){
     }
   }
   return true;
+}
+
+function restoreWorldSnapshot(saved){
+  if(!saved||saved.version!==WORLD_SNAPSHOT_VERSION)return{ok:false,reason:'unsupported-version'};
+  if(!savedDimensionsAreValid(saved))return{ok:false,reason:'invalid-dimensions'};
+  const savedCols=clampInt(saved.cols,1,1000,0),savedRows=clampInt(saved.rows,1,1000,0);
+  restoreCustomMaterials(saved.customMaterials);
+  if(!restoreEditableArrays(saved))return{ok:false,reason:'invalid-dimensions'};
+  sourceInterval=clampInt(saved.sourceInterval,1,60,1);
+  lightingEnabled=saved.lightingEnabled===undefined?true:!!saved.lightingEnabled;
+  lightStrength=clamp(Number(saved.lightStrength),0,1);
+  if(!Number.isFinite(lightStrength))lightStrength=.18;
+  sideLightStrength=clamp(Number(saved.sideLightStrength),0,2);
+  if(!Number.isFinite(sideLightStrength))sideLightStrength=1;
+  shadowStrength=clamp(Number(saved.shadowStrength),0,1);
+  if(!Number.isFinite(shadowStrength))shadowStrength=.16;
+  selected=MATERIAL_FROM_NAME[saved.selected]?saved.selected:materialKeyFromId(WATER);
+  bodies=[];
+  fillPreview=[];
+  placing=null;
+  forceState=null;
+  editDirty=false;
+  if(typeof rebuildBodyMask==='function')rebuildBodyMask();
+  return{ok:true,resampled:savedCols!==cols||savedRows!==rows,savedCols,savedRows};
 }

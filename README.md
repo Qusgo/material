@@ -46,7 +46,8 @@ between save and load.
   materials.
 - `src/02-step-world.js` - DOM-free simulation tick wrapper preserving update
   order.
-- `src/04-save-codec.js` - DOM-free snapshot encoding and editable-array restore.
+- `src/04-save-codec.js` - DOM-free snapshot serialization, restore, and
+  editable-array resampling.
 - `src/04-save-load.js` - One-slot `localStorage` save/load wrapper.
 - `src/03-lighting.js` - DOM-free base color and light-mask helpers.
 - `src/03-render-buffer.js` - DOM-free RGBA buffer construction from material
@@ -70,7 +71,8 @@ node tests/headless-regression.js
 
 That script checks syntax, browser-style bootstrap, and focused behavior for
 material registration, world-array lifecycle, world-state installation,
-lighting, render buffers, sources, tint movement, and save/load.
+lighting, render buffers, sources, tint movement, and portable snapshot
+save/load.
 
 The migration path toward a portable simulation core is documented in
 `docs/PORTABILITY_PLAN.md`. Follow that plan instead of doing a large
@@ -122,11 +124,13 @@ When a source cell is empty during simulation, it creates one material cell.
 frames.
 
 `Save` writes one local browser slot and `Load` restores it. Saving again
-overwrites the previous slot. The saved state includes material cells, source
-cells, background tint, particle tint, custom material definitions, selected
-material, air color, light settings, and source speed. Transient physics state
-such as velocity, sleep, oscillation history, and carried-particle timers is
-reset on load so the restored scene starts cleanly.
+overwrites the previous slot. Browser storage lives in `src/04-save-load.js`,
+while `serializeWorldSnapshot()` and `restoreWorldSnapshot()` in
+`src/04-save-codec.js` own the portable snapshot format. The saved state
+includes material cells, source cells, background tint, particle tint, custom
+material definitions, selected material, air color, light settings, and source
+speed. Transient physics state such as velocity, sleep, oscillation history, and
+carried-particle timers is reset on load so the restored scene starts cleanly.
 If the browser layout changed and the current grid size differs from the saved
 grid, `Load` projects each saved non-empty cell to one current cell instead of
 scanning current cells backward. This avoids silently skipping thin layers

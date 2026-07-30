@@ -386,11 +386,14 @@ let material,mass,vx,vy,bodyMask,flowDir,restAge,stableMask,tintR,tintG,tintB,ti
 let moveHistory,moveFlip,horizontalDir,horizontalTurns,escapeDir,escapeTarget,carriedBy,carriedTTL,lastMoveTick;
 let waterSeen,waterSpaceMark,waterComponentMark,waterBasinMark,waterSleepBlockMark,waterTargetMark,waterWakeMark,waterQueue,rowCounts;
 let waterSpaceToken=1,waterComponentToken=1,waterBasinToken=1,waterTargetToken=1,waterWakeToken=1;
+let selected='water',sourceInterval=1,lightingEnabled=true,lightStrength=.18,sideLightStrength=1,shadowStrength=.16;
+let bodies=[],fillPreview=[],placing=null,forceState=null,editDirty=false;
 function makeArrays(){
   count=cols*rows;
   installGridArrays(createGridArrays(count,rows));
 }
 function idx(c,r){return r*cols+c}
+function rebuildBodyMask(){bodyMask.fill(0)}
 function testAssert(condition,message){if(!condition)throw new Error(message)}
 function rowsContaining(mat){
   const out=[];
@@ -419,6 +422,11 @@ bgTintR[idx(5,12)]=1;
 bgTintG[idx(5,12)]=2;
 bgTintB[idx(5,12)]=3;
 bgTintA[idx(5,12)]=255;
+sourceInterval=4;
+lightingEnabled=false;
+lightStrength=.33;
+sideLightStrength=.44;
+shadowStrength=.55;
 const saved={
   cols,
   rows,
@@ -428,8 +436,33 @@ const saved={
   backgroundTint:encodeTintCells(bgTintR,bgTintG,bgTintB,bgTintA),
   airColor:[255,255,255]
 };
+const snapshot=serializeWorldSnapshot();
+testAssert(snapshot.version===WORLD_SNAPSHOT_VERSION,'snapshot version changed');
+testAssert(snapshot.sourceInterval===4&&snapshot.lightingEnabled===false,'snapshot settings were not serialized');
 restoreEditableArrays(saved);
 testAssert(rowsContaining(FIXED_STONE).length===1,'exact restore should keep one concrete row');
+
+material.fill(EMPTY);
+sourceMat.fill(EMPTY);
+airColor=[0,0,0];
+sourceInterval=1;
+lightingEnabled=true;
+lightStrength=.18;
+sideLightStrength=1;
+shadowStrength=.16;
+bodies=[{x:1}];
+fillPreview=[1];
+placing={};
+forceState={};
+editDirty=true;
+const restored=restoreWorldSnapshot(snapshot);
+testAssert(restored.ok&&!restored.resampled,'snapshot restore should succeed without resampling');
+testAssert(material[idx(5,11)]===EMPTY&&sourceMat[idx(5,11)]===WATER,'snapshot restore lost source layer');
+testAssert(rowsContaining(FIXED_STONE).length===1,'snapshot restore should keep concrete row');
+testAssert(tintA[idx(6,10)]===255&&bgTintA[idx(5,12)]===255,'snapshot restore lost tint data');
+testAssert(sourceInterval===4&&lightingEnabled===false&&lightStrength===.33&&sideLightStrength===.44&&shadowStrength===.55,'snapshot restore lost settings');
+testAssert(bodies.length===0&&fillPreview.length===0&&placing===null&&forceState===null&&editDirty===false,'snapshot restore should clear transient runtime state');
+testAssert(!restoreWorldSnapshot({version:999,cols:1,rows:1}).ok,'snapshot restore should reject unsupported versions');
 
 cols=20;
 rows=19;
