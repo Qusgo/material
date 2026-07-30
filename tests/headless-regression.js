@@ -274,16 +274,23 @@ testAssert(material[idx(0,1)]===EMPTY,'source interval should throttle generatio
 }
 
 function editCommandRegression(){
-  const source=sharedPrelude()+read('src/00-materials.js')+read('src/01-editing-and-bodies.js')+read('src/02-sources.js')+read('src/01-edit-commands.js')+`
-let cols=4,rows=3,count=cols*rows,cellSize=5,editDirty=false,WAKE_RADIUS=2,accumulator=0;
-let material=new Uint8Array(count),sourceMat=new Uint8Array(count),bodyMask=new Uint8Array(count),mass=new Float32Array(count),vx=new Float32Array(count),vy=new Float32Array(count),flowDir=new Int8Array(count),restAge=new Uint8Array(count),stableMask=new Uint8Array(count),moveHistory=new Int32Array(count),moveFlip=new Uint8Array(count),horizontalDir=new Int8Array(count),horizontalTurns=new Uint8Array(count),escapeDir=new Int8Array(count),escapeTarget=new Int16Array(count),carriedBy=new Uint8Array(count),carriedTTL=new Uint16Array(count),lastMoveTick=new Int32Array(count),tintR=new Uint8Array(count),tintG=new Uint8Array(count),tintB=new Uint8Array(count),tintA=new Uint8Array(count),bgTintR=new Uint8Array(count),bgTintG=new Uint8Array(count),bgTintB=new Uint8Array(count),bgTintA=new Uint8Array(count);
+  const source=sharedPrelude()+read('src/00-materials.js')+read('src/00-world-arrays.js')+read('src/01-editing-and-bodies.js')+read('src/02-sources.js')+read('src/01-edit-commands.js')+`
+let cols=4,rows=3,count=cols*rows,cellSize=5,editDirty=false,WAKE_RADIUS=2,MAX_FILL_CELLS=100,accumulator=0;
+let material,mass,vx,vy,bodyMask,flowDir,restAge,stableMask,tintR,tintG,tintB,tintA,bgTintR,bgTintG,bgTintB,bgTintA,sourceMat,lightMask;
+let moveHistory,moveFlip,horizontalDir,horizontalTurns,escapeDir,escapeTarget,carriedBy,carriedTTL,lastMoveTick;
+let waterSeen,waterSpaceMark,waterComponentMark,waterBasinMark,waterSleepBlockMark,waterTargetMark,waterWakeMark,waterQueue,rowCounts;
+let waterSpaceToken=1,waterComponentToken=1,waterBasinToken=1,waterTargetToken=1,waterWakeToken=1;
 let bodies=[],fillPreview=[],placing=null,forceState=null,airColor=[255,255,255];
+installGridArrays(createGridArrays(count,rows));
 function idx(c,r){return r*cols+c}
 function inBounds(c,r){return c>=0&&c<cols&&r>=0&&r<rows}
 function pointToCell(x,y){return{c:Math.max(0,Math.min(cols-1,Math.floor(x/cellSize))),r:Math.max(0,Math.min(rows-1,Math.floor(y/cellSize)))}}
 function wakeWaterComponentsAroundCell(){}
 function wakeFlowAroundCell(){}
 function nextWaterWakeToken(){return 1}
+function rebuildBodyMask(){bodyMask.fill(0)}
+function isBodyMaterial(){return false}
+function setStatus(){}
 function testAssert(condition,message){if(!condition)throw new Error(message)}
 testAssert(applyEditCommand({type:'paint',x:7,y:7,radius:0,material:SAND}),'paint command should apply');
 testAssert(material[idx(1,1)]===SAND,'paint command wrote material');
@@ -294,6 +301,17 @@ testAssert(tintR[idx(1,1)]===9&&tintG[idx(1,1)]===8&&tintB[idx(1,1)]===7&&tintA[
 testAssert(applyEditCommand({type:'tint',x:1,y:1,radius:0,color:[1,2,3]}),'tint command should apply to air');
 testAssert(bgTintR[idx(0,0)]===1&&bgTintG[idx(0,0)]===2&&bgTintB[idx(0,0)]===3&&bgTintA[idx(0,0)]===255,'tint command wrote background tint');
 testAssert(!applyEditCommand({type:'source',x:1,y:1,radius:0,material:FIXED_STONE}),'fixed stone source command should be rejected');
+testAssert(applyEditCommand({type:'erase',x:7,y:7,radius:0}),'erase command should apply');
+testAssert(material[idx(1,1)]===EMPTY&&tintA[idx(1,1)]===0,'erase command should clear material and particle tint');
+testAssert(applyEditCommand({type:'fill',x:1,y:1,material:WATER}),'fill command should apply');
+testAssert(material[idx(0,0)]===WATER&&material[idx(1,1)]===WATER,'fill command should fill connected region');
+testAssert(applyEditCommand({type:'fillAir',color:[11,12,13]}),'fillAir command should apply');
+testAssert(airColor[0]===11&&airColor[1]===12&&airColor[2]===13,'fillAir command should set global air color');
+testAssert(bgTintA[idx(0,0)]===0,'fillAir command should clear background tint overrides');
+testAssert(applyEditCommand({type:'clear'}),'clear command should apply');
+testAssert(material.every(v=>v===EMPTY)&&sourceMat.every(v=>v===EMPTY),'clear command should empty material and source layers');
+testAssert(airColor[0]===255&&airColor[1]===255&&airColor[2]===255,'clear command should reset air color');
+testAssert(!applyEditCommand({type:'paint',x:NaN,y:1,radius:0,material:SAND}),'point commands should reject invalid coordinates');
 `;
   runIsolated('edit command regression',source);
 }

@@ -126,8 +126,8 @@ function stampAt(x,y,rad,mat,wakeToken=nextWaterWakeToken()){const p=pointToCell
 function stampTintAt(x,y,rad,color){const p=pointToCell(x,y),r2=rad*rad;for(let rr=p.r-rad;rr<=p.r+rad;rr++)for(let cc=p.c-rad;cc<=p.c+rad;cc++){if(!inBounds(cc,rr))continue;const dx=cc-p.c,dy=rr-p.r;if(dx*dx+dy*dy<=r2)setTintCell(cc,rr,color)}}
 function drawContinuous(a,b,mat){const rad=getBrushRadius(),dist=Math.hypot(b.x-a.x,b.y-a.y),n=Math.max(1,Math.ceil(dist/Math.max(1,cellSize*.55))),wakeToken=nextWaterWakeToken();for(let k=0;k<=n;k++){const t=k/n;stampAt(a.x+(b.x-a.x)*t,a.y+(b.y-a.y)*t,rad,mat,wakeToken)}}
 function drawTintContinuous(a,b,color){const rad=getBrushRadius(),dist=Math.hypot(b.x-a.x,b.y-a.y),n=Math.max(1,Math.ceil(dist/Math.max(1,cellSize*.55)));for(let k=0;k<=n;k++){const t=k/n;stampTintAt(a.x+(b.x-a.x)*t,a.y+(b.y-a.y)*t,rad,color)}}
-function eraseAt(x,y){
-  const rad=getEraserRadius(),p=pointToCell(x,y),r2=rad*rad,wakeToken=nextWaterWakeToken();
+function eraseAtRadius(x,y,rad){
+  const p=pointToCell(x,y),r2=rad*rad,wakeToken=nextWaterWakeToken();
   for(let rr=p.r-rad;rr<=p.r+rad;rr++)for(let cc=p.c-rad;cc<=p.c+rad;cc++){
     if(!inBounds(cc,rr))continue;
     const dx=cc-p.c,dy=rr-p.r;
@@ -138,13 +138,15 @@ function eraseAt(x,y){
   if(bodies.length!==before)editDirty=true;
   rebuildBodyMask();
 }
+function eraseAt(x,y){
+  eraseAtRadius(x,y,getEraserRadius());
+}
 function computeFill(c,r){const start=idx(c,r),target=material[start],seen=new Uint8Array(count),queue=new Int32Array(Math.min(count,MAX_FILL_CELLS+1)),out=[];let h=0,t=0;seen[start]=1;queue[t++]=start;while(h<t&&out.length<MAX_FILL_CELLS){const i=queue[h++];out.push(i);const cc=i%cols,rr=Math.floor(i/cols),ns=[i-1,i+1,i-cols,i+cols];for(const ni of ns){if(ni<0||ni>=count||seen[ni])continue;const nc=ni%cols,nr=Math.floor(ni/cols);if(Math.abs(nc-cc)+Math.abs(nr-rr)!==1)continue;if(bodyMask[ni]||material[ni]!==target)continue;seen[ni]=1;if(t<queue.length)queue[t++]=ni}}return{cells:out,target,clipped:h<t||out.length>=MAX_FILL_CELLS}}
 function updateFillPreview(){fillPreview=[];if(tool!=='fill'||isBodyMaterial()||!hoverPoint)return;const p=pointToCell(hoverPoint.x,hoverPoint.y),res=computeFill(p.c,p.r);fillPreview=res.cells;fillPreviewMaterial=MATERIAL_FROM_NAME[selected]||WATER;if(res.clipped)setStatus('Fill preview reached the cell limit')}
-function applyFill(){
-  if(!fillPreview.length||isBodyMaterial())return;
-  const mat=MATERIAL_FROM_NAME[selected]||WATER;
+function fillCells(cells,mat){
+  if(!cells.length||!isKnownMaterial(mat)||isBodyMaterial())return 0;
   const wakeToken=nextWaterWakeToken();
-  for(const i of fillPreview){
+  for(const i of cells){
     const c=i%cols,r=Math.floor(i/cols);
     const oldMat=material[i];
     if(oldMat!==mat)editDirty=true;
@@ -163,7 +165,18 @@ function applyFill(){
     wakeFlowAroundCell(c,r);
     if(oldMat!==mat)wakeWaterComponentsAroundCell(c,r,WAKE_RADIUS,wakeToken);
   }
-  setStatus(`Filled ${fillPreview.length} cells`);
+  return cells.length;
+}
+function fillAtCell(c,r,mat){
+  if(!inBounds(c,r)||!isKnownMaterial(mat)||isBodyMaterial())return 0;
+  const res=computeFill(c,r);
+  return fillCells(res.cells,mat);
+}
+function applyFill(){
+  if(!fillPreview.length||isBodyMaterial())return;
+  const mat=MATERIAL_FROM_NAME[selected]||WATER;
+  const filled=fillCells(fillPreview,mat);
+  setStatus(`Filled ${filled} cells`);
   fillPreview=[];
   finishEditAsNewInitialState();
 }

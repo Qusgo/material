@@ -36,7 +36,8 @@ between save and load.
 - `src/02-sources.js` - DOM-free infinite source layer editing and material
   generation.
 - `src/02-source-render.js` - Canvas overlay for source cells.
-- `src/01-edit-commands.js` - Small command wrapper for non-DOM adapters.
+- `src/01-edit-commands.js` - Small command wrapper for non-DOM adapters:
+  paint, source, tint, erase, fill, fill-air, and clear.
 - `src/02-flow-and-water.js` - Shared flow movement, water surface-jitter logic,
   legacy water basin settling, stable/wake logic, and grid update order.
 - `src/02-erosion.js` - Lightweight carried-particle erosion for granular

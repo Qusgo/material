@@ -39,8 +39,8 @@ DOM pointer/toolbar input -> command objects -> core world -> render buffer -> c
 The current branch has started that boundary without changing gameplay:
 `src/00-world-arrays.js`, `src/00-world-state.js`, `src/04-save-codec.js`,
 `src/03-lighting.js`, `src/03-render-buffer.js`, and the core part of
-`src/02-sources.js` are DOM-free. `src/01-edit-commands.js` exposes the first
-simple command wrapper for paint/source/tint edits.
+`src/02-sources.js` are DOM-free. `src/01-edit-commands.js` exposes command
+wrappers for paint/source/tint/erase/fill/fillAir/clear edits.
 
 ## Migration Order
 
@@ -56,8 +56,7 @@ simple command wrapper for paint/source/tint edits.
 5. Move grid allocation and command application next. Grid typed-array
    allocation and whole-grid clearing now live in `src/00-world-arrays.js`, and
    a compatibility world shell now lives in `src/00-world-state.js`. Continue by
-   moving more editor operations behind command objects such as `paint`,
-   `erase`, `source`, `tint`, `fill`, and `force`.
+   moving continuous pointer strokes and the force tool behind command objects.
 6. Only after the command boundary exists, migrate to TypeScript or a bundler
    such as Vite.
 7. If more speed is needed later, the headless core can be ported to Rust/WASM

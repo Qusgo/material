@@ -67,9 +67,11 @@ genuinely new algorithm.
 color, light masks, and simple light/shadow blending. Canvas drawing and UI
 remain in `src/03-runtime-render-input.js`. `src/03-render-buffer.js` converts
 the current arrays into an RGBA buffer without touching `canvas` or `document`.
-`src/01-edit-commands.js` is the first command-style boundary for simple paint,
-source, and tint edits. The browser UI still calls the older low-level handlers,
-so expand this file cautiously when moving more input into portable commands.
+`src/01-edit-commands.js` is the command-style boundary for simple editor
+operations: `paint`, `source`, `tint`, `erase`, `fill`, `fillAir`, and `clear`.
+The browser UI still calls some older low-level handlers for continuous pointer
+dragging and the force tool, so expand this file cautiously when moving more
+input into portable commands.
 
 The Material menu can register up to `MAX_CUSTOM_MATERIALS` temporary materials
 per page load. Custom fluid inputs are name, color, and integer density
