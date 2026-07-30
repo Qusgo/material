@@ -113,15 +113,8 @@ function simulationStep(){simTick++;rebuildBodyMask();updateBodies();rebuildBody
 // offscreen canvas first, then scales up with image smoothing disabled.
 function renderGrid(){
   if(!imageData||imageData.width!==cols||imageData.height!==rows)imageData=gridCtx.createImageData(cols,rows);
-  buildLightMask();
   const data=imageData.data;
-  for(let i=0;i<count;i++){
-      const p=i*4,m=normalizeMaterialCell(i),base=baseRenderColor(i,m),shaded=materialEmissive(m)?base:applySimpleLighting(base[0],base[1],base[2],lightMask[i]);
-      data[p]=shaded[0];
-      data[p+1]=shaded[1];
-      data[p+2]=shaded[2];
-      data[p+3]=255;
-  }
+  buildRenderBuffer(data);
   gridCtx.putImageData(imageData,0,0);
   ctx.imageSmoothingEnabled=false;
   ctx.drawImage(gridCanvas,0,0,cols,rows,0,0,cols*cellSize,rows*cellSize);

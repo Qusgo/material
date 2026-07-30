@@ -38,9 +38,11 @@ should call helpers such as `isFlowMaterial()`, `isSolidMaterial()`,
 `materialBlocksLight()`, `materialEmissive()`, `defaultMassForMaterial()`, and
 `defaultFlowDirForMaterial()` instead of adding new id checks.
 
-`src/02-sources.js` owns the infinite source layer. `src/02-flow-and-water.js`
-owns algorithms: gravity/sliding, slope relaxation, water's surface-jitter
-escape logic, stable/wake logic, and the optional legacy basin code.
+`src/02-sources.js` owns DOM-free infinite source data, source brush helpers,
+and source material generation. `src/02-source-render.js` owns only the canvas
+overlay for those source cells. `src/02-flow-and-water.js` owns algorithms:
+gravity/sliding, slope relaxation, water's surface-jitter escape logic,
+stable/wake logic, and the optional legacy basin code.
 `src/02-erosion.js` owns lightweight carried-particle erosion.
 `src/04-save-codec.js` owns DOM-free snapshot encoding and editable-array
 restore. `src/04-save-load.js` owns only the browser `localStorage` wrapper.
@@ -48,7 +50,11 @@ Keep new material data out of algorithm files unless the material needs a
 genuinely new algorithm.
 `src/03-lighting.js` owns DOM-free render preparation such as base material
 color, light masks, and simple light/shadow blending. Canvas drawing and UI
-remain in `src/03-runtime-render-input.js`.
+remain in `src/03-runtime-render-input.js`. `src/03-render-buffer.js` converts
+the current arrays into an RGBA buffer without touching `canvas` or `document`.
+`src/01-edit-commands.js` is the first command-style boundary for simple paint,
+source, and tint edits. The browser UI still calls the older low-level handlers,
+so expand this file cautiously when moving more input into portable commands.
 
 The Material menu can register up to `MAX_CUSTOM_MATERIALS` temporary materials
 per page load. Custom fluid inputs are name, color, and integer density
@@ -122,6 +128,10 @@ later.
 
 Rendering must stay a presentation layer. The simple light controls do not
 modify material ids, tint arrays, velocity, stability, or erosion state.
+
+`buildRenderBuffer(data)` is the render-prep entry point. It rebuilds the light
+mask and writes one RGBA pixel per grid cell into `data`; the browser adapter is
+responsible only for putting that buffer into `ImageData` and drawing it.
 
 `buildLightMask()` scans each column from top to bottom with a boolean `lit`
 flag. When `lightingEnabled` is false, colors are drawn directly. When it is

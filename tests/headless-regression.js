@@ -9,11 +9,14 @@ const RUNTIME_FILES=[
   'src/00-core-state.js',
   'src/01-editing-and-bodies.js',
   'src/02-sources.js',
+  'src/02-source-render.js',
+  'src/01-edit-commands.js',
   'src/02-flow-and-water.js',
   'src/02-erosion.js',
   'src/04-save-codec.js',
   'src/04-save-load.js',
   'src/03-lighting.js',
+  'src/03-render-buffer.js',
   'src/03-runtime-render-input.js'
 ];
 
@@ -124,7 +127,7 @@ testAssert(FLOW_RULES[SAND].slideRequiresSlope===true,'sand slope slide guard ch
 }
 
 function renderColorRegression(){
-  const source=sharedPrelude()+read('src/00-materials.js')+read('src/03-lighting.js')+`
+  const source=sharedPrelude()+read('src/00-materials.js')+read('src/03-lighting.js')+read('src/03-render-buffer.js')+`
 let cols=2,rows=2,count=cols*rows;
 let material=new Uint8Array(count),mass=new Float32Array(count),tintR=new Uint8Array(count),tintG=new Uint8Array(count),tintB=new Uint8Array(count),tintA=new Uint8Array(count),bgTintR=new Uint8Array(count),bgTintG=new Uint8Array(count),bgTintB=new Uint8Array(count),bgTintA=new Uint8Array(count),lightMask=new Uint8Array(count);
 let airColor=[10,20,30],lightingEnabled=true,lightStrength=.2,sideLightStrength=.5,shadowStrength=.25;
@@ -144,6 +147,10 @@ testAssert(materialEmissive(glow.id),'custom emissive material should report emi
 const base=glow.color;
 const rendered=materialEmissive(glow.id)?base:applySimpleLighting(base[0],base[1],base[2],0);
 testAssert(same(rendered,base),'emissive material should skip system lighting');
+material[2]=glow.id;
+const data=new Uint8Array(count*4);
+buildRenderBuffer(data);
+testAssert(data[8]===20&&data[9]===30&&data[10]===40&&data[11]===255,'render buffer should preserve emissive color');
 `;
   runIsolated('render color regression',source);
 }
@@ -179,6 +186,31 @@ applySources();
 testAssert(material[idx(0,1)]===EMPTY,'source interval should throttle generation');
 `;
   runIsolated('source regression',source);
+}
+
+function editCommandRegression(){
+  const source=sharedPrelude()+read('src/00-materials.js')+read('src/01-editing-and-bodies.js')+read('src/02-sources.js')+read('src/01-edit-commands.js')+`
+let cols=4,rows=3,count=cols*rows,cellSize=5,editDirty=false,WAKE_RADIUS=2,accumulator=0;
+let material=new Uint8Array(count),sourceMat=new Uint8Array(count),bodyMask=new Uint8Array(count),mass=new Float32Array(count),vx=new Float32Array(count),vy=new Float32Array(count),flowDir=new Int8Array(count),restAge=new Uint8Array(count),stableMask=new Uint8Array(count),moveHistory=new Int32Array(count),moveFlip=new Uint8Array(count),horizontalDir=new Int8Array(count),horizontalTurns=new Uint8Array(count),escapeDir=new Int8Array(count),escapeTarget=new Int16Array(count),carriedBy=new Uint8Array(count),carriedTTL=new Uint16Array(count),lastMoveTick=new Int32Array(count),tintR=new Uint8Array(count),tintG=new Uint8Array(count),tintB=new Uint8Array(count),tintA=new Uint8Array(count),bgTintR=new Uint8Array(count),bgTintG=new Uint8Array(count),bgTintB=new Uint8Array(count),bgTintA=new Uint8Array(count);
+let bodies=[],fillPreview=[],placing=null,forceState=null,airColor=[255,255,255];
+function idx(c,r){return r*cols+c}
+function inBounds(c,r){return c>=0&&c<cols&&r>=0&&r<rows}
+function pointToCell(x,y){return{c:Math.max(0,Math.min(cols-1,Math.floor(x/cellSize))),r:Math.max(0,Math.min(rows-1,Math.floor(y/cellSize)))}}
+function wakeWaterComponentsAroundCell(){}
+function wakeFlowAroundCell(){}
+function nextWaterWakeToken(){return 1}
+function testAssert(condition,message){if(!condition)throw new Error(message)}
+testAssert(applyEditCommand({type:'paint',x:7,y:7,radius:0,material:SAND}),'paint command should apply');
+testAssert(material[idx(1,1)]===SAND,'paint command wrote material');
+testAssert(applyEditCommand({type:'source',x:12,y:7,radius:0,material:WATER}),'source command should apply');
+testAssert(sourceMat[idx(2,1)]===WATER,'source command wrote source layer');
+testAssert(applyEditCommand({type:'tint',x:7,y:7,radius:0,color:[9,8,7]}),'tint command should apply to material');
+testAssert(tintR[idx(1,1)]===9&&tintG[idx(1,1)]===8&&tintB[idx(1,1)]===7&&tintA[idx(1,1)]===255,'tint command wrote particle tint');
+testAssert(applyEditCommand({type:'tint',x:1,y:1,radius:0,color:[1,2,3]}),'tint command should apply to air');
+testAssert(bgTintR[idx(0,0)]===1&&bgTintG[idx(0,0)]===2&&bgTintB[idx(0,0)]===3&&bgTintA[idx(0,0)]===255,'tint command wrote background tint');
+testAssert(!applyEditCommand({type:'source',x:1,y:1,radius:0,material:FIXED_STONE}),'fixed stone source command should be rejected');
+`;
+  runIsolated('edit command regression',source);
 }
 
 function movementTintRegression(){
@@ -305,5 +337,6 @@ materialRegistryRegression();
 lightingRegression();
 renderColorRegression();
 sourceRegression();
+editCommandRegression();
 movementTintRegression();
 saveLoadRegression();

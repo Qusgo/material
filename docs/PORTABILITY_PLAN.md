@@ -36,6 +36,11 @@ The browser app should become an adapter:
 DOM pointer/toolbar input -> command objects -> core world -> render buffer -> canvas/WebGL
 ```
 
+The current branch has started that boundary without changing gameplay:
+`src/04-save-codec.js`, `src/03-lighting.js`, `src/03-render-buffer.js`, and the
+core part of `src/02-sources.js` are DOM-free. `src/01-edit-commands.js` exposes
+the first simple command wrapper for paint/source/tint edits.
+
 ## Migration Order
 
 1. Keep `index.html` and `material_sim.html` working with the current script
@@ -45,7 +50,8 @@ DOM pointer/toolbar input -> command objects -> core world -> render buffer -> c
 3. Keep pure material definitions and save/load codecs browser-free. These are
    the easiest to test without a DOM.
 4. Move lighting into a core render-prep module. Lighting must remain
-   presentation-only and must not mutate physics state.
+   presentation-only and must not mutate physics state. Completed for light-mask
+   helpers and RGBA buffer construction.
 5. Move grid allocation and command application next. Replace direct DOM tool
    handlers with command objects such as `paint`, `erase`, `source`, `tint`,
    `fill`, and `force`.
@@ -63,12 +69,16 @@ DOM pointer/toolbar input -> command objects -> core world -> render buffer -> c
 - `src/04-save-codec.js` for snapshot encode/decode and restore logic
 - `src/03-lighting.js` for light masks, base colors, and simple light/shadow
   blending
+- `src/03-render-buffer.js` for DOM-free RGBA buffer construction
+- `src/02-sources.js` for source data and generation, with source canvas
+  presentation isolated in `src/02-source-render.js`
 
 ## Web Adapter Candidates
 
 - DOM handles in `src/00-core-state.js`
 - Toolbar state and material editor UI in `src/03-runtime-render-input.js`
 - Canvas drawing and overlays in `src/03-runtime-render-input.js`
+- Source overlay drawing in `src/02-source-render.js`
 - `localStorage` calls in `src/04-save-load.js`
 - CSS and HTML entry points
 
