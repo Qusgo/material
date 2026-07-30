@@ -92,6 +92,13 @@ function resetWaterScratchTokens(){
   waterBasinToken=1;
   waterTargetToken=1;
   waterWakeToken=1;
+  if(typeof currentWorld!=='undefined'&&currentWorld&&currentWorld.tokens){
+    currentWorld.tokens.waterSpaceToken=1;
+    currentWorld.tokens.waterComponentToken=1;
+    currentWorld.tokens.waterBasinToken=1;
+    currentWorld.tokens.waterTargetToken=1;
+    currentWorld.tokens.waterWakeToken=1;
+  }
 }
 
 function clearTransientGridState(){

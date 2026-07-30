@@ -17,7 +17,7 @@ let material,mass,vx,vy,bodyMask,flowDir,restAge,stableMask,tintR,tintG,tintB,ti
 let moveHistory,moveFlip,horizontalDir,horizontalTurns,escapeDir,escapeTarget,carriedBy,carriedTTL,lastMoveTick;
 let waterSeen,waterSpaceMark,waterComponentMark,waterBasinMark,waterSleepBlockMark,waterTargetMark,waterWakeMark,waterQueue,rowCounts;
 let waterSpaceToken=1,waterComponentToken=1,waterBasinToken=1,waterTargetToken=1,waterWakeToken=1;
-installGridArrays(createGridArrays(count,rows));
+installWorldState(createWorldState(cols,rows,{cellSize}));
 let gridCanvas=document.createElement('canvas'),gridCtx=gridCanvas.getContext('2d'),imageData=null;
 let bodies=[],nextBodyId=1,tool='brush',selected='water',running=false,debugBasins=false,materialMenuOpen=false,materialEditorMode=null,pointerDown=false,lastPoint=null,hoverPoint=null,fillPreview=[],fillPreviewMaterial=EMPTY,placing=null,forceState=null,lastFrame=0,accumulator=0,simTick=0,editDirty=false;
 let sourceInterval=1;
@@ -53,8 +53,7 @@ function resize(){
   canvas.width=Math.floor(nextW*dpr); canvas.height=Math.floor(nextH*dpr); ctx.setTransform(dpr,0,0,dpr,0,0); viewW=nextW; viewH=nextH;
   if(newCell===cellSize&&newCols===cols&&newRows===rows){render();return}
   const oldCols=cols,oldRows=rows,oldCell=cellSize,oldMat=material,oldMass=mass,oldVx=vx,oldVy=vy,oldFlowDir=flowDir,oldTintR=tintR,oldTintG=tintG,oldTintB=tintB,oldTintA=tintA,oldBgTintR=bgTintR,oldBgTintG=bgTintG,oldBgTintB=bgTintB,oldBgTintA=bgTintA,oldSourceMat=sourceMat;
-  cellSize=newCell; cols=newCols; rows=newRows; count=cols*rows;
-  installGridArrays(createGridArrays(count,rows));
+  installWorldState(createWorldState(newCols,newRows,{cellSize:newCell}));
   gridCanvas.width=cols; gridCanvas.height=rows; imageData=gridCtx.createImageData(cols,rows);
   if(oldMat&&oldMat.length){for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){const x=(c+.5)*cellSize,y=(r+.5)*cellSize,oc=clamp(Math.floor(x/oldCell),0,oldCols-1),or=clamp(Math.floor(y/oldCell),0,oldRows-1),oi=or*oldCols+oc,ni=idx(c,r),mat=isKnownMaterial(oldMat[oi])?oldMat[oi]:EMPTY,src=isKnownMaterial(oldSourceMat[oi])?oldSourceMat[oi]:EMPTY;material[ni]=mat;mass[ni]=materialCarriesMass(mat)?oldMass[oi]:defaultMassForMaterial(mat);vx[ni]=oldVx[oi]||0;vy[ni]=oldVy[oi]||0;flowDir[ni]=materialUsesDirectedFlow(mat)?(oldFlowDir[oi]||defaultFlowDirForMaterial(mat)):defaultFlowDirForMaterial(mat);tintR[ni]=oldTintR[oi]||0;tintG[ni]=oldTintG[oi]||0;tintB[ni]=oldTintB[oi]||0;tintA[ni]=oldTintA[oi]||0;bgTintR[ni]=oldBgTintR[oi]||0;bgTintG[ni]=oldBgTintG[oi]||0;bgTintB[ni]=oldBgTintB[oi]||0;bgTintA[ni]=oldBgTintA[oi]||0;sourceMat[ni]=isFlowMaterial(src)?src:EMPTY}}
   rebuildBodyMask(); render();

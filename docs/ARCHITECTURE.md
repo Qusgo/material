@@ -36,6 +36,14 @@ existing classic-script code, but new code should allocate with
 state with `clearEditableGridState()` instead of hand-writing long fill blocks.
 This keeps resize, clear, and load on one lifecycle path.
 
+`src/00-world-state.js` is the current world boundary. `createWorldState()`
+groups dimensions, cell size, typed arrays, and water scratch tokens.
+`installWorldState()` deliberately installs that world back into the legacy
+global bindings (`cols`, `material`, `mass`, and so on) so existing physics code
+keeps running unchanged. `currentWorldState()` refreshes the active shell from
+the globals. Treat this as a bridge toward a real `World` object, not as
+permission to mix DOM state into the core.
+
 ## Material Configuration
 
 `src/00-materials.js` is the single entry point for material ids, UI names,

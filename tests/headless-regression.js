@@ -7,6 +7,7 @@ const ROOT=path.resolve(__dirname,'..');
 const RUNTIME_FILES=[
   'src/00-materials.js',
   'src/00-world-arrays.js',
+  'src/00-world-state.js',
   'src/00-core-state.js',
   'src/01-editing-and-bodies.js',
   'src/02-sources.js',
@@ -60,6 +61,32 @@ function sharedPrelude(){
 function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
 function randDir(){return 1}
 `;
+}
+
+function runtimeBootstrapRegression(){
+  const source=read('src/00-materials.js')+read('src/00-world-arrays.js')+read('src/00-world-state.js')+`
+const fakeContext={
+  setTransform(){},
+  createImageData(w,h){return{width:w,height:h,data:new Uint8ClampedArray(w*h*4)}}
+};
+const fakeCanvas={
+  width:0,
+  height:0,
+  getContext(){return fakeContext},
+  getBoundingClientRect(){return{width:320,height:240}}
+};
+const fakeElement={textContent:'',classList:{toggle(){}},dataset:{}};
+const document={
+  getElementById(id){return id==='canvas'?fakeCanvas:fakeElement},
+  createElement(){return fakeCanvas},
+  querySelectorAll(){return[]}
+};
+const window={devicePixelRatio:1};
+`+read('src/00-core-state.js')+`
+if(cols!==1||rows!==1||count!==1)throw new Error('core-state bootstrap dimensions changed');
+if(!currentWorldState()||currentWorldState().arrays.material!==material)throw new Error('core-state did not install active world');
+`;
+  runIsolated('runtime bootstrap regression',source);
 }
 
 function lightingRegression(){
@@ -153,6 +180,35 @@ testAssert(moveHistory[1]===-1&&escapeTarget[1]===-1,'editable clear reset motio
 testAssert(waterSpaceToken===1&&waterWakeToken===1,'editable clear reset water scratch tokens');
 `;
   runIsolated('world array regression',source);
+}
+
+function worldStateRegression(){
+  const source=sharedPrelude()+read('src/00-materials.js')+read('src/00-world-arrays.js')+read('src/00-world-state.js')+`
+let cols=1,rows=1,count=1,cellSize=1;
+let material,mass,vx,vy,bodyMask,flowDir,restAge,stableMask,tintR,tintG,tintB,tintA,bgTintR,bgTintG,bgTintB,bgTintA,sourceMat,lightMask;
+let moveHistory,moveFlip,horizontalDir,horizontalTurns,escapeDir,escapeTarget,carriedBy,carriedTTL,lastMoveTick;
+let waterSeen,waterSpaceMark,waterComponentMark,waterBasinMark,waterSleepBlockMark,waterTargetMark,waterWakeMark,waterQueue,rowCounts;
+let waterSpaceToken=1,waterComponentToken=1,waterBasinToken=1,waterTargetToken=1,waterWakeToken=1;
+function testAssert(condition,message){if(!condition)throw new Error(message)}
+const world=createWorldState(5,4,{cellSize:6});
+testAssert(world.cols===5&&world.rows===4&&world.count===20&&world.cellSize===6,'world dimensions changed');
+testAssert(world.arrays.material.length===20&&world.arrays.rowCounts.length===4,'world array dimensions changed');
+installWorldState(world);
+testAssert(cols===5&&rows===4&&count===20&&cellSize===6,'installWorldState did not update dimensions');
+testAssert(material===world.arrays.material&&rowCounts===world.arrays.rowCounts,'installWorldState did not install arrays');
+material[0]=SAND;
+waterWakeToken=7;
+const current=currentWorldState();
+testAssert(current===world,'currentWorldState should return active world');
+testAssert(current.arrays.material[0]===SAND,'currentWorldState did not capture array references');
+testAssert(current.tokens.waterWakeToken===7,'currentWorldState did not capture scratch tokens');
+clearEditableGridState();
+testAssert(current.tokens.waterWakeToken===1,'clearEditableGridState should reset active world tokens');
+const replacement=createWorldState(2,3,{cellSize:4});
+installWorldState(replacement);
+testAssert(currentWorldState()===replacement&&cols===2&&rows===3&&material.length===6,'replacement world install failed');
+`;
+  runIsolated('world state regression',source);
 }
 
 function renderColorRegression(){
@@ -342,8 +398,10 @@ testAssert(countWhere(bgTintA,v=>v)>0,'upsize lost background tint');
 }
 
 syntaxRegression();
+runtimeBootstrapRegression();
 materialRegistryRegression();
 worldArrayRegression();
+worldStateRegression();
 lightingRegression();
 renderColorRegression();
 sourceRegression();
