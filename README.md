@@ -25,6 +25,8 @@ between save and load.
 - `styles.css` - Layout and visual styling.
 - `src/00-materials.js` - Material ids, colors, densities, stable-frame counts,
   and flow-rule data.
+- `src/00-world-arrays.js` - DOM-free typed-array allocation and clearing
+  helpers for the simulation grid.
 - `src/00-core-state.js` - DOM handles, runtime constants, global state arrays, resize,
   status text, and basic coordinate helpers.
 - `src/01-editing-and-bodies.js` - Brush, erase, fill, grid mutation helpers,
@@ -60,11 +62,17 @@ node tests/headless-regression.js
 ```
 
 That script checks syntax plus focused behavior for material registration,
-lighting, render buffers, sources, tint movement, and save/load.
+world-array lifecycle, lighting, render buffers, sources, tint movement, and
+save/load.
 
 The migration path toward a portable simulation core is documented in
 `docs/PORTABILITY_PLAN.md`. Follow that plan instead of doing a large
 all-at-once TypeScript or engine rewrite.
+
+The code is still loaded as classic scripts and still shares global typed
+arrays. `src/00-world-arrays.js` only centralizes allocation/clearing so later
+work can wrap those arrays in a real `World` object without changing physics in
+the same step.
 
 When changing water behavior, read `docs/ARCHITECTURE.md` first. Most previous
 bugs came from local water rules fighting the component-level water stabilizer.

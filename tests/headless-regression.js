@@ -6,6 +6,7 @@ const path=require('path');
 const ROOT=path.resolve(__dirname,'..');
 const RUNTIME_FILES=[
   'src/00-materials.js',
+  'src/00-world-arrays.js',
   'src/00-core-state.js',
   'src/01-editing-and-bodies.js',
   'src/02-sources.js',
@@ -126,6 +127,34 @@ testAssert(FLOW_RULES[SAND].slideRequiresSlope===true,'sand slope slide guard ch
   runIsolated('material registry regression',source);
 }
 
+function worldArrayRegression(){
+  const source=sharedPrelude()+read('src/00-materials.js')+read('src/00-world-arrays.js')+`
+let material,mass,vx,vy,bodyMask,flowDir,restAge,stableMask,tintR,tintG,tintB,tintA,bgTintR,bgTintG,bgTintB,bgTintA,sourceMat,lightMask;
+let moveHistory,moveFlip,horizontalDir,horizontalTurns,escapeDir,escapeTarget,carriedBy,carriedTTL,lastMoveTick;
+let waterSeen,waterSpaceMark,waterComponentMark,waterBasinMark,waterSleepBlockMark,waterTargetMark,waterWakeMark,waterQueue,rowCounts;
+let waterSpaceToken=9,waterComponentToken=9,waterBasinToken=9,waterTargetToken=9,waterWakeToken=9;
+function testAssert(condition,message){if(!condition)throw new Error(message)}
+installGridArrays(createGridArrays(6,2));
+testAssert(material.length===6&&rowCounts.length===2,'grid array allocation size changed');
+testAssert(moveHistory[0]===-1&&escapeTarget[0]===-1,'motion sentinels should initialize to -1');
+material[1]=SAND;
+mass[1]=3;
+vx[1]=4;
+sourceMat[2]=WATER;
+tintA[1]=255;
+bgTintA[3]=255;
+bodyMask[4]=1;
+lightMask[5]=3;
+clearEditableGridState();
+testAssert(material[1]===EMPTY&&mass[1]===0&&sourceMat[2]===EMPTY,'editable clear left material/source state');
+testAssert(tintA[1]===0&&bgTintA[3]===0,'editable clear left tint state');
+testAssert(bodyMask[4]===0&&lightMask[5]===0,'editable clear left mask state');
+testAssert(moveHistory[1]===-1&&escapeTarget[1]===-1,'editable clear reset motion sentinels');
+testAssert(waterSpaceToken===1&&waterWakeToken===1,'editable clear reset water scratch tokens');
+`;
+  runIsolated('world array regression',source);
+}
+
 function renderColorRegression(){
   const source=sharedPrelude()+read('src/00-materials.js')+read('src/03-lighting.js')+read('src/03-render-buffer.js')+`
 let cols=2,rows=2,count=cols*rows;
@@ -243,35 +272,15 @@ testAssert(material[to]===EMPTY&&tintA[to]===0,'source cell tint should clear af
 }
 
 function saveLoadRegression(){
-  const source=sharedPrelude()+read('src/00-materials.js')+read('src/04-save-codec.js')+`
+  const source=sharedPrelude()+read('src/00-materials.js')+read('src/00-world-arrays.js')+read('src/04-save-codec.js')+`
 let airColor=[255,255,255];
+let material,mass,vx,vy,bodyMask,flowDir,restAge,stableMask,tintR,tintG,tintB,tintA,bgTintR,bgTintG,bgTintB,bgTintA,sourceMat,lightMask;
+let moveHistory,moveFlip,horizontalDir,horizontalTurns,escapeDir,escapeTarget,carriedBy,carriedTTL,lastMoveTick;
+let waterSeen,waterSpaceMark,waterComponentMark,waterBasinMark,waterSleepBlockMark,waterTargetMark,waterWakeMark,waterQueue,rowCounts;
+let waterSpaceToken=1,waterComponentToken=1,waterBasinToken=1,waterTargetToken=1,waterWakeToken=1;
 function makeArrays(){
   count=cols*rows;
-  material=new Uint8Array(count);
-  sourceMat=new Uint8Array(count);
-  mass=new Float32Array(count);
-  vx=new Float32Array(count);
-  vy=new Float32Array(count);
-  flowDir=new Int8Array(count);
-  restAge=new Uint8Array(count);
-  stableMask=new Uint8Array(count);
-  moveHistory=new Int32Array(count);
-  moveFlip=new Uint8Array(count);
-  horizontalDir=new Int8Array(count);
-  horizontalTurns=new Uint8Array(count);
-  escapeDir=new Int8Array(count);
-  escapeTarget=new Int16Array(count);
-  carriedBy=new Uint8Array(count);
-  carriedTTL=new Uint16Array(count);
-  lastMoveTick=new Int32Array(count);
-  tintR=new Uint8Array(count);
-  tintG=new Uint8Array(count);
-  tintB=new Uint8Array(count);
-  tintA=new Uint8Array(count);
-  bgTintR=new Uint8Array(count);
-  bgTintG=new Uint8Array(count);
-  bgTintB=new Uint8Array(count);
-  bgTintA=new Uint8Array(count);
+  installGridArrays(createGridArrays(count,rows));
 }
 function idx(c,r){return r*cols+c}
 function testAssert(condition,message){if(!condition)throw new Error(message)}
@@ -334,6 +343,7 @@ testAssert(countWhere(bgTintA,v=>v)>0,'upsize lost background tint');
 
 syntaxRegression();
 materialRegistryRegression();
+worldArrayRegression();
 lightingRegression();
 renderColorRegression();
 sourceRegression();

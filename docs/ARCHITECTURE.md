@@ -29,6 +29,13 @@ parallel typed arrays:
 Dynamic round/rectangular stones are separate objects in `bodies`. They are not
 stored as particles. Each frame their shape is rasterized into `bodyMask`.
 
+`src/00-world-arrays.js` owns allocation and whole-grid clearing for these typed
+arrays. The app still exposes the arrays as globals for compatibility with the
+existing classic-script code, but new code should allocate with
+`createGridArrays()`, install with `installGridArrays()`, and reset editable
+state with `clearEditableGridState()` instead of hand-writing long fill blocks.
+This keeps resize, clear, and load on one lifecycle path.
+
 ## Material Configuration
 
 `src/00-materials.js` is the single entry point for material ids, UI names,
@@ -90,6 +97,10 @@ transient state: velocity, stable masks, rest ages, oscillation/escape history,
 carried-particle state, dynamic bodies, fill previews, placements, and force
 preview. This is deliberate. Loading should behave like drawing that page again
 and then starting the simulation from a clean initial state.
+
+`restoreEditableArrays()` must call `clearEditableGridState()` before writing
+saved cells. Do not duplicate the clearing sequence in save/load code; otherwise
+future typed-array additions will be easy to miss.
 
 If `cols` or `rows` differ between save and load, `restoreEditableArrays()` in
 `src/04-save-codec.js` must project each saved non-empty cell to one current

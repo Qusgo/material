@@ -89,31 +89,7 @@ function clearCell(c,r,wakeToken=0,clearTintFlag=true,clearSourceFlag=clearTintF
 }
 function clearSimulationState(){
   airColor=[255,255,255];
-  material.fill(EMPTY);
-  mass.fill(0);
-  vx.fill(0);
-  vy.fill(0);
-  flowDir.fill(0);
-  restAge.fill(0);
-  stableMask.fill(0);
-  moveHistory.fill(-1);
-  moveFlip.fill(0);
-  horizontalDir.fill(0);
-  horizontalTurns.fill(0);
-  escapeDir.fill(0);
-  escapeTarget.fill(-1);
-  carriedBy.fill(0);
-  carriedTTL.fill(0);
-  lastMoveTick.fill(0);
-  tintR.fill(0);
-  tintG.fill(0);
-  tintB.fill(0);
-  tintA.fill(0);
-  bgTintR.fill(0);
-  bgTintG.fill(0);
-  bgTintB.fill(0);
-  bgTintA.fill(0);
-  sourceMat.fill(EMPTY);
+  clearEditableGridState();
   bodies=[];
   fillPreview=[];
   placing=null;
