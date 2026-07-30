@@ -21,6 +21,30 @@ function commandHasPoint(command){
   return Number.isFinite(command.x)&&Number.isFinite(command.y);
 }
 
+function commandLine(command){
+  const line={
+    from:{x:command.x1,y:command.y1},
+    to:{x:command.x2,y:command.y2}
+  };
+  if(!Number.isFinite(line.from.x)||!Number.isFinite(line.from.y)||!Number.isFinite(line.to.x)||!Number.isFinite(line.to.y))return null;
+  return line;
+}
+
+function commandCircle(command){
+  const circle=command.circle||{};
+  const out={x:circle.x,y:circle.y,r:circle.r};
+  if(!Number.isFinite(out.x)||!Number.isFinite(out.y)||!Number.isFinite(out.r)||out.r<=0)return null;
+  out.r=Math.min(Math.max(out.r,0),Math.max(viewW,viewH));
+  return out;
+}
+
+function commandArrow(command){
+  const arrow=command.arrow||{};
+  const out={x:arrow.x,y:arrow.y};
+  if(!Number.isFinite(out.x)||!Number.isFinite(out.y))return null;
+  return out;
+}
+
 function applyEditCommand(command){
   if(!command||typeof command.type!=='string')return false;
   const radius=commandRadius(command);
@@ -30,10 +54,21 @@ function applyEditCommand(command){
     stampAt(command.x,command.y,radius,command.material);
     return true;
   }
+  if(command.type==='paintLine'){
+    const line=commandLine(command);
+    if(!line||!isKnownMaterial(command.material))return false;
+    drawMaterialLine(line.from,line.to,radius,command.material);
+    return true;
+  }
   if(command.type==='source'){
     if(!commandHasPoint(command))return false;
     if(!canSourceMaterial(command.material))return false;
     return stampSourceAt(command.x,command.y,radius,command.material)>0;
+  }
+  if(command.type==='sourceLine'){
+    const line=commandLine(command);
+    if(!line||!canSourceMaterial(command.material))return false;
+    return drawSourceLine(line.from,line.to,radius,command.material)>0;
   }
   if(command.type==='tint'){
     if(!commandHasPoint(command))return false;
@@ -42,9 +77,21 @@ function applyEditCommand(command){
     stampTintAt(command.x,command.y,radius,color);
     return true;
   }
+  if(command.type==='tintLine'){
+    const line=commandLine(command),color=commandColor(command);
+    if(!line||!color)return false;
+    drawTintLine(line.from,line.to,radius,color);
+    return true;
+  }
   if(command.type==='erase'){
     if(!commandHasPoint(command))return false;
     eraseAtRadius(command.x,command.y,radius);
+    return true;
+  }
+  if(command.type==='eraseLine'){
+    const line=commandLine(command);
+    if(!line)return false;
+    eraseLine(line.from,line.to,radius);
     return true;
   }
   if(command.type==='fill'){
@@ -62,6 +109,11 @@ function applyEditCommand(command){
   if(command.type==='clear'){
     clearSimulationState();
     return true;
+  }
+  if(command.type==='force'){
+    const circle=commandCircle(command),arrow=commandArrow(command);
+    if(!circle||!arrow)return false;
+    return applyForce(circle,arrow);
   }
   return false;
 }

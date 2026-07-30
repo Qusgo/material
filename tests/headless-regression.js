@@ -12,8 +12,9 @@ const RUNTIME_FILES=[
   'src/01-editing-and-bodies.js',
   'src/02-sources.js',
   'src/02-source-render.js',
-  'src/01-edit-commands.js',
   'src/02-flow-and-water.js',
+  'src/02-force.js',
+  'src/01-edit-commands.js',
   'src/02-erosion.js',
   'src/04-save-codec.js',
   'src/04-save-load.js',
@@ -274,8 +275,8 @@ testAssert(material[idx(0,1)]===EMPTY,'source interval should throttle generatio
 }
 
 function editCommandRegression(){
-  const source=sharedPrelude()+read('src/00-materials.js')+read('src/00-world-arrays.js')+read('src/01-editing-and-bodies.js')+read('src/02-sources.js')+read('src/01-edit-commands.js')+`
-let cols=4,rows=3,count=cols*rows,cellSize=5,editDirty=false,WAKE_RADIUS=2,MAX_FILL_CELLS=100,accumulator=0;
+  const source=sharedPrelude()+read('src/00-materials.js')+read('src/00-world-arrays.js')+read('src/01-editing-and-bodies.js')+read('src/02-sources.js')+read('src/02-force.js')+read('src/01-edit-commands.js')+`
+let cols=4,rows=3,count=cols*rows,cellSize=5,viewW=20,viewH=15,editDirty=false,WAKE_RADIUS=2,MAX_FILL_CELLS=100,accumulator=0;
 let material,mass,vx,vy,bodyMask,flowDir,restAge,stableMask,tintR,tintG,tintB,tintA,bgTintR,bgTintG,bgTintB,bgTintA,sourceMat,lightMask;
 let moveHistory,moveFlip,horizontalDir,horizontalTurns,escapeDir,escapeTarget,carriedBy,carriedTTL,lastMoveTick;
 let waterSeen,waterSpaceMark,waterComponentMark,waterBasinMark,waterSleepBlockMark,waterTargetMark,waterWakeMark,waterQueue,rowCounts;
@@ -285,8 +286,10 @@ installGridArrays(createGridArrays(count,rows));
 function idx(c,r){return r*cols+c}
 function inBounds(c,r){return c>=0&&c<cols&&r>=0&&r<rows}
 function pointToCell(x,y){return{c:Math.max(0,Math.min(cols-1,Math.floor(x/cellSize))),r:Math.max(0,Math.min(rows-1,Math.floor(y/cellSize)))}}
+function cellCenter(c,r){return{x:(c+.5)*cellSize,y:(r+.5)*cellSize}}
 function wakeWaterComponentsAroundCell(){}
 function wakeFlowAroundCell(){}
+function wakeFlowNearBody(){}
 function nextWaterWakeToken(){return 1}
 function rebuildBodyMask(){bodyMask.fill(0)}
 function isBodyMaterial(){return false}
@@ -301,10 +304,18 @@ testAssert(tintR[idx(1,1)]===9&&tintG[idx(1,1)]===8&&tintB[idx(1,1)]===7&&tintA[
 testAssert(applyEditCommand({type:'tint',x:1,y:1,radius:0,color:[1,2,3]}),'tint command should apply to air');
 testAssert(bgTintR[idx(0,0)]===1&&bgTintG[idx(0,0)]===2&&bgTintB[idx(0,0)]===3&&bgTintA[idx(0,0)]===255,'tint command wrote background tint');
 testAssert(!applyEditCommand({type:'source',x:1,y:1,radius:0,material:FIXED_STONE}),'fixed stone source command should be rejected');
+testAssert(applyEditCommand({type:'paintLine',x1:0,y1:12,x2:19,y2:12,radius:0,material:SAND}),'paintLine command should apply');
+testAssert(material[idx(3,2)]===SAND,'paintLine command should write line endpoint');
+testAssert(applyEditCommand({type:'sourceLine',x1:0,y1:7,x2:19,y2:7,radius:0,material:WATER}),'sourceLine command should apply');
+testAssert(sourceMat[idx(3,1)]===WATER,'sourceLine command should write line endpoint');
+testAssert(applyEditCommand({type:'tintLine',x1:0,y1:2,x2:19,y2:2,radius:0,color:[4,5,6]}),'tintLine command should apply');
+testAssert(bgTintR[idx(3,0)]===4&&bgTintG[idx(3,0)]===5&&bgTintB[idx(3,0)]===6,'tintLine command should write line endpoint');
 testAssert(applyEditCommand({type:'erase',x:7,y:7,radius:0}),'erase command should apply');
 testAssert(material[idx(1,1)]===EMPTY&&tintA[idx(1,1)]===0,'erase command should clear material and particle tint');
 testAssert(applyEditCommand({type:'fill',x:1,y:1,material:WATER}),'fill command should apply');
 testAssert(material[idx(0,0)]===WATER&&material[idx(1,1)]===WATER,'fill command should fill connected region');
+testAssert(applyEditCommand({type:'force',circle:{x:7.5,y:7.5,r:8},arrow:{x:20,y:0}}),'force command should apply');
+testAssert(vx[idx(1,1)]>0,'force command should accelerate flow material');
 testAssert(applyEditCommand({type:'fillAir',color:[11,12,13]}),'fillAir command should apply');
 testAssert(airColor[0]===11&&airColor[1]===12&&airColor[2]===13,'fillAir command should set global air color');
 testAssert(bgTintA[idx(0,0)]===0,'fillAir command should clear background tint overrides');

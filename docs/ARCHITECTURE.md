@@ -67,11 +67,13 @@ genuinely new algorithm.
 color, light masks, and simple light/shadow blending. Canvas drawing and UI
 remain in `src/03-runtime-render-input.js`. `src/03-render-buffer.js` converts
 the current arrays into an RGBA buffer without touching `canvas` or `document`.
-`src/01-edit-commands.js` is the command-style boundary for simple editor
-operations: `paint`, `source`, `tint`, `erase`, `fill`, `fillAir`, and `clear`.
-The browser UI still calls some older low-level handlers for continuous pointer
-dragging and the force tool, so expand this file cautiously when moving more
-input into portable commands.
+`src/01-edit-commands.js` is the command-style boundary for editor operations:
+point/line `paint`, `source`, `tint`, `erase`, plus `fill`, `fillAir`, `clear`,
+and `force`. The browser pointer handlers now route ordinary strokes through
+these commands. The material editor, save/load buttons, dynamic stone placement,
+and simulation stepping are still browser/runtime responsibilities.
+`src/02-force.js` owns DOM-free force application for flow cells and dynamic
+bodies.
 
 The Material menu can register up to `MAX_CUSTOM_MATERIALS` temporary materials
 per page load. Custom fluid inputs are name, color, and integer density

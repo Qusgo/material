@@ -35,14 +35,14 @@ function stampSourceAt(x,y,rad,mat){
   return painted;
 }
 
-function drawSourceContinuous(a,b,mat){
-  const rad=getBrushRadius(),dist=Math.hypot(b.x-a.x,b.y-a.y),n=Math.max(1,Math.ceil(dist/Math.max(1,cellSize*.55)));
+function drawSourceLine(a,b,rad,mat){
   let painted=0;
-  for(let k=0;k<=n;k++){
-    const t=k/n;
-    painted+=stampSourceAt(a.x+(b.x-a.x)*t,a.y+(b.y-a.y)*t,rad,mat);
-  }
+  forEachLinePoint(a,b,(x,y)=>{painted+=stampSourceAt(x,y,rad,mat)});
   return painted;
+}
+
+function drawSourceContinuous(a,b,mat){
+  return drawSourceLine(a,b,getBrushRadius(),mat);
 }
 
 function sourceIntervalReady(){

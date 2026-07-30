@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-// Dynamic-body physics, force tool, render pipeline, pointer input, and app bootstrap.
+// Dynamic-body physics, render pipeline, pointer input, and app bootstrap.
 
 function bodyHitsFixed(b){const samples=[];if(b.type==='circle'){samples.push([0,0]);for(let k=0;k<12;k++){const a=k/12*Math.PI*2;samples.push([Math.cos(a)*b.radius,Math.sin(a)*b.radius])}}else{for(const sx of[-1,0,1])for(const sy of[-1,0,1])samples.push([sx*b.hw,sy*b.hh]);samples.push([b.hw,0],[-b.hw,0],[0,b.hh],[0,-b.hh])}const ca=Math.cos(b.angle),sa=Math.sin(b.angle);for(const [lx,ly]of samples){const x=b.x+lx*ca-ly*sa,y=b.y+lx*sa+ly*ca;if(x<0||x>=viewW||y<0||y>=viewH)return true;const p=pointToCell(x,y);if(material[idx(p.c,p.r)]===FIXED_STONE)return true}return false}
 function displaceGridUnderBody(b){
@@ -77,35 +77,6 @@ function updateBodies(){
   rebuildBodyMask();
   for(const b of bodies)displaceGridUnderBody(b);
   bodies=bodies.filter(b=>b.y-b.radius<viewH+160&&b.x+b.radius>-160&&b.x-b.radius<viewW+160);
-}
-function applyForce(circle,arrow){
-  const fx=arrow.x*.035,fy=arrow.y*.035;
-  if(Math.hypot(fx,fy)<.02)return;
-  const minC=clamp(Math.floor((circle.x-circle.r)/cellSize),0,cols-1),maxC=clamp(Math.floor((circle.x+circle.r)/cellSize),0,cols-1);
-  const minR=clamp(Math.floor((circle.y-circle.r)/cellSize),0,rows-1),maxR=clamp(Math.floor((circle.y+circle.r)/cellSize),0,rows-1),r2=circle.r*circle.r;
-  for(let r=minR;r<=maxR;r++)for(let c=minC;c<=maxC;c++){
-    const p=cellCenter(c,r),dx=p.x-circle.x,dy=p.y-circle.y;
-    if(dx*dx+dy*dy>r2)continue;
-    const i=idx(c,r);
-    const mat=material[i],rule=FLOW_RULES[mat];
-    if(rule){
-      const scale=rule.forceScale||.65;
-      clearRestState(i);
-      vx[i]+=fx*scale;
-      vy[i]+=fy*scale;
-      wakeFlowAroundCell(c,r);
-    }
-  }
-  for(const b of bodies){
-    if(!bodyIntersectsCircle(b,circle.x,circle.y,circle.r))continue;
-    wakeFlowNearBody(b);
-    const response=.55/Math.max(1,b.mass*.015);
-    b.vx+=fx*response;
-    b.vy+=fy*response;
-    const rx=circle.x-b.x,ry=circle.y-b.y;
-    b.av+=(rx*fy-ry*fx)*b.invInertia*38;
-  }
-  setStatus('Force applied');
 }
 function simulationStep(){simTick++;rebuildBodyMask();updateBodies();rebuildBodyMask();updateGridMaterials();rebuildBodyMask()}
 
@@ -383,9 +354,9 @@ function deleteExistingMaterial(id){
 }
 
 function frame(ts){if(!lastFrame)lastFrame=ts;const dt=Math.min(50,ts-lastFrame);lastFrame=ts;if(running){accumulator+=dt;let steps=0;while(accumulator>=SIM_STEP_MS&&steps<4){simulationStep();accumulator-=SIM_STEP_MS;steps++}}else accumulator=0;render();requestAnimationFrame(frame)}
-canvas.addEventListener('pointerdown',e=>{canvas.setPointerCapture(e.pointerId);pointerDown=true;const p=canvasPoint(e);hoverPoint=p;pauseForEdit();if(tool==='brush'){if(isBodyMaterial())placing={kind:selected,start:p,current:p};else{const mat=MATERIAL_FROM_NAME[selected]||WATER;stampAt(p.x,p.y,getBrushRadius(),mat)}lastPoint=p}else if(tool==='source'){const mat=selectedSourceMaterial();if(mat){stampSourceAt(p.x,p.y,getBrushRadius(),mat);lastPoint=p}else setStatus('Source requires a flow material')}else if(tool==='color'){stampTintAt(p.x,p.y,getBrushRadius(),getTintColor());lastPoint=p}else if(tool==='fill'){updateFillPreview();applyFill()}else if(tool==='eraser')eraseAt(p.x,p.y);else if(tool==='force'){if(!forceState||forceState.done)forceState={phase:'circle',start:p,current:p};else if(forceState.phase==='arrow')forceState.arrowEnd=p}render()});
-canvas.addEventListener('pointermove',e=>{const p=canvasPoint(e);hoverPoint=p;if(tool==='fill')updateFillPreview();if(!pointerDown){render();return}if(tool==='brush'){if(placing)placing.current=p;else if(lastPoint){const mat=MATERIAL_FROM_NAME[selected]||WATER;drawContinuous(lastPoint,p,mat)}lastPoint=p}else if(tool==='source'){const mat=selectedSourceMaterial();if(mat&&lastPoint)drawSourceContinuous(lastPoint,p,mat);lastPoint=p}else if(tool==='color'){if(lastPoint)drawTintContinuous(lastPoint,p,getTintColor());lastPoint=p}else if(tool==='eraser')eraseAt(p.x,p.y);else if(tool==='force'&&forceState){if(forceState.phase==='circle')forceState.current=p;else if(forceState.phase==='arrow')forceState.arrowEnd=p}render()});
-canvas.addEventListener('pointerup',e=>{pointerDown=false;const p=canvasPoint(e);if(placing){placing.current=p;const b=makeBodyFromPlacement(placing,true);if(b&&addBody(b))setStatus('Dynamic stone placed');placing=null}if(tool==='force'&&forceState){if(forceState.phase==='circle'){const r=Math.max(12,Math.hypot(forceState.current.x-forceState.start.x,forceState.current.y-forceState.start.y));forceState={phase:'arrow',circle:{x:forceState.start.x,y:forceState.start.y,r},arrowEnd:null};setStatus('Force: now drag arrow direction and strength')}else if(forceState.phase==='arrow'&&forceState.arrowEnd){const arrow={x:forceState.arrowEnd.x-forceState.circle.x,y:forceState.arrowEnd.y-forceState.circle.y};applyForce(forceState.circle,arrow);forceState=null}}finishEditAsNewInitialState();lastPoint=null;if(canvas.hasPointerCapture(e.pointerId))canvas.releasePointerCapture(e.pointerId);rebuildBodyMask();updateFillPreview();render()});
+canvas.addEventListener('pointerdown',e=>{canvas.setPointerCapture(e.pointerId);pointerDown=true;const p=canvasPoint(e);hoverPoint=p;pauseForEdit();if(tool==='brush'){if(isBodyMaterial())placing={kind:selected,start:p,current:p};else{const mat=MATERIAL_FROM_NAME[selected]||WATER;applyEditCommand({type:'paint',x:p.x,y:p.y,radius:getBrushRadius(),material:mat})}lastPoint=p}else if(tool==='source'){const mat=selectedSourceMaterial();if(mat){applyEditCommand({type:'source',x:p.x,y:p.y,radius:getBrushRadius(),material:mat});lastPoint=p}else setStatus('Source requires a flow material')}else if(tool==='color'){applyEditCommand({type:'tint',x:p.x,y:p.y,radius:getBrushRadius(),color:getTintColor()});lastPoint=p}else if(tool==='fill'){updateFillPreview();applyFill()}else if(tool==='eraser')applyEditCommand({type:'erase',x:p.x,y:p.y,radius:getEraserRadius()});else if(tool==='force'){if(!forceState||forceState.done)forceState={phase:'circle',start:p,current:p};else if(forceState.phase==='arrow')forceState.arrowEnd=p}render()});
+canvas.addEventListener('pointermove',e=>{const p=canvasPoint(e);hoverPoint=p;if(tool==='fill')updateFillPreview();if(!pointerDown){render();return}if(tool==='brush'){if(placing)placing.current=p;else if(lastPoint){const mat=MATERIAL_FROM_NAME[selected]||WATER;applyEditCommand({type:'paintLine',x1:lastPoint.x,y1:lastPoint.y,x2:p.x,y2:p.y,radius:getBrushRadius(),material:mat})}lastPoint=p}else if(tool==='source'){const mat=selectedSourceMaterial();if(mat&&lastPoint)applyEditCommand({type:'sourceLine',x1:lastPoint.x,y1:lastPoint.y,x2:p.x,y2:p.y,radius:getBrushRadius(),material:mat});lastPoint=p}else if(tool==='color'){if(lastPoint)applyEditCommand({type:'tintLine',x1:lastPoint.x,y1:lastPoint.y,x2:p.x,y2:p.y,radius:getBrushRadius(),color:getTintColor()});lastPoint=p}else if(tool==='eraser')applyEditCommand({type:'erase',x:p.x,y:p.y,radius:getEraserRadius()});else if(tool==='force'&&forceState){if(forceState.phase==='circle')forceState.current=p;else if(forceState.phase==='arrow')forceState.arrowEnd=p}render()});
+canvas.addEventListener('pointerup',e=>{pointerDown=false;const p=canvasPoint(e);if(placing){placing.current=p;const b=makeBodyFromPlacement(placing,true);if(b&&addBody(b))setStatus('Dynamic stone placed');placing=null}if(tool==='force'&&forceState){if(forceState.phase==='circle'){const r=Math.max(12,Math.hypot(forceState.current.x-forceState.start.x,forceState.current.y-forceState.start.y));forceState={phase:'arrow',circle:{x:forceState.start.x,y:forceState.start.y,r},arrowEnd:null};setStatus('Force: now drag arrow direction and strength')}else if(forceState.phase==='arrow'&&forceState.arrowEnd){const arrow={x:forceState.arrowEnd.x-forceState.circle.x,y:forceState.arrowEnd.y-forceState.circle.y};if(applyEditCommand({type:'force',circle:forceState.circle,arrow}))setStatus('Force applied');forceState=null}}finishEditAsNewInitialState();lastPoint=null;if(canvas.hasPointerCapture(e.pointerId))canvas.releasePointerCapture(e.pointerId);rebuildBodyMask();updateFillPreview();render()});
 canvas.addEventListener('pointercancel',e=>{pointerDown=false;placing=null;lastPoint=null;finishEditAsNewInitialState();if(canvas.hasPointerCapture(e.pointerId))canvas.releasePointerCapture(e.pointerId);render()});
 canvas.addEventListener('pointerleave',()=>{hoverPoint=null;fillPreview=[];render()});
 document.querySelectorAll('[data-tool]').forEach(b=>b.addEventListener('click',()=>setTool(b.dataset.tool)));
