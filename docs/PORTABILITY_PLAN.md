@@ -42,8 +42,8 @@ DOM pointer/toolbar input -> command objects -> core world -> render buffer -> c
    order.
 2. Add and maintain headless Node regressions for fragile behavior. Start with
    `tests/headless-regression.js`.
-3. Move pure material definitions and save/load codecs first. These are the
-   easiest to test without a browser.
+3. Keep pure material definitions and save/load codecs browser-free. These are
+   the easiest to test without a DOM.
 4. Move lighting into a core render-prep module. Lighting must remain
    presentation-only and must not mutate physics state.
 5. Move grid allocation and command application next. Replace direct DOM tool
@@ -60,7 +60,7 @@ DOM pointer/toolbar input -> command objects -> core world -> render buffer -> c
 - `src/02-flow-and-water.js`
 - `src/02-erosion.js`
 - The non-DOM parts of `src/01-editing-and-bodies.js`
-- The encode/decode and restore logic in `src/04-save-load.js`
+- `src/04-save-codec.js` for snapshot encode/decode and restore logic
 - `src/03-lighting.js` for light masks, base colors, and simple light/shadow
   blending
 

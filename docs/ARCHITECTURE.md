@@ -42,9 +42,10 @@ should call helpers such as `isFlowMaterial()`, `isSolidMaterial()`,
 owns algorithms: gravity/sliding, slope relaxation, water's surface-jitter
 escape logic, stable/wake logic, and the optional legacy basin code.
 `src/02-erosion.js` owns lightweight carried-particle erosion.
-`src/04-save-load.js` owns the single-slot local save/load format. Keep new
-material data out of algorithm files unless the material needs a genuinely new
-algorithm.
+`src/04-save-codec.js` owns DOM-free snapshot encoding and editable-array
+restore. `src/04-save-load.js` owns only the browser `localStorage` wrapper.
+Keep new material data out of algorithm files unless the material needs a
+genuinely new algorithm.
 `src/03-lighting.js` owns DOM-free render preparation such as base material
 color, light masks, and simple light/shadow blending. Canvas drawing and UI
 remain in `src/03-runtime-render-input.js`.
@@ -84,13 +85,13 @@ carried-particle state, dynamic bodies, fill previews, placements, and force
 preview. This is deliberate. Loading should behave like drawing that page again
 and then starting the simulation from a clean initial state.
 
-If `cols` or `rows` differ between save and load, `restoreEditableArrays()` must
-project each saved non-empty cell to one current cell. Target-to-source sampling
-can miss one-cell walls when only center points are used, while covered-cell
-sampling can duplicate a one-cell wall into a two-cell wall when the current grid
-has more rows. Source-to-target projection keeps exact copies for same-size loads
-and preserves discrete cells during resampled loads without inventing extra
-material rows.
+If `cols` or `rows` differ between save and load, `restoreEditableArrays()` in
+`src/04-save-codec.js` must project each saved non-empty cell to one current
+cell. Target-to-source sampling can miss one-cell walls when only center points
+are used, while covered-cell sampling can duplicate a one-cell wall into a
+two-cell wall when the current grid has more rows. Source-to-target projection
+keeps exact copies for same-size loads and preserves discrete cells during
+resampled loads without inventing extra material rows.
 
 When changing material registration, keep `exportCustomMaterials()` and
 `restoreCustomMaterials()` in sync with the fields needed by the corresponding

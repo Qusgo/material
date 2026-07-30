@@ -35,7 +35,8 @@ between save and load.
   legacy water basin settling, stable/wake logic, and grid update order.
 - `src/02-erosion.js` - Lightweight carried-particle erosion for granular
   materials.
-- `src/04-save-load.js` - One-slot local canvas save/load for editable state.
+- `src/04-save-codec.js` - DOM-free snapshot encoding and editable-array restore.
+- `src/04-save-load.js` - One-slot `localStorage` save/load wrapper.
 - `src/03-lighting.js` - DOM-free base color and light-mask helpers.
 - `src/03-runtime-render-input.js` - Dynamic body updates, force tool, render
   pipeline, basin debug overlay, pointer input, and app bootstrap.
@@ -51,7 +52,7 @@ global scope and must be loaded in the order shown in the HTML files.
 After edits, run:
 
 ```powershell
-node -e "const fs=require('fs'); const files=['src/00-materials.js','src/00-core-state.js','src/01-editing-and-bodies.js','src/02-sources.js','src/02-flow-and-water.js','src/02-erosion.js','src/04-save-load.js','src/03-lighting.js','src/03-runtime-render-input.js']; for (const f of files) new Function(fs.readFileSync(f,'utf8')); new Function(files.map(f=>fs.readFileSync(f,'utf8')).join('\n')); console.log('syntax ok')"
+node -e "const fs=require('fs'); const files=['src/00-materials.js','src/00-core-state.js','src/01-editing-and-bodies.js','src/02-sources.js','src/02-flow-and-water.js','src/02-erosion.js','src/04-save-codec.js','src/04-save-load.js','src/03-lighting.js','src/03-runtime-render-input.js']; for (const f of files) new Function(fs.readFileSync(f,'utf8')); new Function(files.map(f=>fs.readFileSync(f,'utf8')).join('\n')); console.log('syntax ok')"
 ```
 
 For behavior that should survive future refactors, run:
