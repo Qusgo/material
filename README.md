@@ -43,6 +43,8 @@ between save and load.
   legacy water basin settling, stable/wake logic, and grid update order.
 - `src/02-force.js` - DOM-free force application for flow cells and dynamic
   bodies.
+- `src/01-runtime-config.js` - DOM-free material add/update/delete commands
+  and source/lighting setting commands.
 - `src/02-erosion.js` - Lightweight carried-particle erosion for granular
   materials.
 - `src/02-step-world.js` - DOM-free simulation tick wrapper preserving update
@@ -72,8 +74,8 @@ node tests/headless-regression.js
 
 That script checks syntax, browser-style bootstrap, and focused behavior for
 material registration, world-array lifecycle, world-state installation,
-lighting, render buffers, sources, tint movement, and portable snapshot
-save/load.
+runtime config commands, lighting, render buffers, sources, tint movement, and
+portable snapshot save/load.
 
 The migration path toward a portable simulation core is documented in
 `docs/PORTABILITY_PLAN.md`. Follow that plan instead of doing a large

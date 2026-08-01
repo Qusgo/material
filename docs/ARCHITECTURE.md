@@ -77,6 +77,12 @@ synchronization are still browser/runtime responsibilities.
 `src/02-force.js` owns DOM-free force application for flow cells and dynamic
 bodies.
 
+`src/01-runtime-config.js` is the command-style boundary for custom material
+configuration and global runtime settings. It owns use-count checks for custom
+materials, `add`/`update`/`delete` material commands, source interval clamping,
+and lighting setting clamping. The browser UI still owns input widgets and
+status messages, but should not duplicate these rules.
+
 The Material menu can register up to `MAX_CUSTOM_MATERIALS` temporary materials
 per page load. Custom fluid inputs are name, color, and integer density
 `1..98`; custom granular inputs are name, color, integer density `1..98`, and

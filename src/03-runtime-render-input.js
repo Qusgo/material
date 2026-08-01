@@ -147,16 +147,6 @@ function normalizeIntegerInput(input,min,max,fallback){
   return value;
 }
 
-function countMaterialCells(mat){
-  let total=0;
-  for(let i=0;i<count;i++)if(material[i]===mat)total++;
-  return total;
-}
-
-function countMaterialUses(mat){
-  return countMaterialCells(mat)+(typeof countSourceCells==='function'?countSourceCells(mat):0);
-}
-
 function getTintColor(){
   return hexToRgb(tintColorInput?tintColorInput.value:'#ef4444');
 }
@@ -171,9 +161,10 @@ function syncIntegerPair(rangeInput,numberInput,min,max,fallback,source){
 
 function syncSourceRateControls(source=sourceRateInput){
   if(!sourceRateInput||!sourceRateNumberInput)return sourceInterval;
-  if(source)sourceInterval=syncIntegerPair(sourceRateInput,sourceRateNumberInput,1,60,1,source);
+  if(source)applyRuntimeSettingsCommand({type:'sourceInterval',value:syncIntegerPair(sourceRateInput,sourceRateNumberInput,1,60,1,source)});
   else{
-    sourceRateInput.value=String(clampInt(sourceInterval,1,60,1));
+    applyRuntimeSettingsCommand({type:'sourceInterval',value:sourceInterval});
+    sourceRateInput.value=String(sourceInterval);
     sourceRateNumberInput.value=sourceRateInput.value;
   }
   return sourceInterval;
@@ -181,14 +172,14 @@ function syncSourceRateControls(source=sourceRateInput){
 
 function syncLightingControls(source=null){
   if(lightingEnabledInput){
-    if(source===lightingEnabledInput)lightingEnabled=!!lightingEnabledInput.checked;
+    if(source===lightingEnabledInput)applyRuntimeSettingsCommand({type:'lighting',enabled:lightingEnabledInput.checked});
     else lightingEnabledInput.checked=!!lightingEnabled;
   }
   if(lightStrengthInput&&lightStrengthNumberInput){
     const value=source===lightStrengthInput||source===lightStrengthNumberInput
       ?syncIntegerPair(lightStrengthInput,lightStrengthNumberInput,0,100,18,source)
       :clampInt(Math.round(lightStrength*100),0,100,18);
-    lightStrength=value/100;
+    applyRuntimeSettingsCommand({type:'lighting',lightStrength:value/100});
     lightStrengthInput.value=String(value);
     lightStrengthNumberInput.value=String(value);
   }
@@ -196,7 +187,7 @@ function syncLightingControls(source=null){
     const value=source===sideLightStrengthInput||source===sideLightStrengthNumberInput
       ?syncIntegerPair(sideLightStrengthInput,sideLightStrengthNumberInput,0,200,100,source)
       :clampInt(Math.round(sideLightStrength*100),0,200,100);
-    sideLightStrength=value/100;
+    applyRuntimeSettingsCommand({type:'lighting',sideLightStrength:value/100});
     sideLightStrengthInput.value=String(value);
     sideLightStrengthNumberInput.value=String(value);
   }
@@ -204,7 +195,7 @@ function syncLightingControls(source=null){
     const value=source===shadowStrengthInput||source===shadowStrengthNumberInput
       ?syncIntegerPair(shadowStrengthInput,shadowStrengthNumberInput,0,100,16,source)
       :clampInt(Math.round(shadowStrength*100),0,100,16);
-    shadowStrength=value/100;
+    applyRuntimeSettingsCommand({type:'lighting',shadowStrength:value/100});
     shadowStrengthInput.value=String(value);
     shadowStrengthNumberInput.value=String(value);
   }
@@ -318,34 +309,37 @@ function saveCustomMaterial(){
   const density=normalizeIntegerInput(materialDensityInput,1,98,materialEditorMode===MATERIAL_KIND_GRANULAR?2:1);
   const color=hexToRgb(materialColorInput.value);
   const name=materialNameInput.value;
-  const def=materialEditorTarget
-    ?updateCustomMaterial(materialEditorTarget,{name,color,density,blocksLight:materialBlocksLightInput.checked,emissive:materialEmissiveInput.checked,maxSlope:normalizeIntegerInput(materialSlopeInput,0,32,1),erosionResistance:normalizeIntegerInput(materialErosionInput,1,999,SAND_LIKE_FLOW.erosionResistance)})
-    :materialEditorMode===MATERIAL_KIND_GRANULAR
-    ?registerCustomGranularMaterial({name,color,density,blocksLight:materialBlocksLightInput.checked,emissive:materialEmissiveInput.checked,maxSlope:normalizeIntegerInput(materialSlopeInput,0,32,1),erosionResistance:normalizeIntegerInput(materialErosionInput,1,999,SAND_LIKE_FLOW.erosionResistance)})
-    :registerCustomFluidMaterial({name,color,density,blocksLight:materialBlocksLightInput.checked,emissive:materialEmissiveInput.checked});
-  if(!def){
-    setStatus('Custom material limit reached');
+  const result=applyMaterialCommand({
+    type:materialEditorTarget?'update':'add',
+    id:materialEditorTarget,
+    kind:materialEditorMode,
+    name,
+    color,
+    density,
+    blocksLight:materialBlocksLightInput.checked,
+    emissive:materialEmissiveInput.checked,
+    maxSlope:normalizeIntegerInput(materialSlopeInput,0,32,1),
+    erosionResistance:normalizeIntegerInput(materialErosionInput,1,999,SAND_LIKE_FLOW.erosionResistance)
+  });
+  if(!result.ok){
+    setStatus(result.reason==='limit'?'Custom material limit reached':'Could not save material');
     return;
   }
   materialEditorMode=null;
   materialEditorTarget=0;
   materialMenuOpen=false;
-  setSelected(def.key);
+  setSelected(result.def.key);
 }
 
 function deleteExistingMaterial(id){
   const def=materialDef(id);
-  if(!def.custom){
-    setStatus('Built-in materials are locked');
-    return;
-  }
-  const used=countMaterialUses(id);
-  if(used>0){
-    setStatus(`Erase ${used} cells or sources of ${def.name} before deleting`);
+  const result=applyMaterialCommand({type:'delete',id});
+  if(!result.ok){
+    if(result.reason==='in-use')setStatus(`Erase ${result.uses} cells or sources of ${def.name} before deleting`);
+    else setStatus('Built-in materials are locked');
     renderMaterialMenu();
     return;
   }
-  deleteCustomMaterial(id);
   if(selected===def.key)selected=materialKeyFromId(WATER);
   materialEditorMode=null;
   materialEditorTarget=0;

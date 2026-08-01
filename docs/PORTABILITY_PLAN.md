@@ -42,7 +42,9 @@ The current branch has started that boundary without changing gameplay:
 `src/02-sources.js` are DOM-free. `src/02-force.js` and
 `src/02-step-world.js` are DOM-free. `src/01-edit-commands.js` exposes command
 wrappers for point/line paint/source/tint/erase, fill/fillAir/clear, force, and
-dynamic body placement edits. `src/04-save-codec.js` exposes portable
+dynamic body placement edits. `src/01-runtime-config.js` exposes DOM-free
+material configuration and runtime setting commands. `src/04-save-codec.js`
+exposes portable
 `serializeWorldSnapshot()`/`restoreWorldSnapshot()` APIs; `src/04-save-load.js`
 is only the browser `localStorage` adapter.
 
@@ -61,7 +63,9 @@ is only the browser `localStorage` adapter.
    allocation and whole-grid clearing now live in `src/00-world-arrays.js`, and
    a compatibility world shell now lives in `src/00-world-state.js`. Dynamic
    body placement commits now route through `applyEditCommand({type:'placeBody'})`.
-   Continue by moving material editing or runtime settings behind portable APIs.
+   Material editing and source/light settings now route through
+   `src/01-runtime-config.js`. Continue by reducing direct global state writes
+   inside browser bootstrap and save/load adapters.
 6. Only after the command boundary exists, migrate to TypeScript or a bundler
    such as Vite.
 7. If more speed is needed later, the headless core can be ported to Rust/WASM

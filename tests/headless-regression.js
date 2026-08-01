@@ -14,6 +14,7 @@ const RUNTIME_FILES=[
   'src/02-source-render.js',
   'src/02-flow-and-water.js',
   'src/02-force.js',
+  'src/01-runtime-config.js',
   'src/01-edit-commands.js',
   'src/02-erosion.js',
   'src/02-step-world.js',
@@ -154,6 +155,37 @@ testAssert(FLOW_RULES[WATER].useBasinSettle===false,'default water should not us
 testAssert(FLOW_RULES[SAND].slideRequiresSlope===true,'sand slope slide guard changed');
 `;
   runIsolated('material registry regression',source);
+}
+
+function runtimeConfigRegression(){
+  const source=sharedPrelude()+read('src/00-materials.js')+read('src/00-world-arrays.js')+read('src/02-sources.js')+read('src/01-runtime-config.js')+`
+let cols=3,rows=3,count=cols*rows,sourceInterval=1,lightingEnabled=true,lightStrength=.18,sideLightStrength=1,shadowStrength=.16;
+let material,mass,vx,vy,bodyMask,flowDir,restAge,stableMask,tintR,tintG,tintB,tintA,bgTintR,bgTintG,bgTintB,bgTintA,sourceMat,lightMask;
+let moveHistory,moveFlip,horizontalDir,horizontalTurns,escapeDir,escapeTarget,carriedBy,carriedTTL,lastMoveTick;
+let waterSeen,waterSpaceMark,waterComponentMark,waterBasinMark,waterSleepBlockMark,waterTargetMark,waterWakeMark,waterQueue,rowCounts;
+installGridArrays(createGridArrays(count,rows));
+function idx(c,r){return r*cols+c}
+function testAssert(condition,message){if(!condition)throw new Error(message)}
+const fluid=applyMaterialCommand({type:'add',kind:MATERIAL_KIND_FLUID,name:'Oil',color:[1,2,3],density:5,blocksLight:true,emissive:true});
+testAssert(fluid.ok&&fluid.def.custom&&isFluidMaterial(fluid.def.id),'add fluid command failed');
+testAssert(fluid.def.color[0]===1&&fluid.def.density===5&&materialBlocksLight(fluid.def.id)&&materialEmissive(fluid.def.id),'add fluid command normalized fields incorrectly');
+material[idx(0,0)]=fluid.def.id;
+sourceMat[idx(1,0)]=fluid.def.id;
+const blockedDelete=applyMaterialCommand({type:'delete',id:fluid.def.id});
+testAssert(!blockedDelete.ok&&blockedDelete.reason==='in-use'&&blockedDelete.uses===2,'delete command should reject materials in use');
+material[idx(0,0)]=EMPTY;
+sourceMat[idx(1,0)]=EMPTY;
+const updated=applyMaterialCommand({type:'update',id:fluid.def.id,name:'Heavy Oil',color:[9,8,7],density:7,blocksLight:false,emissive:false});
+testAssert(updated.ok&&updated.def.name==='Heavy Oil'&&updated.def.density===7&&!materialBlocksLight(updated.def.id),'update material command failed');
+const deleted=applyMaterialCommand({type:'delete',id:updated.def.id});
+testAssert(deleted.ok&&!isKnownMaterial(updated.def.id),'delete material command failed');
+testAssert(!applyMaterialCommand({type:'add',kind:MATERIAL_KIND_FIXED,name:'Bad'}).ok,'add command should reject unsupported kinds');
+applyRuntimeSettingsCommand({type:'sourceInterval',value:99});
+testAssert(sourceInterval===60,'source interval command should clamp high values');
+applyRuntimeSettingsCommand({type:'lighting',enabled:false,lightStrength:2,sideLightStrength:3,shadowStrength:-1});
+testAssert(lightingEnabled===false&&lightStrength===1&&sideLightStrength===2&&shadowStrength===0,'lighting command should clamp settings');
+`;
+  runIsolated('runtime config regression',source);
 }
 
 function worldArrayRegression(){
@@ -490,6 +522,7 @@ testAssert(countWhere(bgTintA,v=>v)>0,'upsize lost background tint');
 syntaxRegression();
 runtimeBootstrapRegression();
 materialRegistryRegression();
+runtimeConfigRegression();
 worldArrayRegression();
 worldStateRegression();
 stepWorldRegression();
