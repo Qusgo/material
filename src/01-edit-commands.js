@@ -1,8 +1,7 @@
 'use strict';
 
-// Thin command boundary for future ports. The current browser UI still calls
-// the low-level drawing functions directly, but tests and non-DOM adapters can
-// start routing simple edits through this shape.
+// Thin command boundary for future ports. Browser input should translate user
+// gestures into these small commands before touching grid/body helpers.
 
 function commandRadius(command){
   return clampInt(command.radius,0,32,0);
@@ -43,6 +42,20 @@ function commandArrow(command){
   const out={x:arrow.x,y:arrow.y};
   if(!Number.isFinite(out.x)||!Number.isFinite(out.y))return null;
   return out;
+}
+
+function commandPoint(value){
+  if(!value)return null;
+  const point={x:value.x,y:value.y};
+  if(!Number.isFinite(point.x)||!Number.isFinite(point.y))return null;
+  return point;
+}
+
+function commandBodyPlacement(command){
+  if(command.kind!=='stoneCircle'&&command.kind!=='stoneRect')return null;
+  const start=commandPoint(command.start),current=commandPoint(command.current);
+  if(!start||!current)return null;
+  return{kind:command.kind,start,current};
 }
 
 function applyEditCommand(command){
@@ -114,6 +127,12 @@ function applyEditCommand(command){
     const circle=commandCircle(command),arrow=commandArrow(command);
     if(!circle||!arrow)return false;
     return applyForce(circle,arrow);
+  }
+  if(command.type==='placeBody'){
+    const placement=commandBodyPlacement(command);
+    if(!placement)return false;
+    const body=makeBodyFromPlacement(placement,true);
+    return !!(body&&addBody(body));
   }
   return false;
 }

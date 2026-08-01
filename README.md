@@ -37,7 +37,8 @@ between save and load.
   generation.
 - `src/02-source-render.js` - Canvas overlay for source cells.
 - `src/01-edit-commands.js` - Small command wrapper for non-DOM adapters:
-  point/line paint, source, tint, erase, fill-air, clear, and force.
+  point/line paint, source, tint, erase, fill-air, clear, force, and dynamic
+  body placement.
 - `src/02-flow-and-water.js` - Shared flow movement, water surface-jitter logic,
   legacy water basin settling, stable/wake logic, and grid update order.
 - `src/02-force.js` - DOM-free force application for flow cells and dynamic

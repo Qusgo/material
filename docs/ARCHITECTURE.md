@@ -70,9 +70,10 @@ remain in `src/03-runtime-render-input.js`. `src/03-render-buffer.js` converts
 the current arrays into an RGBA buffer without touching `canvas` or `document`.
 `src/01-edit-commands.js` is the command-style boundary for editor operations:
 point/line `paint`, `source`, `tint`, `erase`, plus `fill`, `fillAir`, `clear`,
-and `force`. The browser pointer handlers now route ordinary strokes through
-these commands. The material editor, dynamic stone placement, browser storage
-wrapper, and button synchronization are still browser/runtime responsibilities.
+`force`, and `placeBody`. The browser pointer handlers now route ordinary
+strokes and dynamic body placement commits through these commands. The material
+editor, dynamic body preview/update loop, browser storage wrapper, and button
+synchronization are still browser/runtime responsibilities.
 `src/02-force.js` owns DOM-free force application for flow cells and dynamic
 bodies.
 

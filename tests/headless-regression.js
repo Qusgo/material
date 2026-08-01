@@ -299,12 +299,12 @@ testAssert(material[idx(0,1)]===EMPTY,'source interval should throttle generatio
 
 function editCommandRegression(){
   const source=sharedPrelude()+read('src/00-materials.js')+read('src/00-world-arrays.js')+read('src/01-editing-and-bodies.js')+read('src/02-sources.js')+read('src/02-force.js')+read('src/01-edit-commands.js')+`
-let cols=4,rows=3,count=cols*rows,cellSize=5,viewW=20,viewH=15,editDirty=false,WAKE_RADIUS=2,MAX_FILL_CELLS=100,accumulator=0;
+let cols=12,rows=8,count=cols*rows,cellSize=5,viewW=60,viewH=40,editDirty=false,WAKE_RADIUS=2,MAX_FILL_CELLS=100,accumulator=0,BODY_LIMIT=64;
 let material,mass,vx,vy,bodyMask,flowDir,restAge,stableMask,tintR,tintG,tintB,tintA,bgTintR,bgTintG,bgTintB,bgTintA,sourceMat,lightMask;
 let moveHistory,moveFlip,horizontalDir,horizontalTurns,escapeDir,escapeTarget,carriedBy,carriedTTL,lastMoveTick;
 let waterSeen,waterSpaceMark,waterComponentMark,waterBasinMark,waterSleepBlockMark,waterTargetMark,waterWakeMark,waterQueue,rowCounts;
 let waterSpaceToken=1,waterComponentToken=1,waterBasinToken=1,waterTargetToken=1,waterWakeToken=1;
-let bodies=[],fillPreview=[],placing=null,forceState=null,airColor=[255,255,255];
+let bodies=[],nextBodyId=1,fillPreview=[],placing=null,forceState=null,airColor=[255,255,255];
 installGridArrays(createGridArrays(count,rows));
 function idx(c,r){return r*cols+c}
 function inBounds(c,r){return c>=0&&c<cols&&r>=0&&r<rows}
@@ -314,7 +314,6 @@ function wakeWaterComponentsAroundCell(){}
 function wakeFlowAroundCell(){}
 function wakeFlowNearBody(){}
 function nextWaterWakeToken(){return 1}
-function rebuildBodyMask(){bodyMask.fill(0)}
 function isBodyMaterial(){return false}
 function setStatus(){}
 function testAssert(condition,message){if(!condition)throw new Error(message)}
@@ -346,6 +345,12 @@ testAssert(applyEditCommand({type:'clear'}),'clear command should apply');
 testAssert(material.every(v=>v===EMPTY)&&sourceMat.every(v=>v===EMPTY),'clear command should empty material and source layers');
 testAssert(airColor[0]===255&&airColor[1]===255&&airColor[2]===255,'clear command should reset air color');
 testAssert(!applyEditCommand({type:'paint',x:NaN,y:1,radius:0,material:SAND}),'point commands should reject invalid coordinates');
+material[idx(6,5)]=WATER;
+testAssert(!applyEditCommand({type:'placeBody',kind:'bad',start:{x:20,y:20},current:{x:40,y:30}}),'placeBody command should reject invalid body kinds');
+testAssert(applyEditCommand({type:'placeBody',kind:'stoneRect',start:{x:20,y:20},current:{x:40,y:30}}),'placeBody command should apply');
+testAssert(bodies.length===1&&bodies[0].type==='rect','placeBody command should create one rectangle body');
+testAssert(material[idx(6,5)]===EMPTY,'placeBody command should clear material under the body');
+testAssert(bodyMask[idx(6,5)]===1,'placeBody command should rebuild the body mask');
 `;
   runIsolated('edit command regression',source);
 }
