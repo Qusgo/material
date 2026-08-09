@@ -46,7 +46,8 @@ dynamic body placement edits. `src/01-runtime-config.js` exposes DOM-free
 material configuration and runtime setting commands. `src/04-save-codec.js`
 exposes portable
 `serializeWorldSnapshot()`/`restoreWorldSnapshot()` APIs; `src/04-save-load.js`
-is only the browser `localStorage` adapter.
+is only the browser `localStorage` adapter, and `src/04-save-ui-adapter.js`
+contains the browser-only post-load UI sync hook.
 
 ## Migration Order
 
@@ -65,8 +66,9 @@ is only the browser `localStorage` adapter.
    `src/00-world-state.js`. Dynamic body placement commits now route through
    `applyEditCommand({type:'placeBody'})`.
    Material editing and source/light settings now route through
-   `src/01-runtime-config.js`. Continue by reducing direct global state writes
-   inside browser bootstrap and save/load adapters.
+   `src/01-runtime-config.js`. Save/load post-restore UI synchronization now
+   lives in `src/04-save-ui-adapter.js`. Continue by reducing direct global
+   state writes inside browser bootstrap.
 6. Only after the command boundary exists, migrate to TypeScript or a bundler
    such as Vite.
 7. If more speed is needed later, the headless core can be ported to Rust/WASM
@@ -92,6 +94,9 @@ is only the browser `localStorage` adapter.
   presentation isolated in `src/02-source-render.js`
 
 ## Web Adapter Candidates
+
+- `src/04-save-load.js` for localStorage messages and persistence.
+- `src/04-save-ui-adapter.js` for post-load browser control/render sync.
 
 - DOM handles in `src/00-core-state.js`
 - Toolbar state and material editor UI in `src/03-runtime-render-input.js`

@@ -368,7 +368,7 @@ document.getElementById('step').addEventListener('click',()=>{running=false;sync
 if(debugBasinsBtn)debugBasinsBtn.addEventListener('click',()=>{debugBasins=!debugBasins;syncButtons();setStatus(debugBasins?'Showing geometry basins':'Basin debug hidden');render()});
 if(fillAirColorBtn)fillAirColorBtn.addEventListener('click',()=>{applyEditCommand({type:'fillAir',color:getTintColor()});setStatus('Air color filled');render()});
 if(saveCanvasBtn)saveCanvasBtn.addEventListener('click',()=>{const result=saveCanvasSnapshot();setStatus(result.message);render()});
-if(loadCanvasBtn)loadCanvasBtn.addEventListener('click',()=>{const result=loadCanvasSnapshot();setStatus(result.message);syncButtons();render()});
+if(loadCanvasBtn)loadCanvasBtn.addEventListener('click',()=>{const result=loadCanvasSnapshot();setStatus(result.message);render()});
 document.getElementById('clear').addEventListener('click',()=>{running=false;applyEditCommand({type:'clear'});rebuildBodyMask();syncButtons();setStatus('Cleared');render()});
 if(brushSizeInput&&brushSizeNumberInput){
   brushSizeInput.addEventListener('input',()=>{syncIntegerPair(brushSizeInput,brushSizeNumberInput,0,10,4,brushSizeInput);render()});

@@ -64,7 +64,9 @@ stable/wake logic, and the optional legacy basin code.
 `src/02-erosion.js` owns lightweight carried-particle erosion.
 `src/04-save-codec.js` owns DOM-free snapshot serialization, restore, and
 editable-array resampling. `src/04-save-load.js` owns only the browser
-`localStorage` wrapper and user-facing messages.
+`localStorage` wrapper and user-facing messages. `src/04-save-ui-adapter.js`
+owns the browser-only post-load hook that stops runtime playback, synchronizes
+controls, refreshes previews, and renders after a snapshot has been restored.
 Keep new material data out of algorithm files unless the material needs a
 genuinely new algorithm.
 `src/03-lighting.js` owns DOM-free render preparation such as base material

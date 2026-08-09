@@ -20,6 +20,7 @@ const RUNTIME_FILES=[
   'src/02-step-world.js',
   'src/04-save-codec.js',
   'src/04-save-load.js',
+  'src/04-save-ui-adapter.js',
   'src/03-lighting.js',
   'src/03-render-buffer.js',
   'src/03-runtime-render-input.js'
@@ -541,6 +542,29 @@ testAssert(countWhere(bgTintA,v=>v)>0,'upsize lost background tint');
   runIsolated('save/load regression',source);
 }
 
+function saveLoadAdapterRegression(){
+  const source=read('src/04-save-load.js')+read('src/04-save-ui-adapter.js')+`
+let cols=7,rows=5,running=true,accumulator=12;
+const calls=[];
+const localStorage={
+  getItem(){return JSON.stringify({version:1})},
+  setItem(){}
+};
+function restoreWorldSnapshot(){return{ok:true,resampled:true,savedCols:2,savedRows:3}}
+function syncButtons(){calls.push('buttons')}
+function syncSourceRateControls(arg){if(arg!==null)throw new Error('source controls should sync from state');calls.push('source')}
+function syncLightingControls(arg){if(arg!==null)throw new Error('lighting controls should sync from state');calls.push('lighting')}
+function updateFillPreview(){calls.push('preview')}
+function render(){calls.push('render')}
+function testAssert(condition,message){if(!condition)throw new Error(message)}
+const result=loadCanvasSnapshot();
+testAssert(result.ok&&result.message==='Canvas loaded (2x3 -> 7x5)','loadCanvasSnapshot should return resampled message');
+testAssert(running===false&&accumulator===0,'save UI adapter should stop runtime clock');
+testAssert(calls.join(',')==='buttons,source,lighting,preview,render','save UI adapter sync order changed');
+`;
+  runIsolated('save/load adapter regression',source);
+}
+
 syntaxRegression();
 runtimeBootstrapRegression();
 materialRegistryRegression();
@@ -554,3 +578,4 @@ sourceRegression();
 editCommandRegression();
 movementTintRegression();
 saveLoadRegression();
+saveLoadAdapterRegression();

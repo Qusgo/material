@@ -33,12 +33,6 @@ function loadCanvasSnapshot(){
   }
   const result=restoreWorldSnapshot(saved);
   if(!result.ok)return{ok:false,message:loadSnapshotMessage(result)};
-  running=false;
-  accumulator=0;
-  if(typeof syncButtons==='function')syncButtons();
-  if(typeof syncSourceRateControls==='function')syncSourceRateControls(null);
-  if(typeof syncLightingControls==='function')syncLightingControls(null);
-  if(typeof updateFillPreview==='function')updateFillPreview();
-  if(typeof render==='function')render();
+  if(typeof syncCanvasAfterSnapshotLoad==='function')syncCanvasAfterSnapshotLoad(result);
   return{ok:true,message:result.resampled?`Canvas loaded (${result.savedCols}x${result.savedRows} -> ${cols}x${rows})`:'Canvas loaded'};
 }

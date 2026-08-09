@@ -53,6 +53,8 @@ between save and load.
 - `src/04-save-codec.js` - DOM-free snapshot serialization, restore, and
   editable-array resampling.
 - `src/04-save-load.js` - One-slot `localStorage` save/load wrapper.
+- `src/04-save-ui-adapter.js` - Browser-only UI synchronization after loading
+  a snapshot.
 - `src/03-lighting.js` - DOM-free base color and light-mask helpers.
 - `src/03-render-buffer.js` - DOM-free RGBA buffer construction from material
   color, tint, and lighting state.
