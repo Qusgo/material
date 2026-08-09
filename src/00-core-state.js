@@ -1,11 +1,9 @@
 ﻿'use strict';
 
-// DOM handles, constants, mutable simulation state, resize, and top-level UI state helpers.
+// Runtime constants, mutable simulation state, resize, and top-level UI state helpers.
 
 // These files are loaded as ordered classic scripts, not ES modules. Top-level
 // bindings are intentionally shared by later files in the same page.
-const canvas=document.getElementById('canvas'),ctx=canvas.getContext('2d',{alpha:false});
-const statusEl=document.getElementById('status'),playBtn=document.getElementById('play'),debugBasinsBtn=document.getElementById('debug-basins'),brushSizeInput=document.getElementById('brush-size');
 const BODY_LIMIT=64,GRAVITY=.24,MAX_BODY_SPEED=7,MAX_ANGULAR_SPEED=.18,CELL_MAX_COLS=220,CELL_MAX_ROWS=360,MAX_FILL_CELLS=28000,WATER_SETTLE_INTERVAL=1;
 const SIM_STEP_MS=14;
 const WATER_RESIDUE_MAX_FRACTION=.025,WATER_RESIDUE_MAX_CELLS=96;

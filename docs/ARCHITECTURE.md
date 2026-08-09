@@ -73,6 +73,9 @@ genuinely new algorithm.
 color, light masks, and simple light/shadow blending. Canvas drawing and UI
 remain in `src/03-runtime-render-input.js`. `src/03-render-buffer.js` converts
 the current arrays into an RGBA buffer without touching `canvas` or `document`.
+`src/00-app-dom-refs.js` owns early browser app-shell DOM handles needed before
+core runtime state loads, such as the canvas, status label, play/debug buttons,
+and brush-size input.
 `src/03-dom-refs.js` owns browser DOM handles shared by material and controls
 adapters.
 `src/03-material-ui-adapter.js` owns browser material menu/editor field

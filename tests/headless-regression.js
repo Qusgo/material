@@ -8,6 +8,7 @@ const RUNTIME_FILES=[
   'src/00-materials.js',
   'src/00-world-arrays.js',
   'src/00-world-state.js',
+  'src/00-app-dom-refs.js',
   'src/00-core-state.js',
   'src/01-editing-and-bodies.js',
   'src/02-sources.js',
@@ -89,11 +90,32 @@ const document={
   querySelectorAll(){return[]}
 };
 const window={devicePixelRatio:1};
-`+read('src/00-core-state.js')+`
+`+read('src/00-app-dom-refs.js')+read('src/00-core-state.js')+`
 if(cols!==1||rows!==1||count!==1)throw new Error('core-state bootstrap dimensions changed');
 if(!currentWorldState()||currentWorldState().arrays.material!==material)throw new Error('core-state did not install active world');
 `;
   runIsolated('runtime bootstrap regression',source);
+}
+
+function appDomRefsRegression(){
+  const source=`
+const requested=[];
+const fakeContext={};
+const fakeCanvas={id:'canvas',getContext(type,options){return{type,options}}};
+const document={
+  getElementById(id){
+    requested.push(id);
+    return id==='canvas'?fakeCanvas:{id};
+  }
+};
+function testAssert(condition,message){if(!condition)throw new Error(message)}
+`+read('src/00-app-dom-refs.js')+`
+testAssert(canvas.id==='canvas'&&ctx.type==='2d'&&ctx.options.alpha===false,'canvas ref changed');
+testAssert(statusEl.id==='status'&&playBtn.id==='play','app shell refs changed');
+testAssert(debugBasinsBtn.id==='debug-basins'&&brushSizeInput.id==='brush-size','early control refs changed');
+testAssert(requested.join(',')==='canvas,status,play,debug-basins,brush-size','app DOM ref order changed');
+`;
+  runIsolated('app DOM refs regression',source);
 }
 
 function lightingRegression(){
@@ -697,6 +719,7 @@ testAssert(hexToRgb('bad').join(',')==='36,168,198','hexToRgb should fallback fo
 }
 
 syntaxRegression();
+appDomRefsRegression();
 runtimeBootstrapRegression();
 materialRegistryRegression();
 runtimeConfigRegression();

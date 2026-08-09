@@ -30,8 +30,10 @@ between save and load.
 - `src/00-world-state.js` - DOM-free world shell that groups dimensions, grid
   arrays, water scratch tokens, and resize resampling while still installing
   compatible globals.
-- `src/00-core-state.js` - DOM handles, runtime constants, canvas resize input,
-  status text, and basic coordinate helpers.
+- `src/00-app-dom-refs.js` - Browser-only app shell DOM handles needed by early
+  runtime state.
+- `src/00-core-state.js` - Runtime constants, canvas resize input, status text,
+  and basic coordinate helpers.
 - `src/01-editing-and-bodies.js` - Brush, erase, fill, grid mutation helpers,
   and rigid body construction/collision helpers.
 - `src/02-sources.js` - DOM-free infinite source layer editing and material
