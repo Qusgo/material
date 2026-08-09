@@ -96,7 +96,8 @@ contains the browser-only post-load UI sync hook.
 - `src/02-body-runtime.js` for dynamic-body physics and grid displacement
 - `src/02-step-world.js` for physics tick order
 - `src/02-erosion.js`
-- The non-DOM parts of `src/01-editing-and-bodies.js`
+- `src/01-grid-editing.js` for DOM-free grid edit helpers
+- `src/01-body-geometry.js` for dynamic-body construction and body masks
 - `src/04-save-codec.js` for portable snapshot serialize/restore and
   editable-array resampling
 - `src/03-lighting.js` for light masks, base colors, and simple light/shadow
@@ -112,7 +113,7 @@ contains the browser-only post-load UI sync hook.
 
 - Early app-shell DOM handles in `src/00-app-dom-refs.js`
 - Shared browser UI handles in `src/03-dom-refs.js`
-- Status, resize, coordinate, selection, and button sync helpers in
+- Status, resize, coordinate, brush/eraser radius, selection, and button sync helpers in
   `src/03-app-ui-state-adapter.js`
 - Material menu/editor field sync in `src/03-material-ui-adapter.js`
 - Source-rate and lighting form sync in `src/03-settings-sync-adapter.js`

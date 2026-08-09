@@ -10,7 +10,8 @@ const RUNTIME_FILES=[
   'src/00-world-state.js',
   'src/00-app-dom-refs.js',
   'src/00-core-state.js',
-  'src/01-editing-and-bodies.js',
+  'src/01-grid-editing.js',
+  'src/01-body-geometry.js',
   'src/02-sources.js',
   'src/02-source-render.js',
   'src/02-flow-and-water.js',
@@ -464,7 +465,7 @@ testAssert(material[idx(0,1)]===EMPTY,'source interval should throttle generatio
 }
 
 function editCommandRegression(){
-  const source=sharedPrelude()+read('src/00-materials.js')+read('src/00-world-arrays.js')+read('src/01-editing-and-bodies.js')+read('src/02-sources.js')+read('src/02-force.js')+read('src/01-edit-commands.js')+`
+  const source=sharedPrelude()+read('src/00-materials.js')+read('src/00-world-arrays.js')+read('src/01-grid-editing.js')+read('src/01-body-geometry.js')+read('src/02-sources.js')+read('src/02-force.js')+read('src/01-edit-commands.js')+`
 let cols=12,rows=8,count=cols*rows,cellSize=5,viewW=60,viewH=40,editDirty=false,WAKE_RADIUS=2,MAX_FILL_CELLS=100,accumulator=0,BODY_LIMIT=64;
 let material,mass,vx,vy,bodyMask,flowDir,restAge,stableMask,tintR,tintG,tintB,tintA,bgTintR,bgTintG,bgTintB,bgTintA,sourceMat,lightMask;
 let moveHistory,moveFlip,horizontalDir,horizontalTurns,escapeDir,escapeTarget,carriedBy,carriedTTL,lastMoveTick;
@@ -519,6 +520,35 @@ testAssert(material[idx(6,5)]===EMPTY,'placeBody command should clear material u
 testAssert(bodyMask[idx(6,5)]===1,'placeBody command should rebuild the body mask');
 `;
   runIsolated('edit command regression',source);
+}
+
+function bodyGeometryRegression(){
+  const source=sharedPrelude()+`
+let cols=20,rows=20,count=cols*rows,cellSize=5,viewW=100,viewH=100,BODY_LIMIT=64,editDirty=false,WAKE_RADIUS=2;
+let bodies=[],nextBodyId=1;
+let bodyMask=new Uint8Array(count),material=new Uint8Array(count),mass=new Float32Array(count),vx=new Float32Array(count),vy=new Float32Array(count),flowDir=new Int8Array(count),sourceMat=new Uint8Array(count),tintR=new Uint8Array(count),tintG=new Uint8Array(count),tintB=new Uint8Array(count),tintA=new Uint8Array(count),bgTintR=new Uint8Array(count),bgTintG=new Uint8Array(count),bgTintB=new Uint8Array(count),bgTintA=new Uint8Array(count);
+let moveHistory=new Int16Array(count),moveFlip=new Uint8Array(count),horizontalDir=new Int8Array(count),horizontalTurns=new Uint8Array(count),escapeDir=new Int8Array(count),escapeTarget=new Int16Array(count),carriedBy=new Uint8Array(count),carriedTTL=new Uint16Array(count),lastMoveTick=new Uint32Array(count),restAge=new Uint16Array(count),stableMask=new Uint8Array(count);
+function idx(c,r){return r*cols+c}
+function inBounds(c,r){return c>=0&&c<cols&&r>=0&&r<rows}
+function cellCenter(c,r){return{x:(c+.5)*cellSize,y:(r+.5)*cellSize}}
+function nextWaterWakeToken(){return 1}
+function wakeWaterComponentsAroundCell(){}
+function wakeFlowAroundCell(){}
+function setStatus(){}
+function testAssert(condition,message){if(!condition)throw new Error(message)}
+`+read('src/00-materials.js')+read('src/01-grid-editing.js')+read('src/01-body-geometry.js')+`
+const rect=makeBodyFromPlacement({kind:'stoneRect',start:{x:25,y:25},current:{x:45,y:45}},true);
+const circle=makeBodyFromPlacement({kind:'stoneCircle',start:{x:52,y:35},current:{x:60,y:35}},true);
+testAssert(rect.type==='rect'&&circle.type==='circle','body construction changed');
+testAssert(bodyContainsPoint(rect,35,35)&&!bodyContainsPoint(rect,5,5),'bodyContainsPoint changed');
+testAssert(bodyIntersectsCircle(rect,circle.x,circle.y,circle.radius),'rect/circle intersection should use circle radius');
+testAssert(bodiesOverlap(rect,circle),'bodiesOverlap should detect rect/circle overlap');
+testAssert(addBody(rect),'addBody should accept first body');
+testAssert(!canPlaceBody(circle),'overlapping body should not be placeable');
+rebuildBodyMask();
+testAssert(bodyMask[idx(7,7)]===1,'rebuildBodyMask should rasterize body cells');
+`;
+  runIsolated('body geometry regression',source);
 }
 
 function movementTintRegression(){
@@ -913,6 +943,7 @@ lightingRegression();
 renderColorRegression();
 sourceRegression();
 editCommandRegression();
+bodyGeometryRegression();
 movementTintRegression();
 saveLoadRegression();
 saveLoadAdapterRegression();

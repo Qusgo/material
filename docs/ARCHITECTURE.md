@@ -84,8 +84,8 @@ and brush-size input.
 `src/03-dom-refs.js` owns browser DOM handles shared by material and controls
 adapters.
 `src/03-app-ui-state-adapter.js` owns browser-only status display, canvas
-resize, canvas coordinate conversion, tool/material selection helpers, and
-button active-state synchronization.
+resize, canvas coordinate conversion, brush/eraser radius reads, tool/material
+selection helpers, and button active-state synchronization.
 `src/03-material-ui-adapter.js` owns browser material menu/editor field
 synchronization and delegates material mutation to `src/01-runtime-config.js`.
 `src/03-settings-sync-adapter.js` owns browser form value synchronization for
@@ -96,6 +96,10 @@ wire DOM events to existing commands/helpers without adding simulation rules.
 `src/03-canvas-input-adapter.js` owns canvas pointer gestures and routes them to
 edit/force commands. `src/03-app-bootstrap.js` owns browser resize binding and
 the `requestAnimationFrame` loop.
+`src/01-grid-editing.js` owns DOM-free grid edits, tint edits, erasing, fill
+selection, and edit-state reset. `src/01-body-geometry.js` owns dynamic-body
+construction, shape intersection tests, placement checks, grid clearing under a
+placed body, and body-mask rasterization.
 `src/01-edit-commands.js` is the command-style boundary for editor operations:
 point/line `paint`, `source`, `tint`, `erase`, plus `fill`, `fillAir`, `clear`,
 `force`, and `placeBody`. The browser pointer handlers now route ordinary

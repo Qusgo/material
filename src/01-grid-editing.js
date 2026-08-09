@@ -1,6 +1,6 @@
-﻿'use strict';
+'use strict';
 
-// Drawing, erasing, fill selection, and rigid-body construction/collision helpers.
+// Grid editing, tinting, erasing, fill selection, and edit-state reset helpers.
 
 function writeCell(c,r,mat,wakeToken=0){
   if(!inBounds(c,r))return;
@@ -104,8 +104,6 @@ function setAllAirColor(color){
   bgTintB.fill(0);
   bgTintA.fill(0);
 }
-function getBrushRadius(){return clampInt(brushSizeInput.value,0,10,4)}
-function getEraserRadius(){return typeof eraserSizeInput==='undefined'||!eraserSizeInput?getBrushRadius():clampInt(eraserSizeInput.value,0,10,3)}
 function setTintCell(c,r,color){
   if(!inBounds(c,r))return;
   const i=idx(c,r);
@@ -184,14 +182,3 @@ function applyFill(){
   fillPreview=[];
   finishEditAsNewInitialState();
 }
-function makeBodyFromPlacement(p,commit=false){if(!p)return null;const id=commit?nextBodyId++:nextBodyId;if(p.kind==='stoneCircle'){const radius=Math.max(8,Math.hypot(p.current.x-p.start.x,p.current.y-p.start.y)),m=Math.max(1,Math.PI*radius*radius*.012),inertia=.5*m*radius*radius;return{id,type:'circle',x:p.start.x,y:p.start.y,vx:0,vy:0,angle:0,av:0,radius,hw:radius,hh:radius,mass:m,invMass:1/m,inertia,invInertia:1/inertia}}const hw=Math.max(8,Math.abs(p.current.x-p.start.x)/2),hh=Math.max(8,Math.abs(p.current.y-p.start.y)/2),x=(p.current.x+p.start.x)/2,y=(p.current.y+p.start.y)/2,m=Math.max(1,hw*2*hh*2*.012),inertia=m*((hw*2)**2+(hh*2)**2)/12;return{id,type:'rect',x,y,vx:0,vy:0,angle:0,av:0,radius:Math.hypot(hw,hh),hw,hh,mass:m,invMass:1/m,inertia,invInertia:1/inertia}}
-function bodyContainsPoint(b,x,y){if(b.type==='circle')return Math.hypot(x-b.x,y-b.y)<=b.radius;const ca=Math.cos(-b.angle),sa=Math.sin(-b.angle),dx=x-b.x,dy=y-b.y,lx=dx*ca-dy*sa,ly=dx*sa+dy*ca;return Math.abs(lx)<=b.hw&&Math.abs(ly)<=b.hh}
-function bodyIntersectsCircle(b,x,y,r){if(b.type==='circle')return Math.hypot(x-b.x,y-b.y)<=b.radius+r;const ca=Math.cos(-b.angle),sa=Math.sin(-b.angle),dx=x-b.x,dy=y-b.y,lx=dx*ca-dy*sa,ly=dx*sa+dy*ca,cx=clamp(lx,-b.hw,b.hw),cy=clamp(ly,-b.hh,b.hh);return(lx-cx)**2+(ly-cy)**2<=r*r}
-function rectCorners(b){const ca=Math.cos(b.angle),sa=Math.sin(b.angle),pts=[];for(const sx of[-1,1])for(const sy of[-1,1]){const x=sx*b.hw,y=sy*b.hh;pts.push({x:b.x+x*ca-y*sa,y:b.y+x*sa+y*ca})}return pts}
-function project(pts,ax,ay){let min=Infinity,max=-Infinity;for(const p of pts){const v=p.x*ax+p.y*ay;min=Math.min(min,v);max=Math.max(max,v)}return{min,max}}
-function rectRectOverlap(a,b){const ap=rectCorners(a),bp=rectCorners(b),axes=[];for(const body of[a,b]){const ca=Math.cos(body.angle),sa=Math.sin(body.angle);axes.push({x:ca,y:sa},{x:-sa,y:ca})}for(const axis of axes){const pa=project(ap,axis.x,axis.y),pb=project(bp,axis.x,axis.y);if(pa.max<pb.min||pb.max<pa.min)return false}return true}
-function bodiesOverlap(a,b){const broad=a.radius+b.radius,dx=b.x-a.x,dy=b.y-a.y;if(dx*dx+dy*dy>broad*broad)return false;if(a.type==='circle'&&b.type==='circle')return Math.hypot(dx,dy)<broad;if(a.type==='circle'&&b.type==='rect')return bodyIntersectsCircle(b,a.x,a.y,a.radius);if(a.type==='rect'&&b.type==='circle')return bodyIntersectsCircle(a,b.x,b.y,b.radius);return rectRectOverlap(a,b)}
-function canPlaceBody(body){if(bodies.length>=BODY_LIMIT)return false;if(body.x-body.radius<0||body.x+body.radius>viewW||body.y-body.radius<0||body.y+body.radius>viewH)return false;return!bodies.some(o=>bodiesOverlap(body,o))}
-function clearGridUnderBody(body){const minC=clamp(Math.floor((body.x-body.radius)/cellSize),0,cols-1),maxC=clamp(Math.floor((body.x+body.radius)/cellSize),0,cols-1),minR=clamp(Math.floor((body.y-body.radius)/cellSize),0,rows-1),maxR=clamp(Math.floor((body.y+body.radius)/cellSize),0,rows-1),wakeToken=nextWaterWakeToken();for(let r=minR;r<=maxR;r++)for(let c=minC;c<=maxC;c++){const p=cellCenter(c,r);if(bodyContainsPoint(body,p.x,p.y))clearCell(c,r,wakeToken)}}
-function addBody(body){if(!canPlaceBody(body)){setStatus('Dynamic stones cannot overlap or start outside the canvas');return false}clearGridUnderBody(body);bodies.push(body);editDirty=true;rebuildBodyMask();return true}
-function rebuildBodyMask(){bodyMask.fill(0);for(const b of bodies){const minC=clamp(Math.floor((b.x-b.radius)/cellSize),0,cols-1),maxC=clamp(Math.floor((b.x+b.radius)/cellSize),0,cols-1),minR=clamp(Math.floor((b.y-b.radius)/cellSize),0,rows-1),maxR=clamp(Math.floor((b.y+b.radius)/cellSize),0,rows-1);for(let r=minR;r<=maxR;r++)for(let c=minC;c<=maxC;c++){const p=cellCenter(c,r);if(bodyContainsPoint(b,p.x,p.y))bodyMask[idx(c,r)]=1}}}

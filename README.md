@@ -34,8 +34,10 @@ between save and load.
   runtime state.
 - `src/00-core-state.js` - Runtime constants, mutable simulation state, and
   basic coordinate helpers.
-- `src/01-editing-and-bodies.js` - Brush, erase, fill, grid mutation helpers,
-  and rigid body construction/collision helpers.
+- `src/01-grid-editing.js` - Brush, erase, fill, tint, grid mutation, and
+  edit-state reset helpers.
+- `src/01-body-geometry.js` - Dynamic-body construction, shape tests, placement,
+  and body-mask rasterization.
 - `src/02-sources.js` - DOM-free infinite source layer editing and material
   generation.
 - `src/02-source-render.js` - Canvas overlay for source cells.
@@ -65,8 +67,8 @@ between save and load.
 - `src/03-canvas-render-adapter.js` - Browser-only canvas drawing and transient
   overlays.
 - `src/03-dom-refs.js` - Browser-only DOM handles shared by UI adapters.
-- `src/03-app-ui-state-adapter.js` - Browser-only status, resize, tool
-  selection, button sync, and canvas coordinate helpers.
+- `src/03-app-ui-state-adapter.js` - Browser-only status, resize, brush/eraser
+  radius, tool selection, button sync, and canvas coordinate helpers.
 - `src/03-material-ui-adapter.js` - Browser-only material menu/editor field
   synchronization.
 - `src/03-settings-sync-adapter.js` - Browser-only source-rate and lighting
