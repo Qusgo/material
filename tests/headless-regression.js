@@ -23,6 +23,7 @@ const RUNTIME_FILES=[
   'src/04-save-ui-adapter.js',
   'src/03-lighting.js',
   'src/03-render-buffer.js',
+  'src/03-dom-refs.js',
   'src/03-runtime-render-input.js',
   'src/03-material-ui-adapter.js',
   'src/03-controls-adapter.js'
@@ -567,6 +568,22 @@ testAssert(calls.join(',')==='buttons,source,lighting,preview,render','save UI a
   runIsolated('save/load adapter regression',source);
 }
 
+function domRefsRegression(){
+  const source=`
+const requested=[];
+const document={getElementById(id){requested.push(id);return{id}}};
+function testAssert(condition,message){if(!condition)throw new Error(message)}
+`+read('src/03-dom-refs.js')+`
+testAssert(materialButton.id==='material-button','material button ref changed');
+testAssert(brushSizeNumberInput.id==='brush-size-number','brush size number ref changed');
+testAssert(sourceRateInput.id==='source-rate'&&sourceRateNumberInput.id==='source-rate-number','source rate refs changed');
+testAssert(lightingEnabledInput.id==='lighting-enabled'&&shadowStrengthNumberInput.id==='shadow-strength-number','lighting refs changed');
+testAssert(saveCanvasBtn.id==='save-canvas'&&loadCanvasBtn.id==='load-canvas','save/load refs changed');
+testAssert(requested.length===36,'DOM ref count changed');
+`;
+  runIsolated('DOM refs regression',source);
+}
+
 function controlsAdapterRegression(){
   const source=`
 const calls=[];
@@ -650,7 +667,7 @@ function fakeElement(id){
   };
 }
 const document={createElement(tag){return fakeElement(tag)}};
-let selected='water',materialMenuOpen=false,materialEditorMode=null,materialEditorTarget=0;
+let selected='water',materialMenuOpen=false,materialEditorMode=null;
 let materialButton=fakeElement('material-button'),materialMenu=fakeElement('material-menu'),materialListEl=fakeElement('material-list'),materialSwatchEl=fakeElement('swatch'),materialLabelEl=fakeElement('label'),materialEditor=fakeElement('editor');
 let materialNameInput=fakeElement('name'),materialColorInput=fakeElement('color'),materialDensityInput=fakeElement('density'),materialBlocksLightInput=fakeElement('blocks'),materialEmissiveInput=fakeElement('emissive'),materialSlopeInput=fakeElement('slope'),materialSlopeRow=fakeElement('slope-row'),materialErosionInput=fakeElement('erosion'),materialErosionRow=fakeElement('erosion-row');
 let addFluidBtn=fakeElement('add-fluid'),addGranularBtn=fakeElement('add-granular'),deleteMaterialBtn=fakeElement('delete');
@@ -693,5 +710,6 @@ editCommandRegression();
 movementTintRegression();
 saveLoadRegression();
 saveLoadAdapterRegression();
+domRefsRegression();
 materialUiAdapterRegression();
 controlsAdapterRegression();

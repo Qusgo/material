@@ -73,6 +73,8 @@ genuinely new algorithm.
 color, light masks, and simple light/shadow blending. Canvas drawing and UI
 remain in `src/03-runtime-render-input.js`. `src/03-render-buffer.js` converts
 the current arrays into an RGBA buffer without touching `canvas` or `document`.
+`src/03-dom-refs.js` owns browser DOM handles shared by material and controls
+adapters.
 `src/03-material-ui-adapter.js` owns browser material menu/editor field
 synchronization and delegates material mutation to `src/01-runtime-config.js`.
 `src/03-controls-adapter.js` owns browser toolbar/settings bindings; it should
@@ -461,7 +463,8 @@ reintroduce jitter, non-conservation, and wall leakage.
 - Dynamic stones are approximate rigid bodies and interact with the grid through
   rasterized masks.
 - The code uses classic scripts to avoid build tooling. Respect the load order.
+  `src/03-dom-refs.js` must load before runtime/material/control adapters.
   `src/03-material-ui-adapter.js` must load after
   `src/03-runtime-render-input.js`, and `src/03-controls-adapter.js` must load
   after both because it binds controls to functions and DOM handles created
-  there.
+  earlier.

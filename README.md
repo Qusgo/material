@@ -58,6 +58,7 @@ between save and load.
 - `src/03-lighting.js` - DOM-free base color and light-mask helpers.
 - `src/03-render-buffer.js` - DOM-free RGBA buffer construction from material
   color, tint, and lighting state.
+- `src/03-dom-refs.js` - Browser-only DOM handles shared by UI adapters.
 - `src/03-runtime-render-input.js` - Dynamic body updates, render
   pipeline, basin debug overlay, canvas pointer input, and animation loop.
 - `src/03-material-ui-adapter.js` - Browser-only material menu/editor field
