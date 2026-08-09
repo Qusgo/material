@@ -3,6 +3,8 @@
 // Browser-only app UI state helpers for status, resize, tool selection, and
 // canvas coordinate conversion.
 
+let statusText='Brush: paint material directly';
+
 function countVisibleMaterials(){
   const counts={flow:0,stone:0,sources:0,waterMass:0,byId:{}};
   for(let i=0;i<count;i++){
@@ -21,6 +23,7 @@ function updateStatus(){
   const c=countVisibleMaterials();
   statusEl.textContent=`${statusText} | Flow ${c.flow} Stone ${c.stone} Source ${c.sources}`;
 }
+function setStatus(t){statusText=t;updateStatus()}
 function resize(){
   // Resizing changes the cell size and reallocates all hot arrays. Existing
   // material is resampled by canvas position rather than copied by raw index.

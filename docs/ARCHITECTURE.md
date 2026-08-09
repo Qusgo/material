@@ -75,15 +75,15 @@ free of browser events and drawing.
 `src/03-lighting.js` owns DOM-free render preparation such as base material
 color, light masks, and simple light/shadow blending. `src/03-render-buffer.js`
 converts the current arrays into an RGBA buffer without touching `canvas` or
-`document`. `src/03-canvas-render-adapter.js` owns browser canvas drawing and
-transient overlays such as basin debug, fill preview, force preview, eraser
-preview, and body drawing.
+`document`. `src/03-canvas-render-adapter.js` owns the browser-only offscreen
+grid canvas/ImageData, visible canvas drawing, and transient overlays such as
+basin debug, fill preview, force preview, eraser preview, and body drawing.
 `src/00-app-dom-refs.js` owns early browser app-shell DOM handles needed before
 core runtime state loads, such as the canvas, status label, play/debug buttons,
 and brush-size input.
 `src/03-dom-refs.js` owns browser DOM handles shared by material and controls
 adapters.
-`src/03-app-ui-state-adapter.js` owns browser-only status display, canvas
+`src/03-app-ui-state-adapter.js` owns browser-only status text/display, canvas
 resize, canvas coordinate conversion, brush/eraser radius reads, tool/material
 selection helpers, and button active-state synchronization.
 `src/03-material-ui-adapter.js` owns browser material menu/editor field

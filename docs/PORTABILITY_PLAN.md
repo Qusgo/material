@@ -114,14 +114,15 @@ contains the browser-only post-load UI sync hook.
 
 - Early app-shell DOM handles in `src/00-app-dom-refs.js`
 - Shared browser UI handles in `src/03-dom-refs.js`
-- Status, resize, coordinate, brush/eraser radius, selection, and button sync helpers in
+- Status text/display, resize, coordinate, brush/eraser radius, selection, and button sync helpers in
   `src/03-app-ui-state-adapter.js`
 - Material menu/editor field sync in `src/03-material-ui-adapter.js`
 - Source-rate and lighting form sync in `src/03-settings-sync-adapter.js`
 - Toolbar/settings event binding in `src/03-controls-adapter.js`
 - Canvas pointer event binding in `src/03-canvas-input-adapter.js`
 - Resize and animation-loop startup in `src/03-app-bootstrap.js`
-- Canvas drawing and overlays in `src/03-canvas-render-adapter.js`
+- Offscreen grid canvas, visible canvas drawing, and overlays in
+  `src/03-canvas-render-adapter.js`
 - Source overlay drawing in `src/03-source-render-adapter.js`
 - `localStorage` calls in `src/04-save-load.js`
 - CSS and HTML entry points

@@ -67,13 +67,14 @@ between save and load.
 - `src/03-lighting.js` - DOM-free base color and light-mask helpers.
 - `src/03-render-buffer.js` - DOM-free RGBA buffer construction from material
   color, tint, and lighting state.
-- `src/03-canvas-render-adapter.js` - Browser-only canvas drawing and transient
-  overlays.
+- `src/03-canvas-render-adapter.js` - Browser-only offscreen grid canvas,
+  visible canvas drawing, and transient overlays.
 - `src/03-source-render-adapter.js` - Browser-only canvas overlay for source
   cells.
 - `src/03-dom-refs.js` - Browser-only DOM handles shared by UI adapters.
-- `src/03-app-ui-state-adapter.js` - Browser-only status, resize, brush/eraser
-  radius, tool selection, button sync, and canvas coordinate helpers.
+- `src/03-app-ui-state-adapter.js` - Browser-only status text/display, resize,
+  brush/eraser radius, tool selection, button sync, and canvas coordinate
+  helpers.
 - `src/03-material-ui-adapter.js` - Browser-only material menu/editor field
   synchronization.
 - `src/03-settings-sync-adapter.js` - Browser-only source-rate and lighting

@@ -2,6 +2,8 @@
 
 // Browser-only canvas render pipeline and transient drawing overlays.
 
+let gridCanvas=document.createElement('canvas'),gridCtx=gridCanvas.getContext('2d'),imageData=null;
+
 // Rendering is separated from simulation state: the grid draws to a tiny
 // offscreen canvas first, then scales up with image smoothing disabled.
 function renderGrid(){
