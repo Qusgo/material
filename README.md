@@ -28,8 +28,9 @@ between save and load.
 - `src/00-world-arrays.js` - DOM-free typed-array allocation and clearing
   helpers for the simulation grid.
 - `src/00-world-state.js` - DOM-free world shell that groups dimensions, grid
-  arrays, and water scratch tokens while still installing compatible globals.
-- `src/00-core-state.js` - DOM handles, runtime constants, global state arrays, resize,
+  arrays, water scratch tokens, and resize resampling while still installing
+  compatible globals.
+- `src/00-core-state.js` - DOM handles, runtime constants, canvas resize input,
   status text, and basic coordinate helpers.
 - `src/01-editing-and-bodies.js` - Brush, erase, fill, grid mutation helpers,
   and rigid body construction/collision helpers.
@@ -84,8 +85,9 @@ all-at-once TypeScript or engine rewrite.
 The code is still loaded as classic scripts and still shares global typed
 arrays. `src/00-world-state.js` is a compatibility shell, not a full portable
 engine yet: it creates a world object, installs its arrays into the existing
-global names, and lets `stepWorld(world)` preserve the current physics update
-order without changing gameplay in the same step.
+global names, handles DOM-free grid resize resampling, and lets
+`stepWorld(world)` preserve the current physics update order without changing
+gameplay in the same step.
 
 When changing water behavior, read `docs/ARCHITECTURE.md` first. Most previous
 bugs came from local water rules fighting the component-level water stabilizer.

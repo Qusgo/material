@@ -61,8 +61,9 @@ is only the browser `localStorage` adapter.
    helpers and RGBA buffer construction.
 5. Move grid allocation and command application next. Grid typed-array
    allocation and whole-grid clearing now live in `src/00-world-arrays.js`, and
-   a compatibility world shell now lives in `src/00-world-state.js`. Dynamic
-   body placement commits now route through `applyEditCommand({type:'placeBody'})`.
+   a compatibility world shell plus resize resampling now live in
+   `src/00-world-state.js`. Dynamic body placement commits now route through
+   `applyEditCommand({type:'placeBody'})`.
    Material editing and source/light settings now route through
    `src/01-runtime-config.js`. Continue by reducing direct global state writes
    inside browser bootstrap and save/load adapters.
@@ -75,7 +76,8 @@ is only the browser `localStorage` adapter.
 
 - `src/00-materials.js`
 - `src/00-world-arrays.js` for typed-array allocation and whole-grid clearing
-- `src/00-world-state.js` for the compatibility world shell
+- `src/00-world-state.js` for the compatibility world shell and resize
+  resampling
 - `src/02-flow-and-water.js`
 - `src/02-force.js` for force application
 - `src/02-step-world.js` for physics tick order

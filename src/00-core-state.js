@@ -51,11 +51,9 @@ function resize(){
   const rect=canvas.getBoundingClientRect(),nextW=Math.max(320,Math.floor(rect.width)),nextH=Math.max(240,Math.floor(rect.height)); dpr=Math.max(1,Math.min(2,window.devicePixelRatio||1));
   const newCell=Math.max(4,Math.ceil(Math.max(nextW/CELL_MAX_COLS,nextH/CELL_MAX_ROWS))),newCols=Math.max(1,Math.floor(nextW/newCell)),newRows=Math.max(1,Math.floor(nextH/newCell));
   canvas.width=Math.floor(nextW*dpr); canvas.height=Math.floor(nextH*dpr); ctx.setTransform(dpr,0,0,dpr,0,0); viewW=nextW; viewH=nextH;
-  if(newCell===cellSize&&newCols===cols&&newRows===rows){render();return}
-  const oldCols=cols,oldRows=rows,oldCell=cellSize,oldMat=material,oldMass=mass,oldVx=vx,oldVy=vy,oldFlowDir=flowDir,oldTintR=tintR,oldTintG=tintG,oldTintB=tintB,oldTintA=tintA,oldBgTintR=bgTintR,oldBgTintG=bgTintG,oldBgTintB=bgTintB,oldBgTintA=bgTintA,oldSourceMat=sourceMat;
-  installWorldState(createWorldState(newCols,newRows,{cellSize:newCell}));
+  const resized=resizeWorldGrid(newCols,newRows,{cellSize:newCell});
+  if(!resized.changed){render();return}
   gridCanvas.width=cols; gridCanvas.height=rows; imageData=gridCtx.createImageData(cols,rows);
-  if(oldMat&&oldMat.length){for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){const x=(c+.5)*cellSize,y=(r+.5)*cellSize,oc=clamp(Math.floor(x/oldCell),0,oldCols-1),or=clamp(Math.floor(y/oldCell),0,oldRows-1),oi=or*oldCols+oc,ni=idx(c,r),mat=isKnownMaterial(oldMat[oi])?oldMat[oi]:EMPTY,src=isKnownMaterial(oldSourceMat[oi])?oldSourceMat[oi]:EMPTY;material[ni]=mat;mass[ni]=materialCarriesMass(mat)?oldMass[oi]:defaultMassForMaterial(mat);vx[ni]=oldVx[oi]||0;vy[ni]=oldVy[oi]||0;flowDir[ni]=materialUsesDirectedFlow(mat)?(oldFlowDir[oi]||defaultFlowDirForMaterial(mat)):defaultFlowDirForMaterial(mat);tintR[ni]=oldTintR[oi]||0;tintG[ni]=oldTintG[oi]||0;tintB[ni]=oldTintB[oi]||0;tintA[ni]=oldTintA[oi]||0;bgTintR[ni]=oldBgTintR[oi]||0;bgTintG[ni]=oldBgTintG[oi]||0;bgTintB[ni]=oldBgTintB[oi]||0;bgTintA[ni]=oldBgTintA[oi]||0;sourceMat[ni]=isFlowMaterial(src)?src:EMPTY}}
   rebuildBodyMask(); render();
 }
 function canvasPoint(e){const r=canvas.getBoundingClientRect();return{x:clamp(e.clientX-r.left,0,viewW),y:clamp(e.clientY-r.top,0,viewH)}}

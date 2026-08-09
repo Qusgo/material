@@ -41,8 +41,11 @@ groups dimensions, cell size, typed arrays, and water scratch tokens.
 `installWorldState()` deliberately installs that world back into the legacy
 global bindings (`cols`, `material`, `mass`, and so on) so existing physics code
 keeps running unchanged. `currentWorldState()` refreshes the active shell from
-the globals. Treat this as a bridge toward a real `World` object, not as
-permission to mix DOM state into the core.
+the globals. `resizeWorldGrid()` owns DOM-free grid resize resampling for
+materials, flow state, tint layers, and source cells; browser resize code should
+only supply the new dimensions and rebuild presentation buffers. Treat this as
+a bridge toward a real `World` object, not as permission to mix DOM state into
+the core.
 
 ## Material Configuration
 

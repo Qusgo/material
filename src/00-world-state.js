@@ -83,3 +83,74 @@ function currentWorldState(){
   captureWaterScratchTokens(currentWorld);
   return currentWorld;
 }
+
+function clampWorldNumber(value,min,max){
+  return Math.max(min,Math.min(max,value));
+}
+
+function captureResizeSource(){
+  return{
+    cols,
+    rows,
+    cellSize,
+    material,
+    mass,
+    vx,
+    vy,
+    flowDir,
+    tintR,
+    tintG,
+    tintB,
+    tintA,
+    bgTintR,
+    bgTintG,
+    bgTintB,
+    bgTintA,
+    sourceMat
+  };
+}
+
+function sampleResizeSourceIndex(c,r,source){
+  const x=(c+.5)*cellSize,y=(r+.5)*cellSize;
+  const oldC=clampWorldNumber(Math.floor(x/source.cellSize),0,source.cols-1);
+  const oldR=clampWorldNumber(Math.floor(y/source.cellSize),0,source.rows-1);
+  return oldR*source.cols+oldC;
+}
+
+function restoreResizeCell(targetIndex,sourceIndex,source){
+  const mat=isKnownMaterial(source.material[sourceIndex])?source.material[sourceIndex]:EMPTY;
+  const src=isKnownMaterial(source.sourceMat[sourceIndex])?source.sourceMat[sourceIndex]:EMPTY;
+  material[targetIndex]=mat;
+  mass[targetIndex]=materialCarriesMass(mat)?source.mass[sourceIndex]:defaultMassForMaterial(mat);
+  vx[targetIndex]=source.vx[sourceIndex]||0;
+  vy[targetIndex]=source.vy[sourceIndex]||0;
+  flowDir[targetIndex]=materialUsesDirectedFlow(mat)
+    ?(source.flowDir[sourceIndex]||defaultFlowDirForMaterial(mat))
+    :defaultFlowDirForMaterial(mat);
+  tintR[targetIndex]=source.tintR[sourceIndex]||0;
+  tintG[targetIndex]=source.tintG[sourceIndex]||0;
+  tintB[targetIndex]=source.tintB[sourceIndex]||0;
+  tintA[targetIndex]=source.tintA[sourceIndex]||0;
+  bgTintR[targetIndex]=source.bgTintR[sourceIndex]||0;
+  bgTintG[targetIndex]=source.bgTintG[sourceIndex]||0;
+  bgTintB[targetIndex]=source.bgTintB[sourceIndex]||0;
+  bgTintA[targetIndex]=source.bgTintA[sourceIndex]||0;
+  sourceMat[targetIndex]=isFlowMaterial(src)?src:EMPTY;
+}
+
+function resizeWorldGrid(nextCols,nextRows,options={}){
+  const normalizedCols=normalizeWorldDimension(nextCols,cols);
+  const normalizedRows=normalizeWorldDimension(nextRows,rows);
+  const normalizedCell=normalizeWorldDimension(options.cellSize,cellSize);
+  if(normalizedCols===cols&&normalizedRows===rows&&normalizedCell===cellSize){
+    return{changed:false,world:currentWorldState()};
+  }
+  const source=material&&material.length?captureResizeSource():null;
+  installWorldState(createWorldState(normalizedCols,normalizedRows,{cellSize:normalizedCell}));
+  if(source){
+    for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
+      restoreResizeCell(r*cols+c,sampleResizeSourceIndex(c,r,source),source);
+    }
+  }
+  return{changed:true,world:currentWorldState(),oldCols:source&&source.cols,oldRows:source&&source.rows};
+}

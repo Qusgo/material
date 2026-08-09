@@ -223,6 +223,7 @@ let material,mass,vx,vy,bodyMask,flowDir,restAge,stableMask,tintR,tintG,tintB,ti
 let moveHistory,moveFlip,horizontalDir,horizontalTurns,escapeDir,escapeTarget,carriedBy,carriedTTL,lastMoveTick;
 let waterSeen,waterSpaceMark,waterComponentMark,waterBasinMark,waterSleepBlockMark,waterTargetMark,waterWakeMark,waterQueue,rowCounts;
 let waterSpaceToken=1,waterComponentToken=1,waterBasinToken=1,waterTargetToken=1,waterWakeToken=1;
+function idx(c,r){return r*cols+c}
 function testAssert(condition,message){if(!condition)throw new Error(message)}
 const world=createWorldState(5,4,{cellSize:6});
 testAssert(world.cols===5&&world.rows===4&&world.count===20&&world.cellSize===6,'world dimensions changed');
@@ -241,6 +242,27 @@ testAssert(current.tokens.waterWakeToken===1,'clearEditableGridState should rese
 const replacement=createWorldState(2,3,{cellSize:4});
 installWorldState(replacement);
 testAssert(currentWorldState()===replacement&&cols===2&&rows===3&&material.length===6,'replacement world install failed');
+material[idx(1,1)]=WATER;
+mass[idx(1,1)]=.7;
+vx[idx(1,1)]=2;
+vy[idx(1,1)]=3;
+flowDir[idx(1,1)]=1;
+sourceMat[idx(0,2)]=SAND;
+tintR[idx(1,1)]=9;
+tintG[idx(1,1)]=8;
+tintB[idx(1,1)]=7;
+tintA[idx(1,1)]=255;
+bgTintR[idx(0,2)]=6;
+bgTintG[idx(0,2)]=5;
+bgTintB[idx(0,2)]=4;
+bgTintA[idx(0,2)]=255;
+const unchanged=resizeWorldGrid(2,3,{cellSize:4});
+testAssert(!unchanged.changed&&currentWorldState()===replacement,'resizeWorldGrid should no-op matching dimensions');
+const resized=resizeWorldGrid(4,6,{cellSize:4});
+testAssert(resized.changed&&cols===4&&rows===6&&cellSize===4,'resizeWorldGrid did not install resized world');
+testAssert(material[idx(1,1)]===WATER&&mass[idx(1,1)]>.69&&mass[idx(1,1)]<.71&&vx[idx(1,1)]===2&&vy[idx(1,1)]===3,'resizeWorldGrid lost material motion state');
+testAssert(flowDir[idx(1,1)]===1&&tintA[idx(1,1)]===255&&tintR[idx(1,1)]===9,'resizeWorldGrid lost flow direction or particle tint');
+testAssert(sourceMat[idx(0,2)]===SAND&&bgTintA[idx(0,2)]===255&&bgTintR[idx(0,2)]===6,'resizeWorldGrid lost source or background tint');
 `;
   runIsolated('world state regression',source);
 }
