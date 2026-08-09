@@ -27,7 +27,10 @@ const RUNTIME_FILES=[
   'src/03-dom-refs.js',
   'src/03-runtime-render-input.js',
   'src/03-material-ui-adapter.js',
-  'src/03-controls-adapter.js'
+  'src/03-settings-sync-adapter.js',
+  'src/03-controls-adapter.js',
+  'src/03-canvas-input-adapter.js',
+  'src/03-app-bootstrap.js'
 ];
 
 function read(file){
@@ -670,6 +673,102 @@ testAssert(calls.includes('command:clear')&&calls.includes('mask'),'clear button
   runIsolated('controls adapter regression',source);
 }
 
+function settingsSyncAdapterRegression(){
+  const source=sharedPrelude()+read('src/00-materials.js')+`
+const commands=[];
+function fakeInput(id,value='0'){return{id,value,checked:false}}
+let sourceInterval=4,lightingEnabled=true,lightStrength=.18,sideLightStrength=1,shadowStrength=.16;
+let sourceRateInput=fakeInput('source-rate','90'),sourceRateNumberInput=fakeInput('source-rate-number','1');
+let lightingEnabledInput=fakeInput('lighting-enabled'),lightStrengthInput=fakeInput('light','200'),lightStrengthNumberInput=fakeInput('light-number','0'),sideLightStrengthInput=fakeInput('side','150'),sideLightStrengthNumberInput=fakeInput('side-number','0'),shadowStrengthInput=fakeInput('shadow','50'),shadowStrengthNumberInput=fakeInput('shadow-number','0');
+function applyRuntimeSettingsCommand(command){
+  commands.push(command);
+  if(command.type==='sourceInterval')sourceInterval=clampInt(command.value,1,60,1);
+  if(command.type==='lighting'){
+    if(Object.prototype.hasOwnProperty.call(command,'enabled'))lightingEnabled=!!command.enabled;
+    if(Object.prototype.hasOwnProperty.call(command,'lightStrength'))lightStrength=command.lightStrength;
+    if(Object.prototype.hasOwnProperty.call(command,'sideLightStrength'))sideLightStrength=command.sideLightStrength;
+    if(Object.prototype.hasOwnProperty.call(command,'shadowStrength'))shadowStrength=command.shadowStrength;
+  }
+}
+function testAssert(condition,message){if(!condition)throw new Error(message)}
+`+read('src/03-settings-sync-adapter.js')+`
+testAssert(syncSourceRateControls(sourceRateInput)===60&&sourceRateInput.value==='60'&&sourceRateNumberInput.value==='60','source rate clamp changed');
+sourceInterval=7;
+syncSourceRateControls(null);
+testAssert(sourceRateInput.value==='7'&&sourceRateNumberInput.value==='7','source rate state sync changed');
+lightingEnabledInput.checked=false;
+syncLightingControls(lightingEnabledInput);
+testAssert(lightingEnabled===false,'lighting enabled sync changed');
+lightStrengthInput.value='200';
+syncLightingControls(lightStrengthInput);
+testAssert(lightStrength===1&&lightStrengthInput.value==='100'&&lightStrengthNumberInput.value==='100','light strength clamp changed');
+sideLightStrengthInput.value='150';
+syncLightingControls(sideLightStrengthInput);
+testAssert(sideLightStrength===1.5&&sideLightStrengthInput.value==='150','side light strength sync changed');
+shadowStrengthInput.value='50';
+syncLightingControls(shadowStrengthInput);
+testAssert(shadowStrength===.5&&shadowStrengthInput.value==='50','shadow strength sync changed');
+`;
+  runIsolated('settings sync adapter regression',source);
+}
+
+function canvasInputAdapterRegression(){
+  const source=`
+const calls=[],handlers={};
+const canvas={
+  addEventListener(type,handler){handlers[type]=handler},
+  setPointerCapture(id){calls.push('capture:'+id)},
+  hasPointerCapture(){return true},
+  releasePointerCapture(id){calls.push('release:'+id)}
+};
+const MATERIAL_FROM_NAME={water:1},WATER=1;
+let pointerDown=false,tool='brush',selected='water',hoverPoint=null,lastPoint=null,placing=null,forceState=null,fillPreview=[],running=true,accumulator=9;
+function canvasPoint(e){return{x:e.clientX,y:e.clientY}}
+function pauseForEdit(){running=false;accumulator=0;calls.push('pause')}
+function isBodyMaterial(){return false}
+function getBrushRadius(){return 2}
+function getEraserRadius(){return 3}
+function selectedSourceMaterial(){return WATER}
+function getTintColor(){return[1,2,3]}
+function updateFillPreview(){calls.push('preview')}
+function applyFill(){calls.push('fill')}
+function applyEditCommand(command){calls.push('command:'+command.type);return true}
+function setStatus(text){calls.push('status:'+text)}
+function finishEditAsNewInitialState(){calls.push('finish')}
+function rebuildBodyMask(){calls.push('mask')}
+function render(){calls.push('render')}
+function testAssert(condition,message){if(!condition)throw new Error(message)}
+`+read('src/03-canvas-input-adapter.js')+`
+testAssert(Object.keys(handlers).sort().join(',')==='pointercancel,pointerdown,pointerleave,pointermove,pointerup','canvas pointer handlers changed');
+handlers.pointerdown({pointerId:7,clientX:10,clientY:12});
+handlers.pointermove({pointerId:7,clientX:14,clientY:16});
+handlers.pointerup({pointerId:7,clientX:18,clientY:20});
+testAssert(calls.includes('command:paint')&&calls.includes('command:paintLine'),'brush commands were not routed');
+testAssert(calls.includes('finish')&&calls.includes('mask')&&calls.includes('release:7'),'pointerup cleanup changed');
+testAssert(pointerDown===false&&lastPoint===null,'pointer state did not reset');
+`;
+  runIsolated('canvas input adapter regression',source);
+}
+
+function appBootstrapRegression(){
+  const source=`
+const calls=[];
+let lastFrame=0,running=true,accumulator=0,SIM_STEP_MS=14;
+const window={addEventListener(type,handler){calls.push('window:'+type);this[type]=handler}};
+function resize(){calls.push('resize')}
+function simulationStep(){calls.push('step')}
+function render(){calls.push('render')}
+function requestAnimationFrame(handler){calls.push('raf');requestAnimationFrame.last=handler}
+function testAssert(condition,message){if(!condition)throw new Error(message)}
+`+read('src/03-app-bootstrap.js')+`
+testAssert(calls.join(',')==='window:resize,resize,raf','bootstrap startup order changed');
+requestAnimationFrame.last(14);
+requestAnimationFrame.last(28);
+testAssert(calls.includes('step')&&calls.filter(v=>v==='render').length===2,'frame loop did not step and render');
+`;
+  runIsolated('app bootstrap regression',source);
+}
+
 function materialUiAdapterRegression(){
   const source=sharedPrelude()+read('src/00-materials.js')+read('src/01-runtime-config.js')+`
 function fakeElement(id){
@@ -735,4 +834,7 @@ saveLoadRegression();
 saveLoadAdapterRegression();
 domRefsRegression();
 materialUiAdapterRegression();
+settingsSyncAdapterRegression();
 controlsAdapterRegression();
+canvasInputAdapterRegression();
+appBootstrapRegression();

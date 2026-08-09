@@ -61,12 +61,17 @@ between save and load.
 - `src/03-render-buffer.js` - DOM-free RGBA buffer construction from material
   color, tint, and lighting state.
 - `src/03-dom-refs.js` - Browser-only DOM handles shared by UI adapters.
-- `src/03-runtime-render-input.js` - Dynamic body updates, render
-  pipeline, basin debug overlay, canvas pointer input, and animation loop.
+- `src/03-runtime-render-input.js` - Dynamic body updates, render pipeline,
+  and basin debug overlay.
 - `src/03-material-ui-adapter.js` - Browser-only material menu/editor field
   synchronization.
+- `src/03-settings-sync-adapter.js` - Browser-only source-rate and lighting
+  form value synchronization.
 - `src/03-controls-adapter.js` - Browser-only toolbar, material menu, save/load,
   and settings control bindings.
+- `src/03-canvas-input-adapter.js` - Browser-only canvas pointer gestures routed
+  to edit and force commands.
+- `src/03-app-bootstrap.js` - Browser-only resize binding and animation loop.
 - `app.js` - Legacy note only. Do not reintroduce runtime code there unless the
   HTML entry points are changed back.
 - `docs/ARCHITECTURE.md` - Detailed notes for future agents.

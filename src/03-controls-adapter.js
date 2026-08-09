@@ -1,7 +1,7 @@
 'use strict';
 
 // Browser-only toolbar/settings bindings. Canvas pointer handling and the
-// render loop stay in 03-runtime-render-input.js.
+// render loop live in their own browser adapter files.
 
 function bindBrowserControls(){
   document.querySelectorAll('[data-tool]').forEach(b=>b.addEventListener('click',()=>setTool(b.dataset.tool)));

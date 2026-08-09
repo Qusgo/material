@@ -71,8 +71,11 @@ contains the browser-only post-load UI sync hook.
    `src/03-dom-refs.js`, material menu/edit-field sync now lives in
    `src/03-material-ui-adapter.js`, and toolbar/settings event binding lives in
    `src/03-controls-adapter.js`. Early browser app-shell DOM refs now live in
-   `src/00-app-dom-refs.js`. Continue by reducing direct global state writes
-   inside browser bootstrap.
+   `src/00-app-dom-refs.js`. Canvas pointer binding now lives in
+   `src/03-canvas-input-adapter.js`, and resize/animation startup lives in
+   `src/03-app-bootstrap.js`. Source-rate and lighting form synchronization now
+   lives in `src/03-settings-sync-adapter.js`. Continue by reducing direct
+   global state writes inside browser bootstrap.
 6. Only after the command boundary exists, migrate to TypeScript or a bundler
    such as Vite.
 7. If more speed is needed later, the headless core can be ported to Rust/WASM
@@ -106,7 +109,10 @@ contains the browser-only post-load UI sync hook.
 - Shared browser UI handles in `src/03-dom-refs.js`
 - Toolbar state in `src/03-runtime-render-input.js`
 - Material menu/editor field sync in `src/03-material-ui-adapter.js`
+- Source-rate and lighting form sync in `src/03-settings-sync-adapter.js`
 - Toolbar/settings event binding in `src/03-controls-adapter.js`
+- Canvas pointer event binding in `src/03-canvas-input-adapter.js`
+- Resize and animation-loop startup in `src/03-app-bootstrap.js`
 - Canvas drawing and overlays in `src/03-runtime-render-input.js`
 - Source overlay drawing in `src/02-source-render.js`
 - `localStorage` calls in `src/04-save-load.js`

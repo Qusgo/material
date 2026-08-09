@@ -1,6 +1,6 @@
 ﻿'use strict';
 
-// Dynamic-body physics, render pipeline, pointer input, and app bootstrap.
+// Dynamic-body physics, render pipeline, and browser UI setting sync.
 
 function bodyHitsFixed(b){const samples=[];if(b.type==='circle'){samples.push([0,0]);for(let k=0;k<12;k++){const a=k/12*Math.PI*2;samples.push([Math.cos(a)*b.radius,Math.sin(a)*b.radius])}}else{for(const sx of[-1,0,1])for(const sy of[-1,0,1])samples.push([sx*b.hw,sy*b.hh]);samples.push([b.hw,0],[-b.hw,0],[0,b.hh],[0,-b.hh])}const ca=Math.cos(b.angle),sa=Math.sin(b.angle);for(const [lx,ly]of samples){const x=b.x+lx*ca-ly*sa,y=b.y+lx*sa+ly*ca;if(x<0||x>=viewW||y<0||y>=viewH)return true;const p=pointToCell(x,y);if(material[idx(p.c,p.r)]===FIXED_STONE)return true}return false}
 function displaceGridUnderBody(b){
@@ -127,62 +127,3 @@ function drawArrow(x1,y1,x2,y2){const a=Math.atan2(y2-y1,x2-x1);ctx.beginPath();
 function renderForcePreview(){if(!forceState)return;ctx.save();ctx.strokeStyle='rgba(17,24,39,.78)';ctx.fillStyle='rgba(22,141,226,.1)';ctx.lineWidth=2;if(forceState.circle){ctx.beginPath();ctx.arc(forceState.circle.x,forceState.circle.y,forceState.circle.r,0,Math.PI*2);ctx.fill();ctx.stroke()}else if(forceState.start&&forceState.current){const r=Math.hypot(forceState.current.x-forceState.start.x,forceState.current.y-forceState.start.y);ctx.beginPath();ctx.arc(forceState.start.x,forceState.start.y,r,0,Math.PI*2);ctx.fill();ctx.stroke()}if(forceState.circle&&forceState.arrowEnd)drawArrow(forceState.circle.x,forceState.circle.y,forceState.arrowEnd.x,forceState.arrowEnd.y);ctx.restore()}
 function renderEraser(){if(tool!=='eraser'||!hoverPoint)return;const rad=getEraserRadius();ctx.save();ctx.strokeStyle='rgba(201,74,74,.85)';ctx.lineWidth=2;if(rad===0){const p=pointToCell(hoverPoint.x,hoverPoint.y);ctx.strokeRect(p.c*cellSize+.5,p.r*cellSize+.5,Math.max(1,cellSize-1),Math.max(1,cellSize-1))}else{ctx.beginPath();ctx.arc(hoverPoint.x,hoverPoint.y,rad*cellSize,0,Math.PI*2);ctx.stroke()}ctx.restore()}
 function render(){ctx.clearRect(0,0,viewW,viewH);ctx.fillStyle=`rgb(${airColor[0]},${airColor[1]},${airColor[2]})`;ctx.fillRect(0,0,viewW,viewH);renderGrid();if(typeof renderSources==='function')renderSources();renderBasinDebug();renderFillPreview();renderBodies();renderPlacement();renderForcePreview();renderEraser();updateStatus()}
-
-function syncIntegerPair(rangeInput,numberInput,min,max,fallback,source){
-  const input=source||rangeInput;
-  const value=clampInt(input.value,min,max,fallback);
-  rangeInput.value=String(value);
-  numberInput.value=String(value);
-  return value;
-}
-
-function syncSourceRateControls(source=sourceRateInput){
-  if(!sourceRateInput||!sourceRateNumberInput)return sourceInterval;
-  if(source)applyRuntimeSettingsCommand({type:'sourceInterval',value:syncIntegerPair(sourceRateInput,sourceRateNumberInput,1,60,1,source)});
-  else{
-    applyRuntimeSettingsCommand({type:'sourceInterval',value:sourceInterval});
-    sourceRateInput.value=String(sourceInterval);
-    sourceRateNumberInput.value=sourceRateInput.value;
-  }
-  return sourceInterval;
-}
-
-function syncLightingControls(source=null){
-  if(lightingEnabledInput){
-    if(source===lightingEnabledInput)applyRuntimeSettingsCommand({type:'lighting',enabled:lightingEnabledInput.checked});
-    else lightingEnabledInput.checked=!!lightingEnabled;
-  }
-  if(lightStrengthInput&&lightStrengthNumberInput){
-    const value=source===lightStrengthInput||source===lightStrengthNumberInput
-      ?syncIntegerPair(lightStrengthInput,lightStrengthNumberInput,0,100,18,source)
-      :clampInt(Math.round(lightStrength*100),0,100,18);
-    applyRuntimeSettingsCommand({type:'lighting',lightStrength:value/100});
-    lightStrengthInput.value=String(value);
-    lightStrengthNumberInput.value=String(value);
-  }
-  if(sideLightStrengthInput&&sideLightStrengthNumberInput){
-    const value=source===sideLightStrengthInput||source===sideLightStrengthNumberInput
-      ?syncIntegerPair(sideLightStrengthInput,sideLightStrengthNumberInput,0,200,100,source)
-      :clampInt(Math.round(sideLightStrength*100),0,200,100);
-    applyRuntimeSettingsCommand({type:'lighting',sideLightStrength:value/100});
-    sideLightStrengthInput.value=String(value);
-    sideLightStrengthNumberInput.value=String(value);
-  }
-  if(shadowStrengthInput&&shadowStrengthNumberInput){
-    const value=source===shadowStrengthInput||source===shadowStrengthNumberInput
-      ?syncIntegerPair(shadowStrengthInput,shadowStrengthNumberInput,0,100,16,source)
-      :clampInt(Math.round(shadowStrength*100),0,100,16);
-    applyRuntimeSettingsCommand({type:'lighting',shadowStrength:value/100});
-    shadowStrengthInput.value=String(value);
-    shadowStrengthNumberInput.value=String(value);
-  }
-  if(source===null&&lightingEnabledInput)lightingEnabledInput.checked=lightingEnabled;
-}
-
-function frame(ts){if(!lastFrame)lastFrame=ts;const dt=Math.min(50,ts-lastFrame);lastFrame=ts;if(running){accumulator+=dt;let steps=0;while(accumulator>=SIM_STEP_MS&&steps<4){simulationStep();accumulator-=SIM_STEP_MS;steps++}}else accumulator=0;render();requestAnimationFrame(frame)}
-canvas.addEventListener('pointerdown',e=>{canvas.setPointerCapture(e.pointerId);pointerDown=true;const p=canvasPoint(e);hoverPoint=p;pauseForEdit();if(tool==='brush'){if(isBodyMaterial())placing={kind:selected,start:p,current:p};else{const mat=MATERIAL_FROM_NAME[selected]||WATER;applyEditCommand({type:'paint',x:p.x,y:p.y,radius:getBrushRadius(),material:mat})}lastPoint=p}else if(tool==='source'){const mat=selectedSourceMaterial();if(mat){applyEditCommand({type:'source',x:p.x,y:p.y,radius:getBrushRadius(),material:mat});lastPoint=p}else setStatus('Source requires a flow material')}else if(tool==='color'){applyEditCommand({type:'tint',x:p.x,y:p.y,radius:getBrushRadius(),color:getTintColor()});lastPoint=p}else if(tool==='fill'){updateFillPreview();applyFill()}else if(tool==='eraser')applyEditCommand({type:'erase',x:p.x,y:p.y,radius:getEraserRadius()});else if(tool==='force'){if(!forceState||forceState.done)forceState={phase:'circle',start:p,current:p};else if(forceState.phase==='arrow')forceState.arrowEnd=p}render()});
-canvas.addEventListener('pointermove',e=>{const p=canvasPoint(e);hoverPoint=p;if(tool==='fill')updateFillPreview();if(!pointerDown){render();return}if(tool==='brush'){if(placing)placing.current=p;else if(lastPoint){const mat=MATERIAL_FROM_NAME[selected]||WATER;applyEditCommand({type:'paintLine',x1:lastPoint.x,y1:lastPoint.y,x2:p.x,y2:p.y,radius:getBrushRadius(),material:mat})}lastPoint=p}else if(tool==='source'){const mat=selectedSourceMaterial();if(mat&&lastPoint)applyEditCommand({type:'sourceLine',x1:lastPoint.x,y1:lastPoint.y,x2:p.x,y2:p.y,radius:getBrushRadius(),material:mat});lastPoint=p}else if(tool==='color'){if(lastPoint)applyEditCommand({type:'tintLine',x1:lastPoint.x,y1:lastPoint.y,x2:p.x,y2:p.y,radius:getBrushRadius(),color:getTintColor()});lastPoint=p}else if(tool==='eraser')applyEditCommand({type:'erase',x:p.x,y:p.y,radius:getEraserRadius()});else if(tool==='force'&&forceState){if(forceState.phase==='circle')forceState.current=p;else if(forceState.phase==='arrow')forceState.arrowEnd=p}render()});
-canvas.addEventListener('pointerup',e=>{pointerDown=false;const p=canvasPoint(e);if(placing){placing.current=p;if(applyEditCommand({type:'placeBody',kind:placing.kind,start:placing.start,current:placing.current}))setStatus('Dynamic stone placed');placing=null}if(tool==='force'&&forceState){if(forceState.phase==='circle'){const r=Math.max(12,Math.hypot(forceState.current.x-forceState.start.x,forceState.current.y-forceState.start.y));forceState={phase:'arrow',circle:{x:forceState.start.x,y:forceState.start.y,r},arrowEnd:null};setStatus('Force: now drag arrow direction and strength')}else if(forceState.phase==='arrow'&&forceState.arrowEnd){const arrow={x:forceState.arrowEnd.x-forceState.circle.x,y:forceState.arrowEnd.y-forceState.circle.y};if(applyEditCommand({type:'force',circle:forceState.circle,arrow}))setStatus('Force applied');forceState=null}}finishEditAsNewInitialState();lastPoint=null;if(canvas.hasPointerCapture(e.pointerId))canvas.releasePointerCapture(e.pointerId);rebuildBodyMask();updateFillPreview();render()});
-canvas.addEventListener('pointercancel',e=>{pointerDown=false;placing=null;lastPoint=null;finishEditAsNewInitialState();if(canvas.hasPointerCapture(e.pointerId))canvas.releasePointerCapture(e.pointerId);render()});
-canvas.addEventListener('pointerleave',()=>{hoverPoint=null;fillPreview=[];render()});
-window.addEventListener('resize',resize);resize();requestAnimationFrame(frame);

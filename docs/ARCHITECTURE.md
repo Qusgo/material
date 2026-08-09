@@ -80,14 +80,20 @@ and brush-size input.
 adapters.
 `src/03-material-ui-adapter.js` owns browser material menu/editor field
 synchronization and delegates material mutation to `src/01-runtime-config.js`.
+`src/03-settings-sync-adapter.js` owns browser form value synchronization for
+source-rate and lighting controls, and delegates value clamping/mutation to
+`src/01-runtime-config.js`.
 `src/03-controls-adapter.js` owns browser toolbar/settings bindings; it should
 wire DOM events to existing commands/helpers without adding simulation rules.
+`src/03-canvas-input-adapter.js` owns canvas pointer gestures and routes them to
+edit/force commands. `src/03-app-bootstrap.js` owns browser resize binding and
+the `requestAnimationFrame` loop.
 `src/01-edit-commands.js` is the command-style boundary for editor operations:
 point/line `paint`, `source`, `tint`, `erase`, plus `fill`, `fillAir`, `clear`,
 `force`, and `placeBody`. The browser pointer handlers now route ordinary
 strokes and dynamic body placement commits through these commands. The material
-editor, dynamic body preview/update loop, browser storage wrapper, and button
-synchronization are still browser/runtime responsibilities.
+editor, dynamic body preview/update loop, browser storage wrapper, button
+synchronization, and runtime loop are still browser/runtime responsibilities.
 `src/02-force.js` owns DOM-free force application for flow cells and dynamic
 bodies.
 
@@ -468,6 +474,7 @@ reintroduce jitter, non-conservation, and wall leakage.
 - The code uses classic scripts to avoid build tooling. Respect the load order.
   `src/03-dom-refs.js` must load before runtime/material/control adapters.
   `src/03-material-ui-adapter.js` must load after
-  `src/03-runtime-render-input.js`, and `src/03-controls-adapter.js` must load
-  after both because it binds controls to functions and DOM handles created
-  earlier.
+  `src/03-runtime-render-input.js`, and `src/03-settings-sync-adapter.js` must
+  load before `src/03-controls-adapter.js` because controls bind to those helper
+  functions. `src/03-canvas-input-adapter.js` and `src/03-app-bootstrap.js` load
+  after the UI adapters.
