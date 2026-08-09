@@ -67,7 +67,8 @@ contains the browser-only post-load UI sync hook.
    `applyEditCommand({type:'placeBody'})`.
    Material editing and source/light settings now route through
    `src/01-runtime-config.js`. Save/load post-restore UI synchronization now
-   lives in `src/04-save-ui-adapter.js`. Continue by reducing direct global
+   lives in `src/04-save-ui-adapter.js`. Toolbar/settings event binding now
+   lives in `src/03-controls-adapter.js`. Continue by reducing direct global
    state writes inside browser bootstrap.
 6. Only after the command boundary exists, migrate to TypeScript or a bundler
    such as Vite.
@@ -99,7 +100,8 @@ contains the browser-only post-load UI sync hook.
 - `src/04-save-ui-adapter.js` for post-load browser control/render sync.
 
 - DOM handles in `src/00-core-state.js`
-- Toolbar state and material editor UI in `src/03-runtime-render-input.js`
+- Toolbar state and material editor UI helpers in `src/03-runtime-render-input.js`
+- Toolbar/settings event binding in `src/03-controls-adapter.js`
 - Canvas drawing and overlays in `src/03-runtime-render-input.js`
 - Source overlay drawing in `src/02-source-render.js`
 - `localStorage` calls in `src/04-save-load.js`

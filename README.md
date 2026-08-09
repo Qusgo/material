@@ -59,7 +59,9 @@ between save and load.
 - `src/03-render-buffer.js` - DOM-free RGBA buffer construction from material
   color, tint, and lighting state.
 - `src/03-runtime-render-input.js` - Dynamic body updates, render
-  pipeline, basin debug overlay, pointer input, and app bootstrap.
+  pipeline, basin debug overlay, canvas pointer input, and animation loop.
+- `src/03-controls-adapter.js` - Browser-only toolbar, material menu, save/load,
+  and settings control bindings.
 - `app.js` - Legacy note only. Do not reintroduce runtime code there unless the
   HTML entry points are changed back.
 - `docs/ARCHITECTURE.md` - Detailed notes for future agents.

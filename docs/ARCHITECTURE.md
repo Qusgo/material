@@ -73,6 +73,8 @@ genuinely new algorithm.
 color, light masks, and simple light/shadow blending. Canvas drawing and UI
 remain in `src/03-runtime-render-input.js`. `src/03-render-buffer.js` converts
 the current arrays into an RGBA buffer without touching `canvas` or `document`.
+`src/03-controls-adapter.js` owns browser toolbar/settings bindings; it should
+wire DOM events to existing commands/helpers without adding simulation rules.
 `src/01-edit-commands.js` is the command-style boundary for editor operations:
 point/line `paint`, `source`, `tint`, `erase`, plus `fill`, `fillAir`, `clear`,
 `force`, and `placeBody`. The browser pointer handlers now route ordinary
@@ -457,3 +459,5 @@ reintroduce jitter, non-conservation, and wall leakage.
 - Dynamic stones are approximate rigid bodies and interact with the grid through
   rasterized masks.
 - The code uses classic scripts to avoid build tooling. Respect the load order.
+  `src/03-controls-adapter.js` must load after `src/03-runtime-render-input.js`
+  because it binds controls to functions and DOM handles created there.

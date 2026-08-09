@@ -23,7 +23,8 @@ const RUNTIME_FILES=[
   'src/04-save-ui-adapter.js',
   'src/03-lighting.js',
   'src/03-render-buffer.js',
-  'src/03-runtime-render-input.js'
+  'src/03-runtime-render-input.js',
+  'src/03-controls-adapter.js'
 ];
 
 function read(file){
@@ -565,6 +566,70 @@ testAssert(calls.join(',')==='buttons,source,lighting,preview,render','save UI a
   runIsolated('save/load adapter regression',source);
 }
 
+function controlsAdapterRegression(){
+  const source=`
+const calls=[];
+function fakeElement(id,value='4'){
+  return{
+    id,
+    value,
+    checked:false,
+    dataset:{tool:id==='tool-brush'?'brush':undefined},
+    addEventListener(type,handler){this[type]=handler}
+  };
+}
+const toolButton=fakeElement('tool-brush');
+const elementMap={step:fakeElement('step'),clear:fakeElement('clear')};
+const document={
+  querySelectorAll(selector){return selector==='[data-tool]'?[toolButton]:[]},
+  getElementById(id){return elementMap[id]||(elementMap[id]=fakeElement(id))}
+};
+const MATERIAL_KIND_FLUID='fluid',MATERIAL_KIND_GRANULAR='granular',SAND_LIKE_FLOW={erosionResistance:24};
+let materialEditorMode=MATERIAL_KIND_GRANULAR,materialEditorTarget=0,running=false,debugBasins=false;
+let materialButton=fakeElement('material-button'),addFluidBtn=fakeElement('add-fluid'),addGranularBtn=fakeElement('add-granular'),cancelMaterialBtn=fakeElement('cancel-material'),deleteMaterialBtn=fakeElement('delete-material'),saveMaterialBtn=fakeElement('save-material');
+let materialDensityInput=fakeElement('density','2'),materialSlopeInput=fakeElement('slope','1'),materialErosionInput=fakeElement('erosion','24');
+let playBtn=fakeElement('play'),debugBasinsBtn=fakeElement('debug'),fillAirColorBtn=fakeElement('fill-air'),saveCanvasBtn=fakeElement('save'),loadCanvasBtn=fakeElement('load');
+let brushSizeInput=fakeElement('brush','4'),brushSizeNumberInput=fakeElement('brush-number','4'),eraserSizeInput=fakeElement('eraser','3'),eraserSizeNumberInput=fakeElement('eraser-number','3');
+let sourceRateInput=fakeElement('source','1'),sourceRateNumberInput=fakeElement('source-number','1');
+let lightingEnabledInput=fakeElement('lighting'),lightStrengthInput=fakeElement('light','18'),lightStrengthNumberInput=fakeElement('light-number','18'),sideLightStrengthInput=fakeElement('side','100'),sideLightStrengthNumberInput=fakeElement('side-number','100'),shadowStrengthInput=fakeElement('shadow','16'),shadowStrengthNumberInput=fakeElement('shadow-number','16');
+let tintColorInput=fakeElement('tint');
+function setTool(tool){calls.push('tool:'+tool)}
+function renderMaterialMenu(){calls.push('menu')}
+function openMaterialEditor(kind){calls.push('open:'+kind)}
+function closeMaterialEditor(){calls.push('close')}
+function deleteExistingMaterial(id){calls.push('delete:'+id)}
+function saveCustomMaterial(){calls.push('save-material')}
+function normalizeIntegerInput(input){calls.push('normalize:'+input.id);return Number(input.value)}
+function syncIntegerPair(range,number){calls.push('pair:'+range.id+'/'+number.id);return Number(range.value)}
+function syncSourceRateControls(source){calls.push('source:'+(source&&source.id))}
+function syncLightingControls(source){calls.push('lighting:'+(source&&source.id))}
+function setStatus(text){calls.push('status:'+text)}
+function syncButtons(){calls.push('buttons')}
+function simulationStep(){calls.push('step')}
+function applyEditCommand(command){calls.push('command:'+command.type);return true}
+function rebuildBodyMask(){calls.push('mask')}
+function saveCanvasSnapshot(){calls.push('save-canvas');return{message:'saved'}}
+function loadCanvasSnapshot(){calls.push('load-canvas');return{message:'loaded'}}
+function getTintColor(){return[1,2,3]}
+function render(){calls.push('render')}
+function testAssert(condition,message){if(!condition)throw new Error(message)}
+`+read('src/03-controls-adapter.js')+`
+toolButton.click();
+playBtn.click();
+brushSizeInput.input();
+sourceRateInput.input();
+lightingEnabledInput.input();
+elementMap.clear.click();
+testAssert(calls.includes('tool:brush'),'tool button was not bound');
+testAssert(calls.includes('status:Running')&&calls.includes('buttons'),'play button was not bound');
+testAssert(calls.includes('pair:brush/brush-number'),'brush size controls were not bound');
+testAssert(calls.includes('source:source'),'source rate controls were not bound');
+testAssert(calls.includes('lighting:lighting'),'lighting controls were not bound');
+testAssert(calls.includes('command:clear')&&calls.includes('mask'),'clear button was not bound');
+`;
+  runIsolated('controls adapter regression',source);
+}
+
 syntaxRegression();
 runtimeBootstrapRegression();
 materialRegistryRegression();
@@ -579,3 +644,4 @@ editCommandRegression();
 movementTintRegression();
 saveLoadRegression();
 saveLoadAdapterRegression();
+controlsAdapterRegression();
