@@ -74,8 +74,12 @@ contains the browser-only post-load UI sync hook.
    `src/00-app-dom-refs.js`. Canvas pointer binding now lives in
    `src/03-canvas-input-adapter.js`, and resize/animation startup lives in
    `src/03-app-bootstrap.js`. Source-rate and lighting form synchronization now
-   lives in `src/03-settings-sync-adapter.js`. Continue by reducing direct
-   global state writes inside browser bootstrap.
+   lives in `src/03-settings-sync-adapter.js`. Dynamic-body runtime now lives in
+   `src/02-body-runtime.js`, while browser canvas drawing and overlays live in
+   `src/03-canvas-render-adapter.js`. Browser status, resize, coordinate,
+   selection, and button state helpers now live in
+   `src/03-app-ui-state-adapter.js`. Continue by reducing direct global state
+   writes inside browser bootstrap.
 6. Only after the command boundary exists, migrate to TypeScript or a bundler
    such as Vite.
 7. If more speed is needed later, the headless core can be ported to Rust/WASM
@@ -89,6 +93,7 @@ contains the browser-only post-load UI sync hook.
   resampling
 - `src/02-flow-and-water.js`
 - `src/02-force.js` for force application
+- `src/02-body-runtime.js` for dynamic-body physics and grid displacement
 - `src/02-step-world.js` for physics tick order
 - `src/02-erosion.js`
 - The non-DOM parts of `src/01-editing-and-bodies.js`
@@ -107,13 +112,14 @@ contains the browser-only post-load UI sync hook.
 
 - Early app-shell DOM handles in `src/00-app-dom-refs.js`
 - Shared browser UI handles in `src/03-dom-refs.js`
-- Toolbar state in `src/03-runtime-render-input.js`
+- Status, resize, coordinate, selection, and button sync helpers in
+  `src/03-app-ui-state-adapter.js`
 - Material menu/editor field sync in `src/03-material-ui-adapter.js`
 - Source-rate and lighting form sync in `src/03-settings-sync-adapter.js`
 - Toolbar/settings event binding in `src/03-controls-adapter.js`
 - Canvas pointer event binding in `src/03-canvas-input-adapter.js`
 - Resize and animation-loop startup in `src/03-app-bootstrap.js`
-- Canvas drawing and overlays in `src/03-runtime-render-input.js`
+- Canvas drawing and overlays in `src/03-canvas-render-adapter.js`
 - Source overlay drawing in `src/02-source-render.js`
 - `localStorage` calls in `src/04-save-load.js`
 - CSS and HTML entry points

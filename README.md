@@ -32,8 +32,8 @@ between save and load.
   compatible globals.
 - `src/00-app-dom-refs.js` - Browser-only app shell DOM handles needed by early
   runtime state.
-- `src/00-core-state.js` - Runtime constants, canvas resize input, status text,
-  and basic coordinate helpers.
+- `src/00-core-state.js` - Runtime constants, mutable simulation state, and
+  basic coordinate helpers.
 - `src/01-editing-and-bodies.js` - Brush, erase, fill, grid mutation helpers,
   and rigid body construction/collision helpers.
 - `src/02-sources.js` - DOM-free infinite source layer editing and material
@@ -50,6 +50,8 @@ between save and load.
   and source/lighting setting commands.
 - `src/02-erosion.js` - Lightweight carried-particle erosion for granular
   materials.
+- `src/02-body-runtime.js` - Dynamic-body physics and grid displacement for
+  non-fixed stone bodies.
 - `src/02-step-world.js` - DOM-free simulation tick wrapper preserving update
   order.
 - `src/04-save-codec.js` - DOM-free snapshot serialization, restore, and
@@ -60,9 +62,11 @@ between save and load.
 - `src/03-lighting.js` - DOM-free base color and light-mask helpers.
 - `src/03-render-buffer.js` - DOM-free RGBA buffer construction from material
   color, tint, and lighting state.
+- `src/03-canvas-render-adapter.js` - Browser-only canvas drawing and transient
+  overlays.
 - `src/03-dom-refs.js` - Browser-only DOM handles shared by UI adapters.
-- `src/03-runtime-render-input.js` - Dynamic body updates, render pipeline,
-  and basin debug overlay.
+- `src/03-app-ui-state-adapter.js` - Browser-only status, resize, tool
+  selection, button sync, and canvas coordinate helpers.
 - `src/03-material-ui-adapter.js` - Browser-only material menu/editor field
   synchronization.
 - `src/03-settings-sync-adapter.js` - Browser-only source-rate and lighting

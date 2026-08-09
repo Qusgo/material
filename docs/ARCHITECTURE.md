@@ -69,15 +69,23 @@ owns the browser-only post-load hook that stops runtime playback, synchronizes
 controls, refreshes previews, and renders after a snapshot has been restored.
 Keep new material data out of algorithm files unless the material needs a
 genuinely new algorithm.
+`src/02-body-runtime.js` owns dynamic-body physics and grid displacement for
+non-fixed stone bodies. It is called from `src/02-step-world.js` and should stay
+free of browser events and drawing.
 `src/03-lighting.js` owns DOM-free render preparation such as base material
-color, light masks, and simple light/shadow blending. Canvas drawing and UI
-remain in `src/03-runtime-render-input.js`. `src/03-render-buffer.js` converts
-the current arrays into an RGBA buffer without touching `canvas` or `document`.
+color, light masks, and simple light/shadow blending. `src/03-render-buffer.js`
+converts the current arrays into an RGBA buffer without touching `canvas` or
+`document`. `src/03-canvas-render-adapter.js` owns browser canvas drawing and
+transient overlays such as basin debug, fill preview, force preview, eraser
+preview, and body drawing.
 `src/00-app-dom-refs.js` owns early browser app-shell DOM handles needed before
 core runtime state loads, such as the canvas, status label, play/debug buttons,
 and brush-size input.
 `src/03-dom-refs.js` owns browser DOM handles shared by material and controls
 adapters.
+`src/03-app-ui-state-adapter.js` owns browser-only status display, canvas
+resize, canvas coordinate conversion, tool/material selection helpers, and
+button active-state synchronization.
 `src/03-material-ui-adapter.js` owns browser material menu/editor field
 synchronization and delegates material mutation to `src/01-runtime-config.js`.
 `src/03-settings-sync-adapter.js` owns browser form value synchronization for
@@ -92,8 +100,8 @@ the `requestAnimationFrame` loop.
 point/line `paint`, `source`, `tint`, `erase`, plus `fill`, `fillAir`, `clear`,
 `force`, and `placeBody`. The browser pointer handlers now route ordinary
 strokes and dynamic body placement commits through these commands. The material
-editor, dynamic body preview/update loop, browser storage wrapper, button
-synchronization, and runtime loop are still browser/runtime responsibilities.
+editor, dynamic body preview, browser storage wrapper, button synchronization,
+and runtime loop are still browser/runtime responsibilities.
 `src/02-force.js` owns DOM-free force application for flow cells and dynamic
 bodies.
 
@@ -472,9 +480,11 @@ reintroduce jitter, non-conservation, and wall leakage.
 - Dynamic stones are approximate rigid bodies and interact with the grid through
   rasterized masks.
 - The code uses classic scripts to avoid build tooling. Respect the load order.
-  `src/03-dom-refs.js` must load before runtime/material/control adapters.
-  `src/03-material-ui-adapter.js` must load after
-  `src/03-runtime-render-input.js`, and `src/03-settings-sync-adapter.js` must
-  load before `src/03-controls-adapter.js` because controls bind to those helper
+  `src/02-body-runtime.js` must load before `src/02-step-world.js`.
+  `src/03-canvas-render-adapter.js` must load after `src/03-render-buffer.js`
+  and before UI adapters that call `render()`. `src/03-dom-refs.js` must load
+  before `src/03-app-ui-state-adapter.js` and other material/control adapters.
+  `src/03-settings-sync-adapter.js` must load
+  before `src/03-controls-adapter.js` because controls bind to those helper
   functions. `src/03-canvas-input-adapter.js` and `src/03-app-bootstrap.js` load
   after the UI adapters.

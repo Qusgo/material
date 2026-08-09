@@ -18,14 +18,16 @@ const RUNTIME_FILES=[
   'src/01-runtime-config.js',
   'src/01-edit-commands.js',
   'src/02-erosion.js',
+  'src/02-body-runtime.js',
   'src/02-step-world.js',
   'src/04-save-codec.js',
   'src/04-save-load.js',
   'src/04-save-ui-adapter.js',
   'src/03-lighting.js',
   'src/03-render-buffer.js',
+  'src/03-canvas-render-adapter.js',
   'src/03-dom-refs.js',
-  'src/03-runtime-render-input.js',
+  'src/03-app-ui-state-adapter.js',
   'src/03-material-ui-adapter.js',
   'src/03-settings-sync-adapter.js',
   'src/03-controls-adapter.js',
@@ -98,6 +100,87 @@ if(cols!==1||rows!==1||count!==1)throw new Error('core-state bootstrap dimension
 if(!currentWorldState()||currentWorldState().arrays.material!==material)throw new Error('core-state did not install active world');
 `;
   runIsolated('runtime bootstrap regression',source);
+}
+
+function browserLoadSmokeRegression(){
+  const source=`
+const calls=[],events={canvas:{},window:{},element:{}};
+function makeContext(){
+  return{
+    setTransform(){calls.push('setTransform')},
+    createImageData(w,h){return{width:w,height:h,data:new Uint8ClampedArray(w*h*4)}},
+    putImageData(){calls.push('putImageData')},
+    drawImage(){calls.push('drawImage')},
+    clearRect(){},
+    fillRect(){},
+    strokeRect(){},
+    save(){},
+    restore(){},
+    beginPath(){},
+    moveTo(){},
+    lineTo(){},
+    closePath(){},
+    arc(){},
+    rect(){},
+    fill(){},
+    stroke(){},
+    translate(){},
+    rotate(){},
+    fillText(){}
+  };
+}
+const fakeCanvas={
+  width:0,
+  height:0,
+  style:{},
+  getContext(){return makeContext()},
+  getBoundingClientRect(){return{left:0,top:0,width:360,height:240}},
+  addEventListener(type,handler){events.canvas[type]=handler},
+  setPointerCapture(){},
+  hasPointerCapture(){return false},
+  releasePointerCapture(){}
+};
+function makeElement(id){
+  return{
+    id,
+    value:id.includes('source-rate')?'1':id.includes('strength')?'50':id.includes('size')?'4':'',
+    checked:false,
+    disabled:false,
+    title:'',
+    textContent:'',
+    innerHTML:'',
+    dataset:{},
+    style:{},
+    classList:{toggle(){}},
+    appendChild(child){return child},
+    addEventListener(type,handler){events.element[id+':'+type]=handler}
+  };
+}
+const elementMap={};
+const document={
+  getElementById(id){
+    if(id==='canvas')return fakeCanvas;
+    return elementMap[id]||(elementMap[id]=makeElement(id));
+  },
+  createElement(tag){return tag==='canvas'?fakeCanvas:makeElement(tag)},
+  querySelectorAll(){return[]}
+};
+const window={
+  devicePixelRatio:1,
+  addEventListener(type,handler){events.window[type]=handler}
+};
+function requestAnimationFrame(handler){calls.push('raf');requestAnimationFrame.last=handler}
+const localStorage={getItem(){return null},setItem(){}};
+function testAssert(condition,message){if(!condition)throw new Error(message)}
+`+RUNTIME_FILES.map(read).join('\n')+`
+testAssert(cols>1&&rows>1&&count===cols*rows,'browser load did not resize/install grid');
+testAssert(!!events.window.resize,'resize handler was not bound');
+testAssert(!!requestAnimationFrame.last&&calls.includes('raf'),'animation frame was not scheduled');
+testAssert(!!events.canvas.pointerdown&&!!events.canvas.pointermove&&!!events.canvas.pointerup,'canvas pointer handlers were not bound');
+testAssert(calls.includes('putImageData')&&calls.includes('drawImage'),'initial render did not draw grid');
+testAssert(typeof render==='function'&&typeof simulationStep==='function','public browser runtime functions missing');
+`;
+  runIsolated('browser load smoke regression',source);
 }
 
 function appDomRefsRegression(){
@@ -820,6 +903,7 @@ testAssert(hexToRgb('bad').join(',')==='36,168,198','hexToRgb should fallback fo
 syntaxRegression();
 appDomRefsRegression();
 runtimeBootstrapRegression();
+browserLoadSmokeRegression();
 materialRegistryRegression();
 runtimeConfigRegression();
 worldArrayRegression();

@@ -13,3 +13,5 @@ function stepWorld(world=currentWorldState()){
   rebuildBodyMask();
   return currentWorldState();
 }
+
+function simulationStep(){return stepWorld()}
