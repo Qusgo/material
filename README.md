@@ -34,13 +34,16 @@ between save and load.
   runtime state.
 - `src/00-core-state.js` - Runtime constants, mutable simulation state, and
   basic coordinate helpers.
-- `src/01-grid-editing.js` - Brush, erase, fill, tint, grid mutation, and
-  edit-state reset helpers.
+- `src/01-cell-state.js` - Low-level cell mutation, transient motion cleanup,
+  tint/source clearing, and cell normalization.
+- `src/01-grid-editing.js` - Brush, erase, tint, grid mutation, and whole-grid
+  edit commands.
+- `src/01-fill-editing.js` - Connected-region fill selection, preview state,
+  and fill application.
 - `src/01-body-geometry.js` - Dynamic-body construction, shape tests, placement,
   and body-mask rasterization.
 - `src/02-sources.js` - DOM-free infinite source layer editing and material
   generation.
-- `src/02-source-render.js` - Canvas overlay for source cells.
 - `src/01-edit-commands.js` - Small command wrapper for non-DOM adapters:
   point/line paint, source, tint, erase, fill-air, clear, force, and dynamic
   body placement.
@@ -66,6 +69,8 @@ between save and load.
   color, tint, and lighting state.
 - `src/03-canvas-render-adapter.js` - Browser-only canvas drawing and transient
   overlays.
+- `src/03-source-render-adapter.js` - Browser-only canvas overlay for source
+  cells.
 - `src/03-dom-refs.js` - Browser-only DOM handles shared by UI adapters.
 - `src/03-app-ui-state-adapter.js` - Browser-only status, resize, brush/eraser
   radius, tool selection, button sync, and canvas coordinate helpers.

@@ -57,8 +57,8 @@ should call helpers such as `isFlowMaterial()`, `isSolidMaterial()`,
 `defaultFlowDirForMaterial()` instead of adding new id checks.
 
 `src/02-sources.js` owns DOM-free infinite source data, source brush helpers,
-and source material generation. `src/02-source-render.js` owns only the canvas
-overlay for those source cells. `src/02-flow-and-water.js` owns algorithms:
+and source material generation. `src/03-source-render-adapter.js` owns only the
+canvas overlay for those source cells. `src/02-flow-and-water.js` owns algorithms:
 gravity/sliding, slope relaxation, water's surface-jitter escape logic,
 stable/wake logic, and the optional legacy basin code.
 `src/02-erosion.js` owns lightweight carried-particle erosion.
@@ -96,8 +96,11 @@ wire DOM events to existing commands/helpers without adding simulation rules.
 `src/03-canvas-input-adapter.js` owns canvas pointer gestures and routes them to
 edit/force commands. `src/03-app-bootstrap.js` owns browser resize binding and
 the `requestAnimationFrame` loop.
-`src/01-grid-editing.js` owns DOM-free grid edits, tint edits, erasing, fill
-selection, and edit-state reset. `src/01-body-geometry.js` owns dynamic-body
+`src/01-cell-state.js` owns low-level cell mutation, transient motion cleanup,
+tint/source clearing, and invalid-material normalization. `src/01-grid-editing.js`
+owns DOM-free brush stamps, tint edits, erasing, whole-grid edit commands, and
+edit-state reset. `src/01-fill-editing.js` owns connected-region fill selection,
+preview state, and fill application. `src/01-body-geometry.js` owns dynamic-body
 construction, shape intersection tests, placement checks, grid clearing under a
 placed body, and body-mask rasterization.
 `src/01-edit-commands.js` is the command-style boundary for editor operations:

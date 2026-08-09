@@ -96,15 +96,16 @@ contains the browser-only post-load UI sync hook.
 - `src/02-body-runtime.js` for dynamic-body physics and grid displacement
 - `src/02-step-world.js` for physics tick order
 - `src/02-erosion.js`
+- `src/01-cell-state.js` for low-level cell mutation and cleanup
 - `src/01-grid-editing.js` for DOM-free grid edit helpers
+- `src/01-fill-editing.js` for connected-region fill selection/application
 - `src/01-body-geometry.js` for dynamic-body construction and body masks
 - `src/04-save-codec.js` for portable snapshot serialize/restore and
   editable-array resampling
 - `src/03-lighting.js` for light masks, base colors, and simple light/shadow
   blending
 - `src/03-render-buffer.js` for DOM-free RGBA buffer construction
-- `src/02-sources.js` for source data and generation, with source canvas
-  presentation isolated in `src/02-source-render.js`
+- `src/02-sources.js` for source data and generation
 
 ## Web Adapter Candidates
 
@@ -121,7 +122,7 @@ contains the browser-only post-load UI sync hook.
 - Canvas pointer event binding in `src/03-canvas-input-adapter.js`
 - Resize and animation-loop startup in `src/03-app-bootstrap.js`
 - Canvas drawing and overlays in `src/03-canvas-render-adapter.js`
-- Source overlay drawing in `src/02-source-render.js`
+- Source overlay drawing in `src/03-source-render-adapter.js`
 - `localStorage` calls in `src/04-save-load.js`
 - CSS and HTML entry points
 

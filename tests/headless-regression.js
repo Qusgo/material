@@ -10,10 +10,11 @@ const RUNTIME_FILES=[
   'src/00-world-state.js',
   'src/00-app-dom-refs.js',
   'src/00-core-state.js',
+  'src/01-cell-state.js',
   'src/01-grid-editing.js',
+  'src/01-fill-editing.js',
   'src/01-body-geometry.js',
   'src/02-sources.js',
-  'src/02-source-render.js',
   'src/02-flow-and-water.js',
   'src/02-force.js',
   'src/01-runtime-config.js',
@@ -27,6 +28,7 @@ const RUNTIME_FILES=[
   'src/03-lighting.js',
   'src/03-render-buffer.js',
   'src/03-canvas-render-adapter.js',
+  'src/03-source-render-adapter.js',
   'src/03-dom-refs.js',
   'src/03-app-ui-state-adapter.js',
   'src/03-material-ui-adapter.js',
@@ -465,7 +467,7 @@ testAssert(material[idx(0,1)]===EMPTY,'source interval should throttle generatio
 }
 
 function editCommandRegression(){
-  const source=sharedPrelude()+read('src/00-materials.js')+read('src/00-world-arrays.js')+read('src/01-grid-editing.js')+read('src/01-body-geometry.js')+read('src/02-sources.js')+read('src/02-force.js')+read('src/01-edit-commands.js')+`
+  const source=sharedPrelude()+read('src/00-materials.js')+read('src/00-world-arrays.js')+read('src/01-cell-state.js')+read('src/01-grid-editing.js')+read('src/01-fill-editing.js')+read('src/01-body-geometry.js')+read('src/02-sources.js')+read('src/02-force.js')+read('src/01-edit-commands.js')+`
 let cols=12,rows=8,count=cols*rows,cellSize=5,viewW=60,viewH=40,editDirty=false,WAKE_RADIUS=2,MAX_FILL_CELLS=100,accumulator=0,BODY_LIMIT=64;
 let material,mass,vx,vy,bodyMask,flowDir,restAge,stableMask,tintR,tintG,tintB,tintA,bgTintR,bgTintG,bgTintB,bgTintA,sourceMat,lightMask;
 let moveHistory,moveFlip,horizontalDir,horizontalTurns,escapeDir,escapeTarget,carriedBy,carriedTTL,lastMoveTick;
@@ -536,7 +538,7 @@ function wakeWaterComponentsAroundCell(){}
 function wakeFlowAroundCell(){}
 function setStatus(){}
 function testAssert(condition,message){if(!condition)throw new Error(message)}
-`+read('src/00-materials.js')+read('src/01-grid-editing.js')+read('src/01-body-geometry.js')+`
+`+read('src/00-materials.js')+read('src/01-cell-state.js')+read('src/01-grid-editing.js')+read('src/01-fill-editing.js')+read('src/01-body-geometry.js')+`
 const rect=makeBodyFromPlacement({kind:'stoneRect',start:{x:25,y:25},current:{x:45,y:45}},true);
 const circle=makeBodyFromPlacement({kind:'stoneCircle',start:{x:52,y:35},current:{x:60,y:35}},true);
 testAssert(rect.type==='rect'&&circle.type==='circle','body construction changed');
