@@ -24,6 +24,7 @@ const RUNTIME_FILES=[
   'src/03-lighting.js',
   'src/03-render-buffer.js',
   'src/03-runtime-render-input.js',
+  'src/03-material-ui-adapter.js',
   'src/03-controls-adapter.js'
 ];
 
@@ -630,6 +631,54 @@ testAssert(calls.includes('command:clear')&&calls.includes('mask'),'clear button
   runIsolated('controls adapter regression',source);
 }
 
+function materialUiAdapterRegression(){
+  const source=sharedPrelude()+read('src/00-materials.js')+read('src/01-runtime-config.js')+`
+function fakeElement(id){
+  return{
+    id,
+    value:'',
+    checked:false,
+    disabled:false,
+    title:'',
+    textContent:'',
+    innerHTML:'',
+    style:{},
+    dataset:{},
+    classList:{toggle(){}},
+    appendChild(child){this.lastChild=child;return child},
+    addEventListener(type,handler){this[type]=handler}
+  };
+}
+const document={createElement(tag){return fakeElement(tag)}};
+let selected='water',materialMenuOpen=false,materialEditorMode=null,materialEditorTarget=0;
+let materialButton=fakeElement('material-button'),materialMenu=fakeElement('material-menu'),materialListEl=fakeElement('material-list'),materialSwatchEl=fakeElement('swatch'),materialLabelEl=fakeElement('label'),materialEditor=fakeElement('editor');
+let materialNameInput=fakeElement('name'),materialColorInput=fakeElement('color'),materialDensityInput=fakeElement('density'),materialBlocksLightInput=fakeElement('blocks'),materialEmissiveInput=fakeElement('emissive'),materialSlopeInput=fakeElement('slope'),materialSlopeRow=fakeElement('slope-row'),materialErosionInput=fakeElement('erosion'),materialErosionRow=fakeElement('erosion-row');
+let addFluidBtn=fakeElement('add-fluid'),addGranularBtn=fakeElement('add-granular'),deleteMaterialBtn=fakeElement('delete');
+let statusText='';
+function setStatus(text){statusText=text}
+function setSelected(key){selected=key}
+function testAssert(condition,message){if(!condition)throw new Error(message)}
+`+read('src/03-material-ui-adapter.js')+`
+openMaterialEditor(MATERIAL_KIND_FLUID);
+testAssert(materialMenuOpen&&materialEditorMode===MATERIAL_KIND_FLUID&&materialEditorTarget===0,'openMaterialEditor should open a new fluid draft');
+materialNameInput.value='Ui Oil';
+materialColorInput.value='#010203';
+materialDensityInput.value='5';
+materialBlocksLightInput.checked=true;
+materialEmissiveInput.checked=true;
+saveCustomMaterial();
+const oilId=MATERIAL_FROM_NAME[selected];
+testAssert(oilId&&materialDef(oilId).name==='Ui Oil'&&materialDef(oilId).density===5,'saveCustomMaterial should register custom fluid');
+testAssert(materialDef(oilId).color[0]===1&&materialBlocksLight(oilId)&&materialEmissive(oilId),'saveCustomMaterial should preserve color and light flags');
+openExistingMaterialEditor(oilId);
+testAssert(materialEditorMode===MATERIAL_KIND_FLUID&&materialEditorTarget===oilId&&materialNameInput.value==='Ui Oil','openExistingMaterialEditor should load existing material');
+deleteExistingMaterial(oilId);
+testAssert(!isKnownMaterial(oilId)&&selected==='water'&&statusText==='Custom material deleted','deleteExistingMaterial should remove unused custom material');
+testAssert(hexToRgb('bad').join(',')==='36,168,198','hexToRgb should fallback for invalid color');
+`;
+  runIsolated('material UI adapter regression',source);
+}
+
 syntaxRegression();
 runtimeBootstrapRegression();
 materialRegistryRegression();
@@ -644,4 +693,5 @@ editCommandRegression();
 movementTintRegression();
 saveLoadRegression();
 saveLoadAdapterRegression();
+materialUiAdapterRegression();
 controlsAdapterRegression();

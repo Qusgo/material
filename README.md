@@ -60,6 +60,8 @@ between save and load.
   color, tint, and lighting state.
 - `src/03-runtime-render-input.js` - Dynamic body updates, render
   pipeline, basin debug overlay, canvas pointer input, and animation loop.
+- `src/03-material-ui-adapter.js` - Browser-only material menu/editor field
+  synchronization.
 - `src/03-controls-adapter.js` - Browser-only toolbar, material menu, save/load,
   and settings control bindings.
 - `app.js` - Legacy note only. Do not reintroduce runtime code there unless the
