@@ -28,15 +28,15 @@ function resize(){
   const rect=canvas.getBoundingClientRect(),nextW=Math.max(320,Math.floor(rect.width)),nextH=Math.max(240,Math.floor(rect.height)); dpr=Math.max(1,Math.min(2,window.devicePixelRatio||1));
   const newCell=Math.max(4,Math.ceil(Math.max(nextW/CELL_MAX_COLS,nextH/CELL_MAX_ROWS))),newCols=Math.max(1,Math.floor(nextW/newCell)),newRows=Math.max(1,Math.floor(nextH/newCell));
   canvas.width=Math.floor(nextW*dpr); canvas.height=Math.floor(nextH*dpr); ctx.setTransform(dpr,0,0,dpr,0,0); viewW=nextW; viewH=nextH;
-  const resized=resizeWorldGrid(newCols,newRows,{cellSize:newCell});
-  if(!resized.changed){render();return}
+  const resized=resizeAppWorld(newCols,newRows,{cellSize:newCell});
+  if(!resized.changed){renderApp();return}
   gridCanvas.width=cols; gridCanvas.height=rows; imageData=gridCtx.createImageData(cols,rows);
-  rebuildBodyMask(); render();
+  rebuildBodyMask(); renderApp();
 }
 function canvasPoint(e){const r=canvas.getBoundingClientRect();return{x:clamp(e.clientX-r.left,0,viewW),y:clamp(e.clientY-r.top,0,viewH)}}
 function getBrushRadius(){return clampInt(brushSizeInput.value,0,10,4)}
 function getEraserRadius(){return typeof eraserSizeInput==='undefined'||!eraserSizeInput?getBrushRadius():clampInt(eraserSizeInput.value,0,10,3)}
 function syncButtons(){document.querySelectorAll('[data-tool]').forEach(b=>b.classList.toggle('active',b.dataset.tool===tool));document.querySelectorAll('[data-material]').forEach(b=>b.classList.toggle('active',b.dataset.material===selected));playBtn.textContent=appContext.running?'Pause':'Play';if(debugBasinsBtn){debugBasinsBtn.classList.toggle('active',appContext.debugBasins);debugBasinsBtn.textContent=appContext.debugBasins?'Basins On':'Basins'}if(typeof renderMaterialMenu==='function')renderMaterialMenu()}
-function setTool(t){tool=t;clearTransientEditUiState();if(tool==='eraser'){appContext.running=false;setStatus('Erase: time paused; removes material, tint, and source')}else if(tool==='fill'){appContext.running=false;setStatus('Fill: replace one connected region')}else if(tool==='force'){appContext.running=false;setStatus('Force: draw an area circle, then an arrow')}else if(tool==='color'){setStatus('Color: tint cells without changing material')}else if(tool==='source'){setStatus('Source: paint an infinite flow-material generator')}else setStatus('Brush: paint material directly');syncButtons();updateFillPreview(appContext.hoverPoint);render()}
-function setSelected(s){selected=s;clearFillPreview();const mat=MATERIAL_FROM_NAME[selected]||WATER;setStatus(isSolidMaterial(mat)?'Stone: fixed stone is drawn':'Material changed');syncButtons();updateFillPreview(appContext.hoverPoint);render()}
+function setTool(t){tool=t;clearTransientEditUiState();if(tool==='eraser'){appContext.running=false;setStatus('Erase: time paused; removes material, tint, and source')}else if(tool==='fill'){appContext.running=false;setStatus('Fill: replace one connected region')}else if(tool==='force'){appContext.running=false;setStatus('Force: draw an area circle, then an arrow')}else if(tool==='color'){setStatus('Color: tint cells without changing material')}else if(tool==='source'){setStatus('Source: paint an infinite flow-material generator')}else setStatus('Brush: paint material directly');syncButtons();updateFillPreview(appContext.hoverPoint);renderApp()}
+function setSelected(s){selected=s;clearFillPreview();const mat=MATERIAL_FROM_NAME[selected]||WATER;setStatus(isSolidMaterial(mat)?'Stone: fixed stone is drawn':'Material changed');syncButtons();updateFillPreview(appContext.hoverPoint);renderApp()}
 function pauseForEdit(){if(appContext.running){appContext.running=false;resetRuntimeClock();syncButtons()}}

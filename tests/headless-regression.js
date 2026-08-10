@@ -107,6 +107,34 @@ if(!currentWorldState()||currentWorldState().arrays.material!==material)throw ne
   runIsolated('runtime bootstrap regression',source);
 }
 
+function appContextRegression(){
+  const source=`
+const calls=[],initialWorld={id:'initial'},nextWorld={id:'next'};
+function currentWorldState(){calls.push('current');return initialWorld}
+function createSimulationEngine(options){
+  if(options.world!==initialWorld)throw new Error('appContext should seed engine from current world');
+  return{
+    currentWorld(){calls.push('engine-current');return nextWorld},
+    edit(command){calls.push('edit:'+command.type);return true},
+    step(iterations){calls.push('step:'+iterations);return nextWorld},
+    resize(cols,rows,options){calls.push('resize:'+cols+'x'+rows+'/'+options.cellSize);return{changed:true,world:nextWorld}}
+  };
+}
+function render(world,context){if(world!==nextWorld||context!==appContext)throw new Error('renderApp should pass app world and context');calls.push('render')}
+function testAssert(condition,message){if(!condition)throw new Error(message)}
+`+read('src/03-app-context.js')+`
+testAssert(appContext.engine,'appContext should own the browser engine');
+testAssert(appWorld()===nextWorld,'appWorld should delegate to engine.currentWorld');
+testAssert(applyAppEditCommand({type:'paint'}),'applyAppEditCommand should delegate to engine.edit');
+testAssert(stepAppWorld(2)===nextWorld,'stepAppWorld should delegate to engine.step');
+const resized=resizeAppWorld(4,5,{cellSize:6});
+testAssert(resized.changed&&resized.world===nextWorld,'resizeAppWorld should delegate to engine.resize');
+renderApp();
+testAssert(calls.includes('edit:paint')&&calls.includes('step:2')&&calls.includes('resize:4x5/6')&&calls.includes('render'),'appContext helpers changed');
+`;
+  runIsolated('app context regression',source);
+}
+
 function headlessCoreSmokeRegression(){
   const coreFiles=[
     'src/00-materials.js',
@@ -808,7 +836,7 @@ function syncButtons(){calls.push('buttons')}
 function syncSourceRateControls(arg){if(arg!==null)throw new Error('source controls should sync from state');calls.push('source')}
 function syncLightingControls(arg){if(arg!==null)throw new Error('lighting controls should sync from state');calls.push('lighting')}
 function updateFillPreview(){calls.push('preview')}
-function render(){calls.push('render')}
+function renderApp(){calls.push('render')}
 function resetRuntimeClock(){clockReset=true}
 function testAssert(condition,message){if(!condition)throw new Error(message)}
 const result=loadCanvasSnapshot();
@@ -862,8 +890,9 @@ let brushSizeInput=fakeElement('brush','4'),brushSizeNumberInput=fakeElement('br
 let sourceRateInput=fakeElement('source','1'),sourceRateNumberInput=fakeElement('source-number','1');
 let lightingEnabledInput=fakeElement('lighting'),lightStrengthInput=fakeElement('light','18'),lightStrengthNumberInput=fakeElement('light-number','18'),sideLightStrengthInput=fakeElement('side','100'),sideLightStrengthNumberInput=fakeElement('side-number','100'),shadowStrengthInput=fakeElement('shadow','16'),shadowStrengthNumberInput=fakeElement('shadow-number','16');
 let tintColorInput=fakeElement('tint');
-const adapterWorld={id:'adapter-world'};
-function currentWorldState(){return adapterWorld}
+function currentWorldState(){throw new Error('controls should use app engine helpers')}
+function stepWorld(){throw new Error('controls should use stepAppWorld')}
+function applyEditCommand(){throw new Error('controls should use applyAppEditCommand')}
 function setTool(tool){calls.push('tool:'+tool)}
 function renderMaterialMenu(){calls.push('menu')}
 function openMaterialEditor(kind){calls.push('open:'+kind)}
@@ -876,13 +905,13 @@ function syncSourceRateControls(source){calls.push('source:'+(source&&source.id)
 function syncLightingControls(source){calls.push('lighting:'+(source&&source.id))}
 function setStatus(text){calls.push('status:'+text)}
 function syncButtons(){calls.push('buttons')}
-function stepWorld(world){if(world!==adapterWorld)throw new Error('step button should pass current world');calls.push('step')}
-function applyEditCommand(world,command){if(world!==adapterWorld)throw new Error('controls should pass current world');calls.push('command:'+command.type);return true}
+function stepAppWorld(){calls.push('step')}
+function applyAppEditCommand(command){calls.push('command:'+command.type);return true}
 function rebuildBodyMask(){calls.push('mask')}
 function saveCanvasSnapshot(){calls.push('save-canvas');return{message:'saved'}}
 function loadCanvasSnapshot(){calls.push('load-canvas');return{message:'loaded'}}
 function getTintColor(){return[1,2,3]}
-function render(){calls.push('render')}
+function renderApp(){calls.push('render')}
 function testAssert(condition,message){if(!condition)throw new Error(message)}
 `+read('src/03-controls-adapter.js')+`
 toolButton.click();
@@ -1009,8 +1038,6 @@ const canvas={
 const MATERIAL_FROM_NAME={water:1},WATER=1;
 let tool='brush',selected='water';
 const appContext={running:true,accumulator:9,pointerDown:false,lastPoint:null,hoverPoint:null,placing:null,forceState:null};
-const inputWorld={id:'input-world'};
-function currentWorldState(){return inputWorld}
 function canvasPoint(e){return{x:e.clientX,y:e.clientY}}
 function pauseForEdit(){appContext.running=false;appContext.accumulator=0;calls.push('pause')}
 function isBodyMaterial(){return false}
@@ -1021,11 +1048,13 @@ function getTintColor(){return[1,2,3]}
 function updateFillPreview(){calls.push('preview')}
 function clearFillPreview(){calls.push('clear-preview')}
 function applyFill(){calls.push('fill')}
-function applyEditCommand(world,command){if(world!==inputWorld)throw new Error('canvas input should pass current world');calls.push('command:'+command.type);return true}
+function applyAppEditCommand(command){calls.push('command:'+command.type);return true}
+function applyEditCommand(){throw new Error('canvas input should use applyAppEditCommand')}
+function currentWorldState(){throw new Error('canvas input should use app engine helpers')}
 function setStatus(text){calls.push('status:'+text)}
 function finishEditAsNewInitialState(){calls.push('finish')}
 function rebuildBodyMask(){calls.push('mask')}
-function render(){calls.push('render')}
+function renderApp(){calls.push('render')}
 function testAssert(condition,message){if(!condition)throw new Error(message)}
 `+read('src/03-canvas-input-adapter.js')+`
 testAssert(Object.keys(handlers).sort().join(',')==='pointercancel,pointerdown,pointerleave,pointermove,pointerup','canvas pointer handlers changed');
@@ -1044,12 +1073,10 @@ const source=`
 const calls=[];
 let SIM_STEP_MS=14;
 const appContext={running:true,lastFrame:0,accumulator:0};
-const bootWorld={id:'boot-world'};
 const window={addEventListener(type,handler){calls.push('window:'+type);this[type]=handler}};
 function resize(){calls.push('resize')}
-function currentWorldState(){return bootWorld}
-function stepWorld(world){if(world!==bootWorld)throw new Error('frame loop should pass current world');calls.push('step')}
-function render(world,context){if(world!==bootWorld||context!==appContext)throw new Error('frame loop should pass explicit world/context');calls.push('render')}
+function stepAppWorld(){calls.push('step')}
+function renderApp(){calls.push('render')}
 function requestAnimationFrame(handler){calls.push('raf');requestAnimationFrame.last=handler}
 function testAssert(condition,message){if(!condition)throw new Error(message)}
 `+read('src/03-app-bootstrap.js')+`
@@ -1116,6 +1143,7 @@ testAssert(hexToRgb('bad').join(',')==='36,168,198','hexToRgb should fallback fo
 syntaxRegression();
 appDomRefsRegression();
 runtimeBootstrapRegression();
+appContextRegression();
 headlessCoreSmokeRegression();
 simulationEngineRegression();
 browserLoadSmokeRegression();

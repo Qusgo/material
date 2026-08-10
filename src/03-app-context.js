@@ -5,6 +5,7 @@
 // classic-script loading model yet.
 
 const appContext={
+  engine:createSimulationEngine({world:currentWorldState()}),
   statusText:'Brush: paint material directly',
   running:false,
   debugBasins:false,
@@ -19,3 +20,23 @@ const appContext={
   lastFrame:0,
   accumulator:0
 };
+
+function appWorld(){
+  return appContext.engine.currentWorld();
+}
+
+function applyAppEditCommand(command){
+  return appContext.engine.edit(command);
+}
+
+function stepAppWorld(iterations=1){
+  return appContext.engine.step(iterations);
+}
+
+function resizeAppWorld(nextCols,nextRows,options={}){
+  return appContext.engine.resize(nextCols,nextRows,options);
+}
+
+function renderApp(){
+  render(appWorld(),appContext);
+}

@@ -89,8 +89,11 @@ core runtime state loads, such as the canvas, status label, play/debug buttons,
 and brush-size input.
 `src/03-app-context.js` owns the browser app-shell state object. This plain
 object holds status text, play/pause, debug display, material menu/editor state,
-pointer/hover/placement/force-preview state, and frame timing. It is adapter
-state, not simulation state; core files should not read it.
+pointer/hover/placement/force-preview state, frame timing, and the browser-owned
+simulation engine facade. Its helpers (`appWorld()`, `applyAppEditCommand()`,
+`stepAppWorld()`, `resizeAppWorld()`, and `renderApp()`) are the browser
+adapter's preferred path into the engine. This is adapter state, not simulation
+state; core files should not read it.
 `src/03-dom-refs.js` owns browser DOM handles shared by material and controls
 adapters.
 `src/03-app-ui-state-adapter.js` owns browser-only status display, canvas resize,
@@ -126,9 +129,10 @@ point/line `paint`, `source`, `tint`, `erase`, plus `fill`, `fillAir`, `clear`,
 `applyEditCommand(world, command)` form. Passing a world installs that
 compatibility shell through `useWorldState(world)` before applying the command.
 The browser pointer handlers now route ordinary strokes and dynamic body
-placement commits through these commands using `currentWorldState()`. The material editor, dynamic body
-preview, browser storage wrapper, button synchronization, and runtime loop are
-still browser/runtime responsibilities.
+placement commits through `applyAppEditCommand()`, which delegates to the
+browser-owned engine facade. The material editor, dynamic body preview, browser
+storage wrapper, button synchronization, and runtime loop are still
+browser/runtime responsibilities.
 `src/02-force.js` owns DOM-free force application for flow cells and dynamic
 bodies.
 

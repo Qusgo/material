@@ -45,7 +45,8 @@ wrappers for point/line paint/source/tint/erase, fill/fillAir/clear, force, and
 dynamic body placement edits. `stepWorld(world)`,
 `applyEditCommand(world, command)`, and `buildRenderBuffer(world, data)` now
 accept explicit world shells while keeping their legacy call forms. Browser
-step/edit/render call sites now pass `currentWorldState()` explicitly.
+step/edit/resize/render call sites now go through app engine helpers in
+`src/03-app-context.js` instead of calling those core wrappers directly.
 `src/01-runtime-config.js` exposes DOM-free
 material configuration and runtime setting commands. `src/04-save-codec.js`
 exposes portable
@@ -56,10 +57,12 @@ groups browser app-shell state such as play/pause, status, debug display,
 material editor/menu state, pointer previews, and frame timing so those values
 are visible as adapter context instead of being mixed into core state.
 `src/03-simulation-engine.js` now provides a DOM-free compatibility facade for
-future non-browser adapters. It exposes one object for create/edit/step/render
-buffer/serialize/restore/resize/clear while still using the classic-script
-world shell internally. `docs/PORTABLE_ADAPTER_GUIDE.md` describes how a
-WebView, mini-program, or native shell should connect to that facade.
+browser and future non-browser adapters. It exposes one object for
+create/edit/step/render buffer/serialize/restore/resize/clear while still using
+the classic-script world shell internally. The browser app context owns an
+engine instance and exposes helper functions around it.
+`docs/PORTABLE_ADAPTER_GUIDE.md` describes how a WebView, mini-program, or
+native shell should connect to that facade.
 
 ## Migration Order
 
@@ -98,11 +101,11 @@ WebView, mini-program, or native shell should connect to that facade.
    in `src/03-canvas-input-adapter.js`, and fill preview state lives in
    `src/01-fill-editing.js`. Browser frame timing lives behind
    `resetRuntimeClock()` in `src/03-app-bootstrap.js` and stores timing fields
-   in `appContext`. Continue by making browser adapter entry points receive an
-   explicit world/context pair consistently. The first explicit-world
+   in `appContext`. Browser adapter entry points now use `appContext` engine
+   helpers for edit, step, resize, and render. The first explicit-world
    compatibility forms are now in place for step, edit, render buffer, and the
    browser canvas render call. `createSimulationEngine()` now wraps those
-   boundaries for future adapters.
+   boundaries for browser and future adapters.
 6. Only after the command boundary exists, migrate to TypeScript or a bundler
    such as Vite.
 7. If more speed is needed later, the headless core can be ported to Rust/WASM

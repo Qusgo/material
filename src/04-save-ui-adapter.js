@@ -10,5 +10,5 @@ function syncCanvasAfterSnapshotLoad(){
   if(typeof syncSourceRateControls==='function')syncSourceRateControls(null);
   if(typeof syncLightingControls==='function')syncLightingControls(null);
   if(typeof updateFillPreview==='function')updateFillPreview(appContext.hoverPoint);
-  if(typeof render==='function')render();
+  if(typeof renderApp==='function')renderApp();
 }

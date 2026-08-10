@@ -131,8 +131,9 @@ global names, handles DOM-free grid resize resampling, and lets
 `stepWorld(world)`, `applyEditCommand(world, command)`, and
 `buildRenderBuffer(world, data)` preserve the current update/edit/render order
 without changing gameplay in the same step. The old one-argument browser calls
-still work, but browser adapters now pass `currentWorldState()` at their
-step/edit/render call sites. The browser canvas adapter also accepts
+still work, but browser adapters now go through the app engine helpers in
+`src/03-app-context.js` for edit, step, resize, and render calls. The browser
+canvas adapter also accepts
 `render(world, appContext)` while keeping the old `render()` convenience form.
 `createSimulationEngine()` in `src/03-simulation-engine.js` is the preferred
 portable facade for future adapters. It still installs its world into the
@@ -141,10 +142,10 @@ object for `edit()`, `step()`, `renderBuffer()`, `serialize()`, `restore()`,
 `resize()`, and `clear()`.
 Browser app-shell state lives in `src/03-app-context.js`. UI adapters read and
 write that plain `appContext` object for play/pause, status text, debug display,
-material menu/editor state, pointer/placement/force-preview state, and frame
-timing. Frame timing is still controlled through `resetRuntimeClock()` in
-`src/03-app-bootstrap.js`; core/edit code should call that hook instead of
-touching RAF accumulator state.
+material menu/editor state, pointer/placement/force-preview state, frame
+timing, and the browser-owned engine facade. Frame timing is still controlled
+through `resetRuntimeClock()` in `src/03-app-bootstrap.js`; core/edit code
+should call that hook instead of touching RAF accumulator state.
 
 When changing water behavior, read `docs/ARCHITECTURE.md` first. Most previous
 bugs came from local water rules fighting the component-level water stabilizer.
