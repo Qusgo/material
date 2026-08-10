@@ -207,9 +207,24 @@ function createSimulationEngine(options){
     runtimeSettings(){calls.push('runtime-current');return{sourceInterval:1,lightingEnabled:true,lightStrength:.18,sideLightStrength:1,shadowStrength:.16}}
   };
 }
-function render(world,context){if(world!==nextWorld||context!==appContext)throw new Error('renderApp should pass app world and context');calls.push('render')}
+function render(world,context){calls.push('render:'+world.id+'/'+context.label)}
 function testAssert(condition,message){if(!condition)throw new Error(message)}
 `+read('src/03-app-context.js')+`
+appContext.label='main';
+const altContext={
+  label:'alt',
+  engine:{
+    currentWorld(){calls.push('alt-current');return{id:'alt-world'}},
+    edit(command){calls.push('alt-edit:'+command.type);return true},
+    step(iterations){calls.push('alt-step:'+iterations);return{id:'alt-step-world'}},
+    resize(cols,rows,options){calls.push('alt-resize:'+cols+'x'+rows+'/'+options.cellSize);return{changed:false,world:{id:'alt-resized'}}},
+    serialize(){calls.push('alt-serialize');return{version:3}},
+    restore(snapshot){calls.push('alt-restore:'+snapshot.version);return{ok:true}},
+    materialCommand(command){calls.push('alt-material:'+command.type);return{ok:true}},
+    runtimeSettingsCommand(command){calls.push('alt-runtime:'+command.type);return{ok:true}},
+    runtimeSettings(){calls.push('alt-runtime-current');return{sourceInterval:9}}
+  }
+};
 testAssert(appContext.engine,'appContext should own the browser engine');
 testAssert(appWorld()===nextWorld,'appWorld should delegate to engine.currentWorld');
 testAssert(applyAppEditCommand({type:'paint'}),'applyAppEditCommand should delegate to engine.edit');
@@ -222,7 +237,18 @@ testAssert(applyAppMaterialCommand({type:'add'}).ok,'applyAppMaterialCommand sho
 testAssert(applyAppRuntimeSettingsCommand({type:'sourceInterval'}).ok,'applyAppRuntimeSettingsCommand should delegate to engine.runtimeSettingsCommand');
 testAssert(currentAppRuntimeSettings().sourceInterval===1,'currentAppRuntimeSettings should delegate to engine.runtimeSettings');
 renderApp();
-testAssert(calls.includes('edit:paint')&&calls.includes('step:2')&&calls.includes('resize:4x5/6')&&calls.includes('serialize')&&calls.includes('restore:2')&&calls.includes('material:add')&&calls.includes('runtime:sourceInterval')&&calls.includes('runtime-current')&&calls.includes('render'),'appContext helpers changed');
+testAssert(appWorld(altContext).id==='alt-world','appWorld should accept explicit context');
+testAssert(applyAppEditCommand({type:'paint'},altContext),'applyAppEditCommand should accept explicit context');
+testAssert(stepAppWorld(4,altContext).id==='alt-step-world','stepAppWorld should accept explicit context');
+testAssert(!resizeAppWorld(6,7,{cellSize:8},altContext).changed,'resizeAppWorld should accept explicit context');
+testAssert(serializeAppSnapshot(altContext).version===3,'serializeAppSnapshot should accept explicit context');
+testAssert(restoreAppSnapshot({version:4},altContext).ok,'restoreAppSnapshot should accept explicit context');
+testAssert(applyAppMaterialCommand({type:'delete'},altContext).ok,'applyAppMaterialCommand should accept explicit context');
+testAssert(applyAppRuntimeSettingsCommand({type:'lighting'},altContext).ok,'applyAppRuntimeSettingsCommand should accept explicit context');
+testAssert(currentAppRuntimeSettings(altContext).sourceInterval===9,'currentAppRuntimeSettings should accept explicit context');
+renderApp(altContext);
+testAssert(calls.includes('edit:paint')&&calls.includes('step:2')&&calls.includes('resize:4x5/6')&&calls.includes('serialize')&&calls.includes('restore:2')&&calls.includes('material:add')&&calls.includes('runtime:sourceInterval')&&calls.includes('runtime-current')&&calls.includes('render:next/main'),'appContext helpers changed');
+testAssert(calls.includes('alt-edit:paint')&&calls.includes('alt-step:4')&&calls.includes('alt-resize:6x7/8')&&calls.includes('alt-serialize')&&calls.includes('alt-restore:4')&&calls.includes('alt-material:delete')&&calls.includes('alt-runtime:lighting')&&calls.includes('alt-runtime-current')&&calls.includes('render:alt-world/alt'),'explicit app context helpers changed');
 `;
   runIsolated('app context regression',source);
 }

@@ -26,42 +26,47 @@ const appContext={
 };
 if(typeof globalThis!=='undefined')globalThis.appContext=appContext;
 
-function appWorld(){
-  return appContext.engine.currentWorld();
+function resolveAppContext(context=appContext){
+  return context||appContext;
 }
 
-function applyAppEditCommand(command){
-  return appContext.engine.edit(command);
+function appWorld(context=appContext){
+  return resolveAppContext(context).engine.currentWorld();
 }
 
-function stepAppWorld(iterations=1){
-  return appContext.engine.step(iterations);
+function applyAppEditCommand(command,context=appContext){
+  return resolveAppContext(context).engine.edit(command);
 }
 
-function resizeAppWorld(nextCols,nextRows,options={}){
-  return appContext.engine.resize(nextCols,nextRows,options);
+function stepAppWorld(iterations=1,context=appContext){
+  return resolveAppContext(context).engine.step(iterations);
 }
 
-function serializeAppSnapshot(){
-  return appContext.engine.serialize();
+function resizeAppWorld(nextCols,nextRows,options={},context=appContext){
+  return resolveAppContext(context).engine.resize(nextCols,nextRows,options);
 }
 
-function restoreAppSnapshot(snapshot){
-  return appContext.engine.restore(snapshot);
+function serializeAppSnapshot(context=appContext){
+  return resolveAppContext(context).engine.serialize();
 }
 
-function applyAppMaterialCommand(command){
-  return appContext.engine.materialCommand(command);
+function restoreAppSnapshot(snapshot,context=appContext){
+  return resolveAppContext(context).engine.restore(snapshot);
 }
 
-function applyAppRuntimeSettingsCommand(command){
-  return appContext.engine.runtimeSettingsCommand(command);
+function applyAppMaterialCommand(command,context=appContext){
+  return resolveAppContext(context).engine.materialCommand(command);
 }
 
-function currentAppRuntimeSettings(){
-  return appContext.engine.runtimeSettings();
+function applyAppRuntimeSettingsCommand(command,context=appContext){
+  return resolveAppContext(context).engine.runtimeSettingsCommand(command);
 }
 
-function renderApp(){
-  render(appWorld(),appContext);
+function currentAppRuntimeSettings(context=appContext){
+  return resolveAppContext(context).engine.runtimeSettings();
+}
+
+function renderApp(context=appContext){
+  const active=resolveAppContext(context);
+  render(appWorld(active),active);
 }

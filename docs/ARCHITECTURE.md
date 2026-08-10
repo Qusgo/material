@@ -99,7 +99,9 @@ timing, and the browser-owned simulation engine facade. Its helpers
 (`appWorld()`, `applyAppEditCommand()`,
 `stepAppWorld()`, `resizeAppWorld()`, `applyAppMaterialCommand()`,
 `applyAppRuntimeSettingsCommand()`, `currentAppRuntimeSettings()`, and
-`renderApp()`) are the browser adapter's preferred path into the engine. This is
+`renderApp()`) are the browser adapter's preferred path into the engine. Each
+helper defaults to the singleton browser `appContext`, but can also receive an
+explicit context object for WebView, mini-program, or native shells. This is
 adapter state, not simulation state; core files should not read it.
 `currentTool()`, `setCurrentTool()`, `currentSelectedKey()`, and
 `setCurrentSelectedKey()` keep `appContext` and the legacy `tool`/`selected`

@@ -151,7 +151,9 @@ write that plain `appContext` object for play/pause, status text, debug display,
 tool/material selection, material menu/editor state,
 pointer/placement/force-preview state, frame timing, and the browser-owned
 engine facade. The old `tool` and `selected` globals are synchronized as a
-classic-script compatibility mirror. Frame timing is still controlled through
+classic-script compatibility mirror. App helper functions default to the
+browser singleton but also accept an explicit context object for future
+platform shells. Frame timing is still controlled through
 `resetRuntimeClock()` in `src/03-app-bootstrap.js`; core/edit code should call
 that hook instead of touching RAF accumulator state.
 
