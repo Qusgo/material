@@ -109,6 +109,16 @@ if(currentTool()!=='eraser'||currentSelectedKey()!=='sand')throw new Error('sele
 setCurrentTool('fill');
 setCurrentSelectedKey('stone');
 if(tool!=='fill'||selected!=='stone'||globalThis.appContext.tool!=='fill'||globalThis.appContext.selected!=='stone')throw new Error('selection helpers should sync legacy globals and appContext');
+sourceInterval=9;
+lightingEnabled=false;
+lightStrength=.4;
+sideLightStrength=.6;
+shadowStrength=.2;
+let settings=currentRuntimeSettingsState();
+if(settings.sourceInterval!==9||settings.lightingEnabled!==false||settings.lightStrength!==.4||settings.sideLightStrength!==.6||settings.shadowStrength!==.2)throw new Error('runtime settings should capture legacy global writes');
+settings=applyRuntimeSettingsState({sourceInterval:99,lightingEnabled:true,lightStrength:2,sideLightStrength:3,shadowStrength:-1});
+if(sourceInterval!==60||lightingEnabled!==true||lightStrength!==1||sideLightStrength!==2||shadowStrength!==0)throw new Error('runtime settings should clamp and sync legacy globals');
+if(settings.sourceInterval!==60||settings.lightStrength!==1||settings.sideLightStrength!==2||settings.shadowStrength!==0)throw new Error('runtime settings should return clamped values');
 `;
   runIsolated('runtime bootstrap regression',source);
 }
@@ -364,6 +374,7 @@ function idx(c,r){return r*cols+c}
 function normalizeMaterialCell(i){return isKnownMaterial(material[i])?material[i]:EMPTY}
 function testAssert(condition,message){if(!condition)throw new Error(message)}
 function reset(){material.fill(EMPTY);lightMask.fill(0)}
+${extractFunction(lighting,'lightingRuntimeSettings')}
 ${extractFunction(lighting,'buildLightMask')}
 
 reset();

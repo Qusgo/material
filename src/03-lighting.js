@@ -7,9 +7,21 @@ function blendChannel(a,b,t){
   return Math.floor(a+(b-a)*t);
 }
 
+function lightingRuntimeSettings(){
+  return typeof currentRuntimeSettingsState==='function'
+    ?currentRuntimeSettingsState()
+    :{
+      lightingEnabled:typeof lightingEnabled==='undefined'?true:lightingEnabled,
+      lightStrength:typeof lightStrength==='undefined'?.18:lightStrength,
+      sideLightStrength:typeof sideLightStrength==='undefined'?1:sideLightStrength,
+      shadowStrength:typeof shadowStrength==='undefined'?.16:shadowStrength
+    };
+}
+
 function buildLightMask(){
+  const settings=lightingRuntimeSettings();
   lightMask.fill(0);
-  if(!lightingEnabled)return;
+  if(!settings.lightingEnabled)return;
   for(let c=0;c<cols;c++){
     let lit=true;
     for(let r=0;r<rows;r++){
@@ -18,7 +30,7 @@ function buildLightMask(){
       if(lit&&m!==EMPTY&&materialBlocksLight(m))lit=false;
     }
   }
-  if(sideLightStrength<=0)return;
+  if(settings.sideLightStrength<=0)return;
   for(let r=0;r<rows;r++){
     for(let c=0;c<cols-1;c++){
       const i=idx(c,r),right=idx(c+1,r),targetMat=normalizeMaterialCell(right);
@@ -29,16 +41,17 @@ function buildLightMask(){
 }
 
 function applySimpleLighting(r,g,b,lightBits){
-  if(!lightingEnabled)return[r,g,b];
+  const settings=lightingRuntimeSettings();
+  if(!settings.lightingEnabled)return[r,g,b];
   if(lightBits&1){
     return[
-      blendChannel(r,255,lightStrength),
-      blendChannel(g,255,lightStrength),
-      blendChannel(b,255,lightStrength)
+      blendChannel(r,255,settings.lightStrength),
+      blendChannel(g,255,settings.lightStrength),
+      blendChannel(b,255,settings.lightStrength)
     ];
   }
   if(lightBits&2){
-    const t=clamp(lightStrength*sideLightStrength,0,1);
+    const t=clamp(settings.lightStrength*settings.sideLightStrength,0,1);
     return[
       blendChannel(r,255,t),
       blendChannel(g,255,t),
@@ -46,9 +59,9 @@ function applySimpleLighting(r,g,b,lightBits){
     ];
   }
   return[
-    blendChannel(r,0,shadowStrength),
-    blendChannel(g,0,shadowStrength),
-    blendChannel(b,0,shadowStrength)
+    blendChannel(r,0,settings.shadowStrength),
+    blendChannel(g,0,settings.shadowStrength),
+    blendChannel(b,0,settings.shadowStrength)
   ];
 }
 

@@ -20,6 +20,42 @@ let bodies=[],nextBodyId=1,tool='brush',selected='water',simTick=0,editDirty=fal
 let sourceInterval=1;
 let airColor=[255,255,255];
 let lightingEnabled=true,lightStrength=.18,sideLightStrength=1,shadowStrength=.16;
+const runtimeSettings={sourceInterval,lightingEnabled,lightStrength,sideLightStrength,shadowStrength};
+function captureRuntimeSettingsFromGlobals(){
+  runtimeSettings.sourceInterval=clampInt(sourceInterval,1,60,1);
+  runtimeSettings.lightingEnabled=!!lightingEnabled;
+  runtimeSettings.lightStrength=Number.isFinite(Number(lightStrength))?clamp(Number(lightStrength),0,1):.18;
+  runtimeSettings.sideLightStrength=Number.isFinite(Number(sideLightStrength))?clamp(Number(sideLightStrength),0,2):1;
+  runtimeSettings.shadowStrength=Number.isFinite(Number(shadowStrength))?clamp(Number(shadowStrength),0,1):.16;
+  return runtimeSettings;
+}
+function syncRuntimeSettingsToGlobals(settings=runtimeSettings){
+  sourceInterval=clampInt(settings.sourceInterval,1,60,1);
+  lightingEnabled=!!settings.lightingEnabled;
+  lightStrength=Number.isFinite(Number(settings.lightStrength))?clamp(Number(settings.lightStrength),0,1):.18;
+  sideLightStrength=Number.isFinite(Number(settings.sideLightStrength))?clamp(Number(settings.sideLightStrength),0,2):1;
+  shadowStrength=Number.isFinite(Number(settings.shadowStrength))?clamp(Number(settings.shadowStrength),0,1):.16;
+  runtimeSettings.sourceInterval=sourceInterval;
+  runtimeSettings.lightingEnabled=lightingEnabled;
+  runtimeSettings.lightStrength=lightStrength;
+  runtimeSettings.sideLightStrength=sideLightStrength;
+  runtimeSettings.shadowStrength=shadowStrength;
+  return runtimeSettings;
+}
+function currentRuntimeSettingsState(){
+  const settings=captureRuntimeSettingsFromGlobals();
+  return{sourceInterval:settings.sourceInterval,lightingEnabled:settings.lightingEnabled,lightStrength:settings.lightStrength,sideLightStrength:settings.sideLightStrength,shadowStrength:settings.shadowStrength};
+}
+function applyRuntimeSettingsState(patch={}){
+  captureRuntimeSettingsFromGlobals();
+  if(Object.prototype.hasOwnProperty.call(patch,'sourceInterval'))runtimeSettings.sourceInterval=patch.sourceInterval;
+  if(Object.prototype.hasOwnProperty.call(patch,'lightingEnabled'))runtimeSettings.lightingEnabled=patch.lightingEnabled;
+  if(Object.prototype.hasOwnProperty.call(patch,'lightStrength'))runtimeSettings.lightStrength=patch.lightStrength;
+  if(Object.prototype.hasOwnProperty.call(patch,'sideLightStrength'))runtimeSettings.sideLightStrength=patch.sideLightStrength;
+  if(Object.prototype.hasOwnProperty.call(patch,'shadowStrength'))runtimeSettings.shadowStrength=patch.shadowStrength;
+  syncRuntimeSettingsToGlobals(runtimeSettings);
+  return currentRuntimeSettingsState();
+}
 function appShellContext(){
   if(typeof globalThis!=='undefined'&&globalThis.appContext)return globalThis.appContext;
   try{return typeof appContext!=='undefined'&&appContext?appContext:null}catch(e){return null}

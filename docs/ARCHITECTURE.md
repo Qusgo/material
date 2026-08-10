@@ -153,7 +153,10 @@ and lighting setting clamping. The browser UI still owns input widgets and
 status messages, but should not duplicate these rules. Browser adapters should
 reach these commands through the app engine helpers rather than calling
 runtime-config globals directly; this keeps a future WebView or mini-program
-adapter on the same facade.
+adapter on the same facade. Runtime settings are bridged through
+`currentRuntimeSettingsState()` and `applyRuntimeSettingsState()` in
+`src/00-core-state.js`; the legacy globals remain synchronized mirrors while
+classic-script compatibility remains.
 
 The Material menu can register up to `MAX_CUSTOM_MATERIALS` temporary materials
 per page load. Custom fluid inputs are name, color, and integer density
@@ -290,10 +293,11 @@ is emissive.
 The Source tool writes only to `sourceMat`. Source cells are also location
 overlays: they do not block movement, do not move with particles, and do not
 overwrite occupied material cells. `applySources()` runs only during simulation;
-if `simTick % sourceInterval === 0`, each empty source cell creates one cell of
-its stored flow material. `sourceInterval` is global and clamped to `1..60`;
-`1` means every frame. Brush, fill, and user erase clear source cells they edit,
-while normal physics deletion and movement leave source cells intact.
+if `simTick % currentRuntimeSettingsState().sourceInterval === 0`, each empty
+source cell creates one cell of its stored flow material. The legacy
+`sourceInterval` global is still synchronized and clamped to `1..60`; `1` means
+every frame. Brush, fill, and user erase clear source cells they edit, while
+normal physics deletion and movement leave source cells intact.
 
 ## Update Order
 

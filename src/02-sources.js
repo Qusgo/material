@@ -47,7 +47,8 @@ function drawSourceContinuous(a,b,mat){
 }
 
 function sourceIntervalReady(){
-  const interval=Math.max(1,sourceInterval|0);
+  const settings=typeof currentRuntimeSettingsState==='function'?currentRuntimeSettingsState():{sourceInterval};
+  const interval=Math.max(1,settings.sourceInterval|0);
   return simTick%interval===0;
 }
 

@@ -55,8 +55,10 @@ to work while migration continues.
 - Hot arrays such as `material`, `mass`, `sourceMat`, and `bodyMask` still live
   as globals. `WorldState` owns allocation and installation, but the physics
   code still mutates those globals directly.
-- Runtime settings such as `sourceInterval`, `lightingEnabled`, and light
-  strengths are still global values behind command helpers.
+- Runtime settings now have a small state/accessor bridge through
+  `currentRuntimeSettingsState()` and `applyRuntimeSettingsState()`, but the
+  old `sourceInterval`, `lightingEnabled`, and light-strength globals are still
+  synchronized mirrors for classic-script compatibility.
 - Dynamic body state (`bodies`, `nextBodyId`) is still global. The UI currently
   exposes only fixed stone, so this is lower risk, but it must be revisited
   before re-enabling dynamic stones in another platform.
@@ -66,17 +68,14 @@ to work while migration continues.
 
 ## Next Migration Steps
 
-1. Move runtime settings into a small context object behind
-   `currentRuntimeSettings()` and `applyRuntimeSettingsCommand()`, keeping the
-   existing globals as compatibility mirrors.
-2. Move dynamic body arrays into `WorldState` or a dedicated body runtime state
+1. Move dynamic body arrays into `WorldState` or a dedicated body runtime state
    object before exposing dynamic stones again.
-3. Continue changing hot-path functions to accept `world` or a small runtime
+2. Continue changing hot-path functions to accept `world` or a small runtime
    context explicitly, starting with low-risk wrappers around source generation,
    fill computation, and save/restore.
-4. Keep browser adapters thin: they should translate platform input into engine
+3. Keep browser adapters thin: they should translate platform input into engine
    commands, upload RGBA buffers, and own transient UI state only.
-5. After the classic global bridge is small and well tested, consider adding a
+4. After the classic global bridge is small and well tested, consider adding a
    bundler or TypeScript layer. Do not do a wholesale module rewrite before this
    boundary is tighter.
 

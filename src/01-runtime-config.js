@@ -68,28 +68,39 @@ function applyMaterialCommand(command){
 }
 
 function currentRuntimeSettings(){
+  if(typeof currentRuntimeSettingsState==='function')return currentRuntimeSettingsState();
   return{sourceInterval,lightingEnabled,lightStrength,sideLightStrength,shadowStrength};
 }
 
 function applyRuntimeSettingsCommand(command){
   if(!command||typeof command.type!=='string')return{ok:false,reason:'invalid-command',settings:currentRuntimeSettings()};
   if(command.type==='sourceInterval'){
-    sourceInterval=clampInt(command.value,1,60,1);
+    if(typeof applyRuntimeSettingsState==='function')applyRuntimeSettingsState({sourceInterval:command.value});
+    else sourceInterval=clampInt(command.value,1,60,1);
     return{ok:true,settings:currentRuntimeSettings()};
   }
   if(command.type==='lighting'){
-    if(command.enabled!==undefined)lightingEnabled=!!command.enabled;
-    if(command.lightStrength!==undefined){
-      lightStrength=clamp(Number(command.lightStrength),0,1);
-      if(!Number.isFinite(lightStrength))lightStrength=.18;
-    }
-    if(command.sideLightStrength!==undefined){
-      sideLightStrength=clamp(Number(command.sideLightStrength),0,2);
-      if(!Number.isFinite(sideLightStrength))sideLightStrength=1;
-    }
-    if(command.shadowStrength!==undefined){
-      shadowStrength=clamp(Number(command.shadowStrength),0,1);
-      if(!Number.isFinite(shadowStrength))shadowStrength=.16;
+    if(typeof applyRuntimeSettingsState==='function'){
+      const patch={};
+      if(command.enabled!==undefined)patch.lightingEnabled=command.enabled;
+      if(command.lightStrength!==undefined)patch.lightStrength=command.lightStrength;
+      if(command.sideLightStrength!==undefined)patch.sideLightStrength=command.sideLightStrength;
+      if(command.shadowStrength!==undefined)patch.shadowStrength=command.shadowStrength;
+      applyRuntimeSettingsState(patch);
+    }else{
+      if(command.enabled!==undefined)lightingEnabled=!!command.enabled;
+      if(command.lightStrength!==undefined){
+        lightStrength=clamp(Number(command.lightStrength),0,1);
+        if(!Number.isFinite(lightStrength))lightStrength=.18;
+      }
+      if(command.sideLightStrength!==undefined){
+        sideLightStrength=clamp(Number(command.sideLightStrength),0,2);
+        if(!Number.isFinite(sideLightStrength))sideLightStrength=1;
+      }
+      if(command.shadowStrength!==undefined){
+        shadowStrength=clamp(Number(command.shadowStrength),0,1);
+        if(!Number.isFinite(shadowStrength))shadowStrength=.16;
+      }
     }
     return{ok:true,settings:currentRuntimeSettings()};
   }

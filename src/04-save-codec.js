@@ -6,17 +6,18 @@
 const WORLD_SNAPSHOT_VERSION=1;
 
 function serializeWorldSnapshot(){
+  const settings=typeof currentRuntimeSettingsState==='function'?currentRuntimeSettingsState():{sourceInterval,lightingEnabled,lightStrength,sideLightStrength,shadowStrength};
   return{
     version:WORLD_SNAPSHOT_VERSION,
     cols,
     rows,
-    sourceInterval,
+    sourceInterval:settings.sourceInterval,
     selected:typeof currentSelectedKey==='function'?currentSelectedKey():selected,
     airColor:airColor.slice(0,3),
-    lightingEnabled,
-    lightStrength,
-    sideLightStrength,
-    shadowStrength,
+    lightingEnabled:settings.lightingEnabled,
+    lightStrength:settings.lightStrength,
+    sideLightStrength:settings.sideLightStrength,
+    shadowStrength:settings.shadowStrength,
     customMaterials:exportCustomMaterials(),
     material:encodeRuns(material),
     sourceMat:encodeRuns(sourceMat),
@@ -196,14 +197,24 @@ function restoreWorldSnapshot(saved){
   const savedCols=clampInt(saved.cols,1,1000,0),savedRows=clampInt(saved.rows,1,1000,0);
   restoreCustomMaterials(saved.customMaterials);
   if(!restoreEditableArrays(saved))return{ok:false,reason:'invalid-dimensions'};
-  sourceInterval=clampInt(saved.sourceInterval,1,60,1);
-  lightingEnabled=saved.lightingEnabled===undefined?true:!!saved.lightingEnabled;
-  lightStrength=clamp(Number(saved.lightStrength),0,1);
-  if(!Number.isFinite(lightStrength))lightStrength=.18;
-  sideLightStrength=clamp(Number(saved.sideLightStrength),0,2);
-  if(!Number.isFinite(sideLightStrength))sideLightStrength=1;
-  shadowStrength=clamp(Number(saved.shadowStrength),0,1);
-  if(!Number.isFinite(shadowStrength))shadowStrength=.16;
+  if(typeof applyRuntimeSettingsState==='function'){
+    applyRuntimeSettingsState({
+      sourceInterval:saved.sourceInterval,
+      lightingEnabled:saved.lightingEnabled===undefined?true:saved.lightingEnabled,
+      lightStrength:saved.lightStrength,
+      sideLightStrength:saved.sideLightStrength,
+      shadowStrength:saved.shadowStrength
+    });
+  }else{
+    sourceInterval=clampInt(saved.sourceInterval,1,60,1);
+    lightingEnabled=saved.lightingEnabled===undefined?true:!!saved.lightingEnabled;
+    lightStrength=clamp(Number(saved.lightStrength),0,1);
+    if(!Number.isFinite(lightStrength))lightStrength=.18;
+    sideLightStrength=clamp(Number(saved.sideLightStrength),0,2);
+    if(!Number.isFinite(sideLightStrength))sideLightStrength=1;
+    shadowStrength=clamp(Number(saved.shadowStrength),0,1);
+    if(!Number.isFinite(shadowStrength))shadowStrength=.16;
+  }
   const restoredSelected=MATERIAL_FROM_NAME[saved.selected]?saved.selected:materialKeyFromId(WATER);
   if(typeof setCurrentSelectedKey==='function')setCurrentSelectedKey(restoredSelected);
   else selected=restoredSelected;
