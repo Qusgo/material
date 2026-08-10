@@ -105,6 +105,55 @@ if(!currentWorldState()||currentWorldState().arrays.material!==material)throw ne
   runIsolated('runtime bootstrap regression',source);
 }
 
+function headlessCoreSmokeRegression(){
+  const coreFiles=[
+    'src/00-materials.js',
+    'src/00-world-arrays.js',
+    'src/00-world-state.js',
+    'src/00-core-state.js',
+    'src/01-cell-state.js',
+    'src/01-grid-editing.js',
+    'src/01-fill-editing.js',
+    'src/01-body-geometry.js',
+    'src/02-sources.js',
+    'src/02-flow-and-water.js',
+    'src/02-force.js',
+    'src/01-runtime-config.js',
+    'src/01-edit-commands.js',
+    'src/02-erosion.js',
+    'src/02-body-runtime.js',
+    'src/02-step-world.js',
+    'src/04-save-codec.js',
+    'src/03-lighting.js',
+    'src/03-render-buffer.js'
+  ];
+  const source=coreFiles.map(read).join('\n')+`
+function testAssert(condition,message){if(!condition)throw new Error(message)}
+function setStatus(){}
+const world=createWorldState(24,18,{cellSize:4});
+installWorldState(world);
+testAssert(typeof document==='undefined'&&typeof canvas==='undefined','headless core smoke should not define DOM globals');
+testAssert(currentWorldState()===world&&cols===24&&rows===18,'headless world was not installed');
+applyEditCommand(world,{type:'paintLine',x1:8,y1:60,x2:80,y2:60,radius:1,material:FIXED_STONE});
+applyEditCommand(world,{type:'paint',x:24,y:32,radius:2,material:WATER});
+applyEditCommand(world,{type:'source',x:12,y:8,radius:0,material:WATER});
+testAssert(material.some(v=>v===FIXED_STONE)&&material.some(v=>v===WATER),'headless edit commands did not write material');
+stepWorld(world);
+stepWorld(world);
+testAssert(simTick===2&&currentWorldState()===world,'headless stepWorld did not tick supplied world');
+const data=new Uint8Array(count*4);
+buildRenderBuffer(world,data);
+testAssert(data.length===count*4&&data.some(v=>v!==0),'headless render buffer was not populated');
+const snapshot=serializeWorldSnapshot();
+testAssert(snapshot.version===WORLD_SNAPSHOT_VERSION&&snapshot.cols===24&&snapshot.rows===18,'headless snapshot metadata changed');
+clearSimulationState();
+testAssert(!material.some(v=>v!==EMPTY),'headless clear command did not empty grid');
+const restored=restoreWorldSnapshot(snapshot);
+testAssert(restored.ok&&material.some(v=>v===FIXED_STONE)&&sourceMat.some(v=>v===WATER),'headless snapshot restore lost material or source cells');
+`;
+  runIsolated('headless core smoke regression',source);
+}
+
 function browserLoadSmokeRegression(){
   const source=`
 const calls=[],events={canvas:{},window:{},element:{}};
@@ -954,6 +1003,7 @@ testAssert(hexToRgb('bad').join(',')==='36,168,198','hexToRgb should fallback fo
 syntaxRegression();
 appDomRefsRegression();
 runtimeBootstrapRegression();
+headlessCoreSmokeRegression();
 browserLoadSmokeRegression();
 materialRegistryRegression();
 runtimeConfigRegression();

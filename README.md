@@ -103,7 +103,10 @@ node tests/headless-regression.js
 That script checks syntax, browser-style bootstrap, and focused behavior for
 material registration, world-array lifecycle, world-state installation,
 runtime config commands, lighting, render buffers, sources, tint movement, and
-portable snapshot save/load.
+portable snapshot save/load. It also includes a DOM-free core smoke regression
+that creates a world, applies edit commands, steps physics, builds a render
+buffer, serializes, clears, and restores without defining `document`, `canvas`,
+or `localStorage`.
 
 The migration path toward a portable simulation core is documented in
 `docs/PORTABILITY_PLAN.md`. Follow that plan instead of doing a large

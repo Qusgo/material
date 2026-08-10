@@ -58,7 +58,10 @@ contains the browser-only post-load UI sync hook.
 1. Keep `index.html` and `material_sim.html` working with the current script
    order.
 2. Add and maintain headless Node regressions for fragile behavior. Start with
-   `tests/headless-regression.js`.
+   `tests/headless-regression.js`. It now includes a DOM-free core smoke test
+   covering `createWorldState()`, `applyEditCommand(world, command)`,
+   `stepWorld(world)`, `buildRenderBuffer(world, data)`, snapshot serialize,
+   clear, and restore without browser globals.
 3. Keep pure material definitions and save/load codecs browser-free. These are
    the easiest to test without a DOM.
 4. Move lighting into a core render-prep module. Lighting must remain
@@ -118,6 +121,17 @@ contains the browser-only post-load UI sync hook.
   blending
 - `src/03-render-buffer.js` for DOM-free RGBA buffer construction
 - `src/02-sources.js` for source data and generation
+
+## Current Portability Evidence
+
+- `tests/headless-regression.js` has a DOM-free core smoke regression that does
+  not define `document`, `canvas`, or `localStorage`.
+- That smoke test creates a world shell, applies explicit-world edit commands,
+  steps physics, builds a render buffer, serializes the world, clears it, and
+  restores the snapshot.
+- Browser smoke regression still loads the full ordered script chain with fake
+  DOM/canvas handles, so direct browser use remains covered while the headless
+  boundary grows.
 
 ## Web Adapter Candidates
 

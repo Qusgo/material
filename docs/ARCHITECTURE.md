@@ -502,6 +502,14 @@ reintroduce jitter, non-conservation, and wall leakage.
 
 ## Known Tradeoffs
 
+## Test Gates
+
+Run `node tests/headless-regression.js` before and after each migration step.
+That suite includes both a full browser-load smoke with fake DOM/canvas handles
+and a DOM-free core smoke. The DOM-free smoke is the portability guard: it must
+continue to create a world, apply explicit-world edit commands, step, render to
+an RGBA buffer, serialize, clear, and restore without browser globals.
+
 - Water is visually stable and cheap, not physically exact.
 - Tiny top-surface water can be deleted in closed basins if it is below the
   configured residue thresholds.
