@@ -762,6 +762,8 @@ let brushSizeInput=fakeElement('brush','4'),brushSizeNumberInput=fakeElement('br
 let sourceRateInput=fakeElement('source','1'),sourceRateNumberInput=fakeElement('source-number','1');
 let lightingEnabledInput=fakeElement('lighting'),lightStrengthInput=fakeElement('light','18'),lightStrengthNumberInput=fakeElement('light-number','18'),sideLightStrengthInput=fakeElement('side','100'),sideLightStrengthNumberInput=fakeElement('side-number','100'),shadowStrengthInput=fakeElement('shadow','16'),shadowStrengthNumberInput=fakeElement('shadow-number','16');
 let tintColorInput=fakeElement('tint');
+const adapterWorld={id:'adapter-world'};
+function currentWorldState(){return adapterWorld}
 function setTool(tool){calls.push('tool:'+tool)}
 function renderMaterialMenu(){calls.push('menu')}
 function openMaterialEditor(kind){calls.push('open:'+kind)}
@@ -775,7 +777,7 @@ function syncLightingControls(source){calls.push('lighting:'+(source&&source.id)
 function setStatus(text){calls.push('status:'+text)}
 function syncButtons(){calls.push('buttons')}
 function simulationStep(){calls.push('step')}
-function applyEditCommand(command){calls.push('command:'+command.type);return true}
+function applyEditCommand(world,command){if(world!==adapterWorld)throw new Error('controls should pass current world');calls.push('command:'+command.type);return true}
 function rebuildBodyMask(){calls.push('mask')}
 function saveCanvasSnapshot(){calls.push('save-canvas');return{message:'saved'}}
 function loadCanvasSnapshot(){calls.push('load-canvas');return{message:'loaded'}}
@@ -849,6 +851,8 @@ const canvas={
 };
 const MATERIAL_FROM_NAME={water:1},WATER=1;
 let tool='brush',selected='water',running=true,accumulator=9;
+const inputWorld={id:'input-world'};
+function currentWorldState(){return inputWorld}
 function canvasPoint(e){return{x:e.clientX,y:e.clientY}}
 function pauseForEdit(){running=false;accumulator=0;calls.push('pause')}
 function isBodyMaterial(){return false}
@@ -859,7 +863,7 @@ function getTintColor(){return[1,2,3]}
 function updateFillPreview(){calls.push('preview')}
 function clearFillPreview(){calls.push('clear-preview')}
 function applyFill(){calls.push('fill')}
-function applyEditCommand(command){calls.push('command:'+command.type);return true}
+function applyEditCommand(world,command){if(world!==inputWorld)throw new Error('canvas input should pass current world');calls.push('command:'+command.type);return true}
 function setStatus(text){calls.push('status:'+text)}
 function finishEditAsNewInitialState(){calls.push('finish')}
 function rebuildBodyMask(){calls.push('mask')}

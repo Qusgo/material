@@ -116,7 +116,8 @@ global names, handles DOM-free grid resize resampling, and lets
 `stepWorld(world)`, `applyEditCommand(world, command)`, and
 `buildRenderBuffer(world, data)` preserve the current update/edit/render order
 without changing gameplay in the same step. The old one-argument browser calls
-still work.
+still work, but browser adapters now pass `currentWorldState()` at their
+step/edit/render call sites.
 Browser play/pause and debug-display state live in
 `src/03-app-ui-state-adapter.js`, material menu/editor state lives in
 `src/03-material-ui-adapter.js`, and pointer/placement/force-preview state lives

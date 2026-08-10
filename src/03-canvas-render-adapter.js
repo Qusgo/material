@@ -9,7 +9,7 @@ let gridCanvas=document.createElement('canvas'),gridCtx=gridCanvas.getContext('2
 function renderGrid(){
   if(!imageData||imageData.width!==cols||imageData.height!==rows)imageData=gridCtx.createImageData(cols,rows);
   const data=imageData.data;
-  buildRenderBuffer(data);
+  buildRenderBuffer(currentWorldState(),data);
   gridCtx.putImageData(imageData,0,0);
   ctx.imageSmoothingEnabled=false;
   ctx.drawImage(gridCanvas,0,0,cols,rows,0,0,cols*cellSize,rows*cellSize);

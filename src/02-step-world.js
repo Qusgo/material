@@ -14,4 +14,4 @@ function stepWorld(world=currentWorldState()){
   return currentWorldState();
 }
 
-function simulationStep(){return stepWorld()}
+function simulationStep(){return stepWorld(currentWorldState())}

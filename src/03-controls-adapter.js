@@ -17,10 +17,10 @@ function bindBrowserControls(){
   playBtn.addEventListener('click',()=>{running=!running;setStatus(running?'Running':'Paused');syncButtons()});
   document.getElementById('step').addEventListener('click',()=>{running=false;syncButtons();simulationStep();setStatus('Advanced one step');render()});
   if(debugBasinsBtn)debugBasinsBtn.addEventListener('click',()=>{debugBasins=!debugBasins;syncButtons();setStatus(debugBasins?'Showing geometry basins':'Basin debug hidden');render()});
-  if(fillAirColorBtn)fillAirColorBtn.addEventListener('click',()=>{applyEditCommand({type:'fillAir',color:getTintColor()});setStatus('Air color filled');render()});
+  if(fillAirColorBtn)fillAirColorBtn.addEventListener('click',()=>{applyEditCommand(currentWorldState(),{type:'fillAir',color:getTintColor()});setStatus('Air color filled');render()});
   if(saveCanvasBtn)saveCanvasBtn.addEventListener('click',()=>{const result=saveCanvasSnapshot();setStatus(result.message);render()});
   if(loadCanvasBtn)loadCanvasBtn.addEventListener('click',()=>{const result=loadCanvasSnapshot();setStatus(result.message);render()});
-  document.getElementById('clear').addEventListener('click',()=>{running=false;applyEditCommand({type:'clear'});rebuildBodyMask();syncButtons();setStatus('Cleared');render()});
+  document.getElementById('clear').addEventListener('click',()=>{running=false;applyEditCommand(currentWorldState(),{type:'clear'});rebuildBodyMask();syncButtons();setStatus('Cleared');render()});
   bindBrushSizeControls();
   bindEraserSizeControls();
   bindSourceRateControls();
