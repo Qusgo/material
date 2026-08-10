@@ -206,9 +206,7 @@ function restoreWorldSnapshot(saved){
   if(!Number.isFinite(shadowStrength))shadowStrength=.16;
   selected=MATERIAL_FROM_NAME[saved.selected]?saved.selected:materialKeyFromId(WATER);
   bodies=[];
-  fillPreview=[];
-  placing=null;
-  forceState=null;
+  clearTransientEditUiState();
   editDirty=false;
   if(typeof rebuildBodyMask==='function')rebuildBodyMask();
   return{ok:true,resampled:savedCols!==cols||savedRows!==rows,savedCols,savedRows};

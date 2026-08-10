@@ -473,7 +473,7 @@ let material,mass,vx,vy,bodyMask,flowDir,restAge,stableMask,tintR,tintG,tintB,ti
 let moveHistory,moveFlip,horizontalDir,horizontalTurns,escapeDir,escapeTarget,carriedBy,carriedTTL,lastMoveTick;
 let waterSeen,waterSpaceMark,waterComponentMark,waterBasinMark,waterSleepBlockMark,waterTargetMark,waterWakeMark,waterQueue,rowCounts;
 let waterSpaceToken=1,waterComponentToken=1,waterBasinToken=1,waterTargetToken=1,waterWakeToken=1;
-let bodies=[],nextBodyId=1,fillPreview=[],placing=null,forceState=null,airColor=[255,255,255];
+let bodies=[],nextBodyId=1,airColor=[255,255,255];
 installGridArrays(createGridArrays(count,rows));
 function idx(c,r){return r*cols+c}
 function inBounds(c,r){return c>=0&&c<cols&&r>=0&&r<rows}
@@ -592,6 +592,7 @@ let waterSeen,waterSpaceMark,waterComponentMark,waterBasinMark,waterSleepBlockMa
 let waterSpaceToken=1,waterComponentToken=1,waterBasinToken=1,waterTargetToken=1,waterWakeToken=1;
 let selected='water',sourceInterval=1,lightingEnabled=true,lightStrength=.18,sideLightStrength=1,shadowStrength=.16;
 let bodies=[],fillPreview=[],placing=null,forceState=null,editDirty=false;
+function clearTransientEditUiState(){fillPreview=[];placing=null;forceState=null}
 function makeArrays(){
   count=cols*rows;
   installGridArrays(createGridArrays(count,rows));
@@ -839,7 +840,7 @@ const canvas={
   releasePointerCapture(id){calls.push('release:'+id)}
 };
 const MATERIAL_FROM_NAME={water:1},WATER=1;
-let pointerDown=false,tool='brush',selected='water',hoverPoint=null,lastPoint=null,placing=null,forceState=null,fillPreview=[],running=true,accumulator=9;
+let tool='brush',selected='water',running=true,accumulator=9;
 function canvasPoint(e){return{x:e.clientX,y:e.clientY}}
 function pauseForEdit(){running=false;accumulator=0;calls.push('pause')}
 function isBodyMaterial(){return false}
@@ -848,6 +849,7 @@ function getEraserRadius(){return 3}
 function selectedSourceMaterial(){return WATER}
 function getTintColor(){return[1,2,3]}
 function updateFillPreview(){calls.push('preview')}
+function clearFillPreview(){calls.push('clear-preview')}
 function applyFill(){calls.push('fill')}
 function applyEditCommand(command){calls.push('command:'+command.type);return true}
 function setStatus(text){calls.push('status:'+text)}
@@ -908,7 +910,7 @@ function fakeElement(id){
   };
 }
 const document={createElement(tag){return fakeElement(tag)}};
-let selected='water',materialMenuOpen=false,materialEditorMode=null;
+let selected='water';
 let materialButton=fakeElement('material-button'),materialMenu=fakeElement('material-menu'),materialListEl=fakeElement('material-list'),materialSwatchEl=fakeElement('swatch'),materialLabelEl=fakeElement('label'),materialEditor=fakeElement('editor');
 let materialNameInput=fakeElement('name'),materialColorInput=fakeElement('color'),materialDensityInput=fakeElement('density'),materialBlocksLightInput=fakeElement('blocks'),materialEmissiveInput=fakeElement('emissive'),materialSlopeInput=fakeElement('slope'),materialSlopeRow=fakeElement('slope-row'),materialErosionInput=fakeElement('erosion'),materialErosionRow=fakeElement('erosion-row');
 let addFluidBtn=fakeElement('add-fluid'),addGranularBtn=fakeElement('add-granular'),deleteMaterialBtn=fakeElement('delete');

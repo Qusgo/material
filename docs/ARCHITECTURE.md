@@ -83,25 +83,28 @@ core runtime state loads, such as the canvas, status label, play/debug buttons,
 and brush-size input.
 `src/03-dom-refs.js` owns browser DOM handles shared by material and controls
 adapters.
-`src/03-app-ui-state-adapter.js` owns browser-only play/pause state, status
-text/display, canvas resize, canvas coordinate conversion, brush/eraser radius
-reads, tool/material selection helpers, and button active-state synchronization.
-`src/03-material-ui-adapter.js` owns browser material menu/editor field
-synchronization and delegates material mutation to `src/01-runtime-config.js`.
+`src/03-app-ui-state-adapter.js` owns browser-only play/pause state, debug basin
+display state, status text/display, canvas resize, canvas coordinate conversion,
+brush/eraser radius reads, tool/material selection helpers, and button
+active-state synchronization.
+`src/03-material-ui-adapter.js` owns browser material menu/editor state and
+field synchronization, and delegates material mutation to
+`src/01-runtime-config.js`.
 `src/03-settings-sync-adapter.js` owns browser form value synchronization for
 source-rate and lighting controls, and delegates value clamping/mutation to
 `src/01-runtime-config.js`.
 `src/03-controls-adapter.js` owns browser toolbar/settings bindings; it should
 wire DOM events to existing commands/helpers without adding simulation rules.
-`src/03-canvas-input-adapter.js` owns canvas pointer gestures and routes them to
-edit/force commands. `src/03-app-bootstrap.js` owns browser resize binding, the
+`src/03-canvas-input-adapter.js` owns canvas pointer gestures,
+pointer/hover/placement/force-preview state, and routes gestures to edit/force
+commands. `src/03-app-bootstrap.js` owns browser resize binding, the
 `requestAnimationFrame` loop, and the runtime clock reset hook used after edits
 and snapshot loads.
 `src/01-cell-state.js` owns low-level cell mutation, transient motion cleanup,
 tint/source clearing, and invalid-material normalization. `src/01-grid-editing.js`
 owns DOM-free brush stamps, tint edits, erasing, whole-grid edit commands, and
 edit-state reset. `src/01-fill-editing.js` owns connected-region fill selection,
-preview state, and fill application. `src/01-body-geometry.js` owns dynamic-body
+fill preview state, and fill application. `src/01-body-geometry.js` owns dynamic-body
 construction, shape intersection tests, placement checks, grid clearing under a
 placed body, and body-mask rasterization.
 `src/01-edit-commands.js` is the command-style boundary for editor operations:
@@ -157,6 +160,9 @@ transient state: velocity, stable masks, rest ages, oscillation/escape history,
 carried-particle state, dynamic bodies, fill previews, placements, and force
 preview. This is deliberate. Loading should behave like drawing that page again
 and then starting the simulation from a clean initial state.
+Snapshot restore clears UI-only edit state through `clearTransientEditUiState()`
+instead of assigning preview or pointer variables directly. Keep that helper as
+the bridge between portable restore logic and browser-only interaction state.
 
 `restoreWorldSnapshot()` must call `restoreEditableArrays()`, and
 `restoreEditableArrays()` must call `clearEditableGridState()` before writing

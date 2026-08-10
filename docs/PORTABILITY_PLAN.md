@@ -78,9 +78,12 @@ contains the browser-only post-load UI sync hook.
    `src/02-body-runtime.js`, while browser canvas drawing and overlays live in
    `src/03-canvas-render-adapter.js`. Browser status, resize, coordinate,
    selection, and button state helpers now live in
-   `src/03-app-ui-state-adapter.js`. Browser play/pause state also lives there,
-   and browser frame timing now lives behind `resetRuntimeClock()` in
-   `src/03-app-bootstrap.js`. Continue by reducing
+   `src/03-app-ui-state-adapter.js`. Browser play/pause and debug-display state
+   also live there. Material menu/editor state now lives in
+   `src/03-material-ui-adapter.js`; pointer/hover/placement/force-preview state
+   now lives in `src/03-canvas-input-adapter.js`; fill preview state now lives in
+   `src/01-fill-editing.js`. Browser frame timing now lives behind
+   `resetRuntimeClock()` in `src/03-app-bootstrap.js`. Continue by reducing
    direct global state writes inside browser bootstrap and UI adapters.
 6. Only after the command boundary exists, migrate to TypeScript or a bundler
    such as Vite.
@@ -100,7 +103,8 @@ contains the browser-only post-load UI sync hook.
 - `src/02-erosion.js`
 - `src/01-cell-state.js` for low-level cell mutation and cleanup
 - `src/01-grid-editing.js` for DOM-free grid edit helpers
-- `src/01-fill-editing.js` for connected-region fill selection/application
+- `src/01-fill-editing.js` for connected-region fill selection/application and
+  fill preview state
 - `src/01-body-geometry.js` for dynamic-body construction and body masks
 - `src/04-save-codec.js` for portable snapshot serialize/restore and
   editable-array resampling
@@ -116,12 +120,13 @@ contains the browser-only post-load UI sync hook.
 
 - Early app-shell DOM handles in `src/00-app-dom-refs.js`
 - Shared browser UI handles in `src/03-dom-refs.js`
-- Play/pause state, status text/display, resize, coordinate, brush/eraser radius, selection, and button sync helpers in
+- Play/pause state, debug-display state, status text/display, resize, coordinate, brush/eraser radius, selection, and button sync helpers in
   `src/03-app-ui-state-adapter.js`
-- Material menu/editor field sync in `src/03-material-ui-adapter.js`
+- Material menu/editor state and field sync in `src/03-material-ui-adapter.js`
 - Source-rate and lighting form sync in `src/03-settings-sync-adapter.js`
 - Toolbar/settings event binding in `src/03-controls-adapter.js`
-- Canvas pointer event binding in `src/03-canvas-input-adapter.js`
+- Canvas pointer event binding and pointer/placement/force-preview state in
+  `src/03-canvas-input-adapter.js`
 - Resize and animation-loop startup in `src/03-app-bootstrap.js`
 - Browser frame timing and `resetRuntimeClock()` in `src/03-app-bootstrap.js`
 - Offscreen grid canvas, visible canvas drawing, and overlays in

@@ -3,7 +3,7 @@
 // Browser-only material menu/editor helpers. Material validation and mutation
 // stay in 01-runtime-config.js; this file only translates DOM fields.
 
-let materialEditorTarget=0;
+let materialMenuOpen=false,materialEditorMode=null,materialEditorTarget=0;
 
 function rgbToHex(col){
   return `#${col.map(v=>clamp(Math.round(v),0,255).toString(16).padStart(2,'0')).join('')}`;

@@ -5,9 +5,7 @@ function clearSimulationState(){
   airColor=[255,255,255];
   clearEditableGridState();
   bodies=[];
-  fillPreview=[];
-  placing=null;
-  forceState=null;
+  clearTransientEditUiState();
   editDirty=false;
 }
 function setAllAirColor(color){

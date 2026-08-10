@@ -16,7 +16,7 @@ let moveHistory,moveFlip,horizontalDir,horizontalTurns,escapeDir,escapeTarget,ca
 let waterSeen,waterSpaceMark,waterComponentMark,waterBasinMark,waterSleepBlockMark,waterTargetMark,waterWakeMark,waterQueue,rowCounts;
 let waterSpaceToken=1,waterComponentToken=1,waterBasinToken=1,waterTargetToken=1,waterWakeToken=1;
 installWorldState(createWorldState(cols,rows,{cellSize}));
-let bodies=[],nextBodyId=1,tool='brush',selected='water',debugBasins=false,materialMenuOpen=false,materialEditorMode=null,pointerDown=false,lastPoint=null,hoverPoint=null,fillPreview=[],fillPreviewMaterial=EMPTY,placing=null,forceState=null,simTick=0,editDirty=false;
+let bodies=[],nextBodyId=1,tool='brush',selected='water',simTick=0,editDirty=false;
 let sourceInterval=1;
 let airColor=[255,255,255];
 let lightingEnabled=true,lightStrength=.18,sideLightStrength=1,shadowStrength=.16;

@@ -38,8 +38,8 @@ between save and load.
   tint/source clearing, and cell normalization.
 - `src/01-grid-editing.js` - Brush, erase, tint, grid mutation, and whole-grid
   edit commands.
-- `src/01-fill-editing.js` - Connected-region fill selection, preview state,
-  and fill application.
+- `src/01-fill-editing.js` - Connected-region fill selection, fill preview
+  state, and fill application.
 - `src/01-body-geometry.js` - Dynamic-body construction, shape tests, placement,
   and body-mask rasterization.
 - `src/02-sources.js` - DOM-free infinite source layer editing and material
@@ -72,17 +72,17 @@ between save and load.
 - `src/03-source-render-adapter.js` - Browser-only canvas overlay for source
   cells.
 - `src/03-dom-refs.js` - Browser-only DOM handles shared by UI adapters.
-- `src/03-app-ui-state-adapter.js` - Browser-only running/status state, resize,
-  brush/eraser radius, tool selection, button sync, and canvas coordinate
-  helpers.
+- `src/03-app-ui-state-adapter.js` - Browser-only running/status/debug state,
+  resize, brush/eraser radius, tool selection, button sync, and canvas
+  coordinate helpers.
 - `src/03-material-ui-adapter.js` - Browser-only material menu/editor field
-  synchronization.
+  state and synchronization.
 - `src/03-settings-sync-adapter.js` - Browser-only source-rate and lighting
   form value synchronization.
 - `src/03-controls-adapter.js` - Browser-only toolbar, material menu, save/load,
   and settings control bindings.
 - `src/03-canvas-input-adapter.js` - Browser-only canvas pointer gestures routed
-  to edit and force commands.
+  to edit and force commands, plus pointer/placement/force-preview state.
 - `src/03-app-bootstrap.js` - Browser-only resize binding, animation loop, and
   runtime clock reset.
 - `app.js` - Legacy note only. Do not reintroduce runtime code there unless the
@@ -115,9 +115,12 @@ engine yet: it creates a world object, installs its arrays into the existing
 global names, handles DOM-free grid resize resampling, and lets
 `stepWorld(world)` preserve the current physics update order without changing
 gameplay in the same step.
-Browser play/pause state lives in `src/03-app-ui-state-adapter.js`, while frame
-timing lives behind `resetRuntimeClock()` in `src/03-app-bootstrap.js`;
-core/edit code should call that hook instead of touching RAF accumulator state.
+Browser play/pause and debug-display state live in
+`src/03-app-ui-state-adapter.js`, material menu/editor state lives in
+`src/03-material-ui-adapter.js`, and pointer/placement/force-preview state lives
+in `src/03-canvas-input-adapter.js`. Frame timing lives behind
+`resetRuntimeClock()` in `src/03-app-bootstrap.js`; core/edit code should call
+that hook instead of touching RAF accumulator state.
 
 When changing water behavior, read `docs/ARCHITECTURE.md` first. Most previous
 bugs came from local water rules fighting the component-level water stabilizer.
