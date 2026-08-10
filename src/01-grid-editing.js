@@ -4,7 +4,8 @@
 function clearSimulationState(){
   airColor=[255,255,255];
   clearEditableGridState();
-  bodies=[];
+  if(typeof setBodyRuntimeState==='function')setBodyRuntimeState();
+  else bodies=[];
   clearTransientEditUiState();
   editDirty=false;
 }

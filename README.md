@@ -28,8 +28,8 @@ between save and load.
 - `src/00-world-arrays.js` - DOM-free typed-array allocation and clearing
   helpers for the simulation grid.
 - `src/00-world-state.js` - DOM-free world shell that groups dimensions, grid
-  arrays, water scratch tokens, and resize resampling while still installing
-  compatible globals.
+  arrays, dynamic body state, water scratch tokens, and resize resampling while
+  still installing compatible globals.
 - `src/00-app-dom-refs.js` - Browser-only app shell DOM handles needed by early
   runtime state.
 - `src/00-core-state.js` - Runtime constants, mutable simulation state, and

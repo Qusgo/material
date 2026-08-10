@@ -26,8 +26,10 @@ parallel typed arrays:
   particles. The particle's `material` id and render color do not change.
 - `lastMoveTick` - most recent frame a cell participated in a move or swap.
 
-Dynamic round/rectangular stones are separate objects in `bodies`. They are not
-stored as particles. Each frame their shape is rasterized into `bodyMask`.
+Dynamic round/rectangular stones are separate objects in `WorldState.bodies`
+with the legacy `bodies` global kept as a synchronized compatibility mirror.
+They are not stored as particles. Each frame their shape is rasterized into
+`bodyMask`.
 
 `src/00-world-arrays.js` owns allocation and whole-grid clearing for these typed
 arrays. The app still exposes the arrays as globals for compatibility with the
@@ -37,15 +39,16 @@ state with `clearEditableGridState()` instead of hand-writing long fill blocks.
 This keeps resize, clear, and load on one lifecycle path.
 
 `src/00-world-state.js` is the current world boundary. `createWorldState()`
-groups dimensions, cell size, typed arrays, and water scratch tokens.
+groups dimensions, cell size, typed arrays, dynamic body state, and water
+scratch tokens.
 `installWorldState()` deliberately installs that world back into the legacy
-global bindings (`cols`, `material`, `mass`, and so on) so existing physics code
-keeps running unchanged. `currentWorldState()` refreshes the active shell from
-the globals. `resizeWorldGrid()` owns DOM-free grid resize resampling for
-materials, flow state, tint layers, and source cells; browser resize code should
-only supply the new dimensions and rebuild presentation buffers. Treat this as
-a bridge toward a real `World` object, not as permission to mix DOM state into
-the core.
+global bindings (`cols`, `material`, `mass`, `bodies`, and so on) so existing
+physics code keeps running unchanged. `currentWorldState()` refreshes the active
+shell from the globals. `resizeWorldGrid()` owns DOM-free grid resize resampling
+for materials, flow state, tint layers, and source cells, while preserving body
+state; browser resize code should only supply the new dimensions and rebuild
+presentation buffers. Treat this as a bridge toward a real `World` object, not
+as permission to mix DOM state into the core.
 
 ## Material Configuration
 

@@ -20,6 +20,52 @@ function createWaterScratchTokens(){
   };
 }
 
+function normalizeBodyId(value){
+  return normalizeWorldDimension(value,1);
+}
+
+function captureBodyRuntimeState(world=currentWorld){
+  try{
+    if(typeof bodies!=='undefined'&&Array.isArray(bodies)){
+      return{bodies,nextBodyId:normalizeBodyId(nextBodyId)};
+    }
+  }catch(e){}
+  return{
+    bodies:world&&Array.isArray(world.bodies)?world.bodies:[],
+    nextBodyId:normalizeBodyId(world&&world.nextBodyId)
+  };
+}
+
+function installBodyRuntimeState(world){
+  const state=captureBodyRuntimeState(world);
+  world.bodies=Array.isArray(world.bodies)?world.bodies:state.bodies;
+  world.nextBodyId=normalizeBodyId(world.nextBodyId||state.nextBodyId);
+  try{
+    if(typeof bodies!=='undefined'){
+      bodies=world.bodies;
+      nextBodyId=world.nextBodyId;
+    }
+  }catch(e){}
+}
+
+function setBodyRuntimeState(nextBodies=[],nextId=1){
+  const state={
+    bodies:Array.isArray(nextBodies)?nextBodies:[],
+    nextBodyId:normalizeBodyId(nextId)
+  };
+  try{
+    if(typeof bodies!=='undefined'){
+      bodies=state.bodies;
+      nextBodyId=state.nextBodyId;
+    }
+  }catch(e){}
+  if(currentWorld){
+    currentWorld.bodies=state.bodies;
+    currentWorld.nextBodyId=state.nextBodyId;
+  }
+  return state;
+}
+
 function createWorldState(worldCols,worldRows,options={}){
   const nextCols=normalizeWorldDimension(worldCols,1),nextRows=normalizeWorldDimension(worldRows,1);
   const world={
@@ -28,7 +74,9 @@ function createWorldState(worldCols,worldRows,options={}){
     count:nextCols*nextRows,
     cellSize:normalizeWorldDimension(options.cellSize,1),
     arrays:createGridArrays(nextCols*nextRows,nextRows),
-    tokens:createWaterScratchTokens()
+    tokens:createWaterScratchTokens(),
+    bodies:Array.isArray(options.bodies)?options.bodies:[],
+    nextBodyId:normalizeBodyId(options.nextBodyId)
   };
   return world;
 }
@@ -63,6 +111,7 @@ function installWorldState(world){
   cellSize=world.cellSize;
   installGridArrays(world.arrays);
   installWaterScratchTokens(world.tokens);
+  installBodyRuntimeState(world);
   return world;
 }
 
@@ -86,6 +135,9 @@ function currentWorldState(){
     waterSleepBlockMark,waterTargetMark,waterWakeMark,waterQueue,rowCounts
   };
   captureWaterScratchTokens(currentWorld);
+  const bodyState=captureBodyRuntimeState(currentWorld);
+  currentWorld.bodies=bodyState.bodies;
+  currentWorld.nextBodyId=bodyState.nextBodyId;
   return currentWorld;
 }
 
@@ -151,7 +203,8 @@ function resizeWorldGrid(nextCols,nextRows,options={}){
     return{changed:false,world:currentWorldState()};
   }
   const source=material&&material.length?captureResizeSource():null;
-  installWorldState(createWorldState(normalizedCols,normalizedRows,{cellSize:normalizedCell}));
+  const bodyState=captureBodyRuntimeState();
+  installWorldState(createWorldState(normalizedCols,normalizedRows,{cellSize:normalizedCell,bodies:bodyState.bodies,nextBodyId:bodyState.nextBodyId}));
   if(source){
     for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
       restoreResizeCell(r*cols+c,sampleResizeSourceIndex(c,r,source),source);

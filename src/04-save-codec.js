@@ -218,7 +218,8 @@ function restoreWorldSnapshot(saved){
   const restoredSelected=MATERIAL_FROM_NAME[saved.selected]?saved.selected:materialKeyFromId(WATER);
   if(typeof setCurrentSelectedKey==='function')setCurrentSelectedKey(restoredSelected);
   else selected=restoredSelected;
-  bodies=[];
+  if(typeof setBodyRuntimeState==='function')setBodyRuntimeState();
+  else bodies=[];
   clearTransientEditUiState();
   editDirty=false;
   if(typeof rebuildBodyMask==='function')rebuildBodyMask();

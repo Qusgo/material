@@ -59,20 +59,20 @@ to work while migration continues.
   `currentRuntimeSettingsState()` and `applyRuntimeSettingsState()`, but the
   old `sourceInterval`, `lightingEnabled`, and light-strength globals are still
   synchronized mirrors for classic-script compatibility.
-- Dynamic body state (`bodies`, `nextBodyId`) is still global. The UI currently
-  exposes only fixed stone, so this is lower risk, but it must be revisited
-  before re-enabling dynamic stones in another platform.
+- Dynamic body state now lives on `WorldState` as `bodies` and `nextBodyId`,
+  but the old globals are still synchronized mirrors because body physics still
+  reads and mutates them directly.
 - Some core helpers intentionally keep optional browser hooks, such as
   `resetRuntimeClock()` and optional status reporting. Non-browser adapters may
   leave those hooks as no-ops.
 
 ## Next Migration Steps
 
-1. Move dynamic body arrays into `WorldState` or a dedicated body runtime state
-   object before exposing dynamic stones again.
-2. Continue changing hot-path functions to accept `world` or a small runtime
+1. Continue changing hot-path functions to accept `world` or a small runtime
    context explicitly, starting with low-risk wrappers around source generation,
    fill computation, and save/restore.
+2. Move body physics functions toward explicit `world` or body-state arguments
+   before exposing dynamic stones in another platform.
 3. Keep browser adapters thin: they should translate platform input into engine
    commands, upload RGBA buffers, and own transient UI state only.
 4. After the classic global bridge is small and well tested, consider adding a
