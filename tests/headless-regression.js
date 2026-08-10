@@ -775,6 +775,8 @@ testAssert(applyFill({x:1,y:1},applyEditCommand),'applyFill should commit the pr
 testAssert(appContext.fillPreview.length===0&&fillPreview.length===0,'applyFill should clear appContext preview state');
 testAssert(applyEditCommand({type:'clear'}),'clear command should reset after fill preview check');
 testAssert(currentWorldState().airColor[0]===255&&currentWorldState().airColor[1]===255&&currentWorldState().airColor[2]===255,'clear command should reset world air color');
+clearTransientEditUiState=undefined;
+testAssert(applyEditCommand({type:'clear'}),'clear command should not require transient UI hook');
 testAssert(!applyEditCommand({type:'paint',x:NaN,y:1,radius:0,material:SAND}),'point commands should reject invalid coordinates');
 material[idx(6,5)]=WATER;
 testAssert(!applyEditCommand({type:'placeBody',kind:'bad',start:{x:20,y:20},current:{x:40,y:30}}),'placeBody command should reject invalid body kinds');
@@ -928,6 +930,9 @@ testAssert(rowsContaining(FIXED_STONE).length===1,'snapshot restore should keep 
 testAssert(tintA[idx(6,10)]===255&&bgTintA[idx(5,12)]===255,'snapshot restore lost tint data');
 testAssert(sourceInterval===4&&lightingEnabled===false&&lightStrength===.33&&sideLightStrength===.44&&shadowStrength===.55,'snapshot restore lost settings');
 testAssert(bodies.length===0&&fillPreview.length===0&&placing===null&&forceState===null&&editDirty===false,'snapshot restore should clear transient runtime state');
+clearTransientEditUiState=undefined;
+editDirty=true;
+testAssert(restoreWorldSnapshot(snapshot).ok&&editDirty===false,'snapshot restore should not require transient UI hook');
 testAssert(!restoreWorldSnapshot({version:999,cols:1,rows:1}).ok,'snapshot restore should reject unsupported versions');
 
 cols=20;

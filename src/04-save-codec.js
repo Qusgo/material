@@ -224,7 +224,7 @@ function restoreWorldSnapshot(saved){
   else selected=restoredSelected;
   if(typeof setBodyRuntimeState==='function')setBodyRuntimeState();
   else bodies=[];
-  clearTransientEditUiState();
+  if(typeof clearTransientEditUiState==='function')clearTransientEditUiState();
   if(typeof setEditDirtyState==='function')setEditDirtyState(false);
   else editDirty=false;
   if(typeof rebuildBodyMask==='function')rebuildBodyMask();

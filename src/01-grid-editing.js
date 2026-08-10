@@ -7,7 +7,7 @@ function clearSimulationState(){
   clearEditableGridState();
   if(typeof setBodyRuntimeState==='function')setBodyRuntimeState();
   else bodies=[];
-  clearTransientEditUiState();
+  if(typeof clearTransientEditUiState==='function')clearTransientEditUiState();
   if(typeof setEditDirtyState==='function')setEditDirtyState(false);
   else editDirty=false;
 }
