@@ -986,11 +986,12 @@ const fakeCtx={
 };
 const document={createElement(){return{getContext(){return fakeCtx}}}};
 let ctx=fakeCtx,cols=2,rows=2,cellSize=3,viewW=6,viewH=6,airColor=[255,255,255],bodies=[],fillPreview=[],fillPreviewMaterial=1,tool='brush';
-const fallbackWorld={id:'fallback'},renderWorld={id:'render-world'},renderContext={debugBasins:false,placing:null,forceState:null,hoverPoint:null};
+const fallbackWorld={id:'fallback',cols:2,rows:2,cellSize:3},renderWorld={id:'render-world',cols:2,rows:2,cellSize:3},renderContext={debugBasins:false,placing:null,forceState:null,hoverPoint:null};
 const appContext={debugBasins:true,placing:{},forceState:{},hoverPoint:{x:1,y:1}};
 function currentWorldState(){return fallbackWorld}
+function useWorldState(world){calls.push('use:'+world.id);return world}
 function buildRenderBuffer(world,data){if(world!==renderWorld)throw new Error('render should pass explicit world to render buffer');calls.push('buffer:'+data.length)}
-function renderSources(){calls.push('sources')}
+function renderSources(world){if(world!==renderWorld)throw new Error('render should pass explicit world to source overlay');calls.push('sources')}
 function renderBodies(){calls.push('bodies')}
 function updateStatus(){calls.push('status')}
 function buildWaterBasins(){throw new Error('explicit context should disable basin debug')}
@@ -1002,7 +1003,7 @@ function pointToCell(){return{c:0,r:0}}
 function testAssert(condition,message){if(!condition)throw new Error(message)}
 `+read('src/03-canvas-render-adapter.js')+`
 render(renderWorld,renderContext);
-testAssert(calls.includes('buffer:16')&&calls.includes('draw')&&calls.includes('sources')&&calls.includes('status'),'render explicit world/context path changed');
+testAssert(calls.includes('use:render-world')&&calls.includes('buffer:16')&&calls.includes('draw')&&calls.includes('sources')&&calls.includes('status'),'render explicit world/context path changed');
 `;
   runIsolated('canvas render adapter regression',source);
 }

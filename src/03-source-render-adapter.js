@@ -3,7 +3,8 @@
 // Canvas-only presentation for the source layer. The source data and generation
 // rules stay in 02-sources.js so they remain testable without a DOM.
 
-function renderSources(){
+function renderSources(world=currentWorldState()){
+  if(typeof useWorldState==='function')useWorldState(world);
   ctx.save();
   for(let i=0;i<count;i++){
     const mat=sourceMat[i];

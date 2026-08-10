@@ -4,23 +4,32 @@
 
 let gridCanvas=document.createElement('canvas'),gridCtx=gridCanvas.getContext('2d'),imageData=null;
 
+function renderAdapterWorld(world){
+  if(typeof useWorldState==='function')return useWorldState(world||currentWorldState());
+  return world||currentWorldState();
+}
+
 // Rendering is separated from simulation state: the grid draws to a tiny
 // offscreen canvas first, then scales up with image smoothing disabled.
 function renderGrid(world=currentWorldState()){
-  if(!imageData||imageData.width!==cols||imageData.height!==rows)imageData=gridCtx.createImageData(cols,rows);
+  const active=renderAdapterWorld(world);
+  if(gridCanvas.width!==active.cols)gridCanvas.width=active.cols;
+  if(gridCanvas.height!==active.rows)gridCanvas.height=active.rows;
+  if(!imageData||imageData.width!==active.cols||imageData.height!==active.rows)imageData=gridCtx.createImageData(active.cols,active.rows);
   const data=imageData.data;
-  buildRenderBuffer(world,data);
+  buildRenderBuffer(active,data);
   gridCtx.putImageData(imageData,0,0);
   ctx.imageSmoothingEnabled=false;
-  ctx.drawImage(gridCanvas,0,0,cols,rows,0,0,cols*cellSize,rows*cellSize);
+  ctx.drawImage(gridCanvas,0,0,active.cols,active.rows,0,0,active.cols*active.cellSize,active.rows*active.cellSize);
   ctx.imageSmoothingEnabled=true;
 }
 function debugBasinColor(id,alpha){
   const hue=(id*57)%360;
   return`hsla(${hue},86%,48%,${alpha})`;
 }
-function renderBasinDebug(context=appContext){
+function renderBasinDebug(world=currentWorldState(),context=appContext){
   if(!context.debugBasins)return;
+  renderAdapterWorld(world);
   const basins=buildWaterBasins();
   ctx.save();
   ctx.lineWidth=Math.max(1,cellSize*.35);
@@ -50,4 +59,18 @@ function renderPlacement(context=appContext){if(!context.placing)return;const b=
 function drawArrow(x1,y1,x2,y2){const a=Math.atan2(y2-y1,x2-x1);ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();ctx.beginPath();ctx.moveTo(x2,y2);ctx.lineTo(x2-Math.cos(a-.55)*14,y2-Math.sin(a-.55)*14);ctx.lineTo(x2-Math.cos(a+.55)*14,y2-Math.sin(a+.55)*14);ctx.closePath();ctx.fillStyle=ctx.strokeStyle;ctx.fill()}
 function renderForcePreview(context=appContext){const forceState=context.forceState;if(!forceState)return;ctx.save();ctx.strokeStyle='rgba(17,24,39,.78)';ctx.fillStyle='rgba(22,141,226,.1)';ctx.lineWidth=2;if(forceState.circle){ctx.beginPath();ctx.arc(forceState.circle.x,forceState.circle.y,forceState.circle.r,0,Math.PI*2);ctx.fill();ctx.stroke()}else if(forceState.start&&forceState.current){const r=Math.hypot(forceState.current.x-forceState.start.x,forceState.current.y-forceState.start.y);ctx.beginPath();ctx.arc(forceState.start.x,forceState.start.y,r,0,Math.PI*2);ctx.fill();ctx.stroke()}if(forceState.circle&&forceState.arrowEnd)drawArrow(forceState.circle.x,forceState.circle.y,forceState.arrowEnd.x,forceState.arrowEnd.y);ctx.restore()}
 function renderEraser(context=appContext){if(tool!=='eraser'||!context.hoverPoint)return;const rad=getEraserRadius();ctx.save();ctx.strokeStyle='rgba(201,74,74,.85)';ctx.lineWidth=2;if(rad===0){const p=pointToCell(context.hoverPoint.x,context.hoverPoint.y);ctx.strokeRect(p.c*cellSize+.5,p.r*cellSize+.5,Math.max(1,cellSize-1),Math.max(1,cellSize-1))}else{ctx.beginPath();ctx.arc(context.hoverPoint.x,context.hoverPoint.y,rad*cellSize,0,Math.PI*2);ctx.stroke()}ctx.restore()}
-function render(world=currentWorldState(),context=appContext){ctx.clearRect(0,0,viewW,viewH);ctx.fillStyle=`rgb(${airColor[0]},${airColor[1]},${airColor[2]})`;ctx.fillRect(0,0,viewW,viewH);renderGrid(world);if(typeof renderSources==='function')renderSources();renderBasinDebug(context);renderFillPreview();renderBodies();renderPlacement(context);renderForcePreview(context);renderEraser(context);updateStatus()}
+function render(world=currentWorldState(),context=appContext){
+  const active=renderAdapterWorld(world);
+  ctx.clearRect(0,0,viewW,viewH);
+  ctx.fillStyle=`rgb(${airColor[0]},${airColor[1]},${airColor[2]})`;
+  ctx.fillRect(0,0,viewW,viewH);
+  renderGrid(active);
+  if(typeof renderSources==='function')renderSources(active);
+  renderBasinDebug(active,context);
+  renderFillPreview();
+  renderBodies();
+  renderPlacement(context);
+  renderForcePreview(context);
+  renderEraser(context);
+  updateStatus();
+}

@@ -244,7 +244,9 @@ the browser adapter is responsible only for putting that buffer into `ImageData`
 and drawing it. The browser canvas adapter now also accepts
 `render(world, appContext)` while keeping the old `render()` convenience form.
 Passing a world still installs the compatibility shell into the classic-script
-globals before rendering.
+globals before rendering. Browser source overlays also receive the same explicit
+world from `render()`, so platform render code should not read a different
+active grid than the main render buffer.
 
 `createSimulationEngine()` is the preferred non-browser entry point. It is a
 facade, not a second implementation of the simulation. Do not duplicate physics,
