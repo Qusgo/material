@@ -299,6 +299,15 @@ clearSimulationState();
 testAssert(!material.some(v=>v!==EMPTY),'headless clear command did not empty grid');
 const restored=restoreWorldSnapshot(snapshot);
 testAssert(restored.ok&&material.some(v=>v===FIXED_STONE)&&sourceMat.some(v=>v===WATER),'headless snapshot restore lost material or source cells');
+const savedActiveWorld=currentWorldState();
+const alternateWorld=createWorldState(10,9,{cellSize:4});
+installWorldState(alternateWorld);
+applyEditCommand(alternateWorld,{type:'paint',x:10,y:10,radius:0,material:WATER});
+const explicitSnapshot=serializeWorldSnapshot(alternateWorld);
+testAssert(explicitSnapshot.cols===10&&explicitSnapshot.rows===9&&currentWorldState()===alternateWorld,'explicit-world serialize should install and read the supplied world');
+installWorldState(savedActiveWorld);
+const explicitRestore=restoreWorldSnapshot(alternateWorld,explicitSnapshot);
+testAssert(explicitRestore.ok&&currentWorldState()===alternateWorld&&material.some(v=>v===WATER),'explicit-world restore should install and mutate the supplied world');
 `;
   runIsolated('headless core smoke regression',source);
 }

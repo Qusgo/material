@@ -178,12 +178,15 @@ id.
 
 ## Persistence
 
-The snapshot format is portable. `serializeWorldSnapshot()` creates the saved
-payload, and `restoreWorldSnapshot(saved)` validates the version, restores
-custom material definitions, restores editable arrays, resets transient runtime
-state, and returns a structured result. Browser save/load is intentionally a
-one-slot feature: `Save` overwrites `CANVAS_SAVE_KEY` in `localStorage`; `Load`
-parses that one snapshot. The browser storage wrapper must call
+The snapshot format is portable. `serializeWorldSnapshot(world)` creates the
+saved payload, and `restoreWorldSnapshot(world, saved)` validates the version,
+restores custom material definitions, restores editable arrays, resets
+transient runtime state, and returns a structured result. The old
+`restoreWorldSnapshot(saved)` form still works through the currently installed
+world while classic-script compatibility remains. Browser save/load is
+intentionally a one-slot feature: `Save` overwrites `CANVAS_SAVE_KEY` in
+`localStorage`; `Load` parses that one snapshot. The browser storage wrapper
+must call
 `serializeAppSnapshot()` and `restoreAppSnapshot()` from `src/03-app-context.js`
 instead of calling the codec directly, so another platform can swap only the
 storage layer while keeping the same engine facade.

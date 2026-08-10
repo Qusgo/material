@@ -5,7 +5,8 @@
 
 const WORLD_SNAPSHOT_VERSION=1;
 
-function serializeWorldSnapshot(){
+function serializeWorldSnapshot(world){
+  if(world&&typeof useWorldState==='function')useWorldState(world);
   const settings=typeof currentRuntimeSettingsState==='function'?currentRuntimeSettingsState():{sourceInterval,lightingEnabled,lightStrength,sideLightStrength,shadowStrength};
   const currentAirColor=typeof currentAirColorState==='function'?currentAirColorState():airColor;
   return{
@@ -195,7 +196,16 @@ function restoreEditableArrays(saved){
   return true;
 }
 
-function restoreWorldSnapshot(saved){
+function normalizeRestoreSnapshotArgs(worldOrSaved,maybeSaved){
+  if(maybeSaved!==undefined){
+    if(worldOrSaved&&typeof useWorldState==='function')useWorldState(worldOrSaved);
+    return maybeSaved;
+  }
+  return worldOrSaved;
+}
+
+function restoreWorldSnapshot(worldOrSaved,maybeSaved){
+  const saved=normalizeRestoreSnapshotArgs(worldOrSaved,maybeSaved);
   if(!saved||saved.version!==WORLD_SNAPSHOT_VERSION)return{ok:false,reason:'unsupported-version'};
   if(!savedDimensionsAreValid(saved))return{ok:false,reason:'invalid-dimensions'};
   const savedCols=clampInt(saved.cols,1,1000,0),savedRows=clampInt(saved.rows,1,1000,0);

@@ -36,12 +36,10 @@ function createSimulationEngine(options={}){
     return target;
   };
   engine.serialize=function(){
-    engine.useWorld();
-    return serializeWorldSnapshot();
+    return serializeWorldSnapshot(engine.world);
   };
   engine.restore=function(snapshot){
-    engine.useWorld();
-    const result=restoreWorldSnapshot(snapshot);
+    const result=restoreWorldSnapshot(engine.world,snapshot);
     engine.world=currentWorldState();
     return result;
   };

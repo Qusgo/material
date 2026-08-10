@@ -201,11 +201,12 @@ overwrites the previous slot. Browser storage lives in `src/04-save-load.js`,
 which now calls the app snapshot helpers in `src/03-app-context.js`; those
 helpers delegate to the browser-owned engine. `serializeWorldSnapshot()` and
 `restoreWorldSnapshot()` in `src/04-save-codec.js` own the portable snapshot
-format. The saved state includes material cells, source cells, background tint,
-particle tint, custom material definitions, selected material, air color, light
-settings, and source speed. Transient physics state such as velocity, sleep,
-oscillation history, and carried-particle timers is reset on load so the
-restored scene starts cleanly.
+format and can operate on an explicit world for non-browser adapters. The saved
+state includes material cells, source cells, background tint, particle tint,
+custom material definitions, selected material, air color, light settings, and
+source speed. Transient physics state such as velocity, sleep, oscillation
+history, and carried-particle timers is reset on load so the restored scene
+starts cleanly.
 If the browser layout changed and the current grid size differs from the saved
 grid, `Load` projects each saved non-empty cell to one current cell instead of
 scanning current cells backward. This avoids silently skipping thin layers

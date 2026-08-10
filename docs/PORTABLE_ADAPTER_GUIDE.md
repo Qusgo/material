@@ -180,6 +180,11 @@ const loaded = JSON.parse(platformStorage.get('canvas-slot'));
 const result = engine.restore(loaded);
 ```
 
+For lower-level tests or a custom engine wrapper, the codec also supports
+`serializeWorldSnapshot(world)` and `restoreWorldSnapshot(world, snapshot)`.
+Prefer the engine methods in platform code so the compatibility world shell
+stays in one place.
+
 Snapshots are data, not replay logs. Restore clears transient velocity, sleep,
 oscillation, body motion, and carried-particle timers.
 
