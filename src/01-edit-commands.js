@@ -58,7 +58,16 @@ function commandBodyPlacement(command){
   return{kind:command.kind,start,current};
 }
 
-function applyEditCommand(command){
+function normalizeEditCommandArgs(worldOrCommand,maybeCommand){
+  if(maybeCommand!==undefined){
+    useWorldState(worldOrCommand);
+    return maybeCommand;
+  }
+  return worldOrCommand;
+}
+
+function applyEditCommand(worldOrCommand,maybeCommand){
+  const command=normalizeEditCommandArgs(worldOrCommand,maybeCommand);
   if(!command||typeof command.type!=='string')return false;
   const radius=commandRadius(command);
   if(command.type==='paint'){

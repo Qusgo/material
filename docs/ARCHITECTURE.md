@@ -109,10 +109,14 @@ construction, shape intersection tests, placement checks, grid clearing under a
 placed body, and body-mask rasterization.
 `src/01-edit-commands.js` is the command-style boundary for editor operations:
 point/line `paint`, `source`, `tint`, `erase`, plus `fill`, `fillAir`, `clear`,
-`force`, and `placeBody`. The browser pointer handlers now route ordinary
-strokes and dynamic body placement commits through these commands. The material
-editor, dynamic body preview, browser storage wrapper, button synchronization,
-and runtime loop are still browser/runtime responsibilities.
+`force`, and `placeBody`. It accepts both the legacy
+`applyEditCommand(command)` form and the explicit
+`applyEditCommand(world, command)` form. Passing a world installs that
+compatibility shell through `useWorldState(world)` before applying the command.
+The browser pointer handlers now route ordinary strokes and dynamic body
+placement commits through these commands. The material editor, dynamic body
+preview, browser storage wrapper, button synchronization, and runtime loop are
+still browser/runtime responsibilities.
 `src/02-force.js` owns DOM-free force application for flow cells and dynamic
 bodies.
 
@@ -207,9 +211,12 @@ later.
 Rendering must stay a presentation layer. The simple light controls do not
 modify material ids, tint arrays, velocity, stability, or erosion state.
 
-`buildRenderBuffer(data)` is the render-prep entry point. It rebuilds the light
-mask and writes one RGBA pixel per grid cell into `data`; the browser adapter is
-responsible only for putting that buffer into `ImageData` and drawing it.
+`buildRenderBuffer(data)` is the legacy render-prep entry point, and
+`buildRenderBuffer(world, data)` is the explicit-world form for future adapters.
+Both rebuild the light mask and write one RGBA pixel per grid cell into `data`;
+the browser adapter is responsible only for putting that buffer into `ImageData`
+and drawing it. Passing a world still installs the compatibility shell into the
+classic-script globals before rendering.
 
 `buildLightMask()` scans each column from top to bottom with a boolean `lit`
 flag. When `lightingEnabled` is false, colors are drawn directly. When it is
@@ -248,10 +255,11 @@ while normal physics deletion and movement leave source cells intact.
 
 ## Update Order
 
-`src/02-step-world.js` owns the current `stepWorld(world)` wrapper. It still
-uses the legacy global-compatible world shell internally, but it gives browser
-and future non-browser adapters a single physics-tick entry point. One
-simulation step is:
+`src/02-step-world.js` owns the current `stepWorld(world)` wrapper. It uses
+`useWorldState(world)` to install an explicit world when one is provided, then
+still runs the legacy global-compatible simulation internals. This gives browser
+and future non-browser adapters a single physics-tick entry point without
+pretending the whole engine is object-pure yet. One simulation step is:
 
 1. Rebuild the dynamic body mask.
 2. Update dynamic bodies.

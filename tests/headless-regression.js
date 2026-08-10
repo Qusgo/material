@@ -405,10 +405,15 @@ testAssert(currentWorldState()===world,'stepWorld should leave supplied world ac
 }
 
 function renderColorRegression(){
-  const source=sharedPrelude()+read('src/00-materials.js')+read('src/03-lighting.js')+read('src/03-render-buffer.js')+`
-let cols=2,rows=2,count=cols*rows;
-let material=new Uint8Array(count),mass=new Float32Array(count),tintR=new Uint8Array(count),tintG=new Uint8Array(count),tintB=new Uint8Array(count),tintA=new Uint8Array(count),bgTintR=new Uint8Array(count),bgTintG=new Uint8Array(count),bgTintB=new Uint8Array(count),bgTintA=new Uint8Array(count),lightMask=new Uint8Array(count);
+  const source=sharedPrelude()+read('src/00-materials.js')+read('src/00-world-arrays.js')+read('src/00-world-state.js')+read('src/03-lighting.js')+read('src/03-render-buffer.js')+`
+let cols=2,rows=2,count=cols*rows,cellSize=1;
+let material,mass,vx,vy,bodyMask,flowDir,restAge,stableMask,tintR,tintG,tintB,tintA,bgTintR,bgTintG,bgTintB,bgTintA,sourceMat,lightMask;
+let moveHistory,moveFlip,horizontalDir,horizontalTurns,escapeDir,escapeTarget,carriedBy,carriedTTL,lastMoveTick;
+let waterSeen,waterSpaceMark,waterComponentMark,waterBasinMark,waterSleepBlockMark,waterTargetMark,waterWakeMark,waterQueue,rowCounts;
+let waterSpaceToken=1,waterComponentToken=1,waterBasinToken=1,waterTargetToken=1,waterWakeToken=1;
 let airColor=[10,20,30],lightingEnabled=true,lightStrength=.2,sideLightStrength=.5,shadowStrength=.25;
+const renderWorld=createWorldState(cols,rows,{cellSize});
+installWorldState(renderWorld);
 function idx(c,r){return r*cols+c}
 function normalizeMaterialCell(i){return isKnownMaterial(material[i])?material[i]:EMPTY}
 function testAssert(condition,message){if(!condition)throw new Error(message)}
@@ -427,7 +432,8 @@ const rendered=materialEmissive(glow.id)?base:applySimpleLighting(base[0],base[1
 testAssert(same(rendered,base),'emissive material should skip system lighting');
 material[2]=glow.id;
 const data=new Uint8Array(count*4);
-buildRenderBuffer(data);
+buildRenderBuffer(renderWorld,data);
+testAssert(currentWorldState()===renderWorld,'buildRenderBuffer(world, data) should leave the supplied world active');
 testAssert(data[8]===20&&data[9]===30&&data[10]===40&&data[11]===255,'render buffer should preserve emissive color');
 `;
   runIsolated('render color regression',source);
@@ -467,14 +473,15 @@ testAssert(material[idx(0,1)]===EMPTY,'source interval should throttle generatio
 }
 
 function editCommandRegression(){
-  const source=sharedPrelude()+read('src/00-materials.js')+read('src/00-world-arrays.js')+read('src/01-cell-state.js')+read('src/01-grid-editing.js')+read('src/01-fill-editing.js')+read('src/01-body-geometry.js')+read('src/02-sources.js')+read('src/02-force.js')+read('src/01-edit-commands.js')+`
+  const source=sharedPrelude()+read('src/00-materials.js')+read('src/00-world-arrays.js')+read('src/00-world-state.js')+read('src/01-cell-state.js')+read('src/01-grid-editing.js')+read('src/01-fill-editing.js')+read('src/01-body-geometry.js')+read('src/02-sources.js')+read('src/02-force.js')+read('src/01-edit-commands.js')+`
 let cols=12,rows=8,count=cols*rows,cellSize=5,viewW=60,viewH=40,editDirty=false,WAKE_RADIUS=2,MAX_FILL_CELLS=100,BODY_LIMIT=64;
 let material,mass,vx,vy,bodyMask,flowDir,restAge,stableMask,tintR,tintG,tintB,tintA,bgTintR,bgTintG,bgTintB,bgTintA,sourceMat,lightMask;
 let moveHistory,moveFlip,horizontalDir,horizontalTurns,escapeDir,escapeTarget,carriedBy,carriedTTL,lastMoveTick;
 let waterSeen,waterSpaceMark,waterComponentMark,waterBasinMark,waterSleepBlockMark,waterTargetMark,waterWakeMark,waterQueue,rowCounts;
 let waterSpaceToken=1,waterComponentToken=1,waterBasinToken=1,waterTargetToken=1,waterWakeToken=1;
 let bodies=[],nextBodyId=1,airColor=[255,255,255];
-installGridArrays(createGridArrays(count,rows));
+const editWorld=createWorldState(cols,rows,{cellSize});
+installWorldState(editWorld);
 function idx(c,r){return r*cols+c}
 function inBounds(c,r){return c>=0&&c<cols&&r>=0&&r<rows}
 function pointToCell(x,y){return{c:Math.max(0,Math.min(cols-1,Math.floor(x/cellSize))),r:Math.max(0,Math.min(rows-1,Math.floor(y/cellSize)))}}
@@ -487,7 +494,8 @@ function isBodyMaterial(){return false}
 function resetRuntimeClock(){}
 function setStatus(){}
 function testAssert(condition,message){if(!condition)throw new Error(message)}
-testAssert(applyEditCommand({type:'paint',x:7,y:7,radius:0,material:SAND}),'paint command should apply');
+testAssert(applyEditCommand(editWorld,{type:'paint',x:7,y:7,radius:0,material:SAND}),'explicit-world paint command should apply');
+testAssert(currentWorldState()===editWorld,'applyEditCommand(world, command) should leave the supplied world active');
 testAssert(material[idx(1,1)]===SAND,'paint command wrote material');
 testAssert(applyEditCommand({type:'source',x:12,y:7,radius:0,material:WATER}),'source command should apply');
 testAssert(sourceMat[idx(2,1)]===WATER,'source command wrote source layer');

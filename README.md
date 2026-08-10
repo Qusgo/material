@@ -113,8 +113,10 @@ The code is still loaded as classic scripts and still shares global typed
 arrays. `src/00-world-state.js` is a compatibility shell, not a full portable
 engine yet: it creates a world object, installs its arrays into the existing
 global names, handles DOM-free grid resize resampling, and lets
-`stepWorld(world)` preserve the current physics update order without changing
-gameplay in the same step.
+`stepWorld(world)`, `applyEditCommand(world, command)`, and
+`buildRenderBuffer(world, data)` preserve the current update/edit/render order
+without changing gameplay in the same step. The old one-argument browser calls
+still work.
 Browser play/pause and debug-display state live in
 `src/03-app-ui-state-adapter.js`, material menu/editor state lives in
 `src/03-material-ui-adapter.js`, and pointer/placement/force-preview state lives

@@ -66,6 +66,11 @@ function installWorldState(world){
   return world;
 }
 
+function useWorldState(world){
+  if(world)return installWorldState(world);
+  return currentWorldState();
+}
+
 function currentWorldState(){
   if(!currentWorld)return null;
   currentWorld.cols=cols;

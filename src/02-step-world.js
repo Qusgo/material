@@ -4,7 +4,7 @@
 // while giving non-browser adapters one function to call per physics tick.
 
 function stepWorld(world=currentWorldState()){
-  if(world)installWorldState(world);
+  useWorldState(world);
   simTick++;
   rebuildBodyMask();
   updateBodies();

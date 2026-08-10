@@ -3,7 +3,16 @@
 // DOM-free pixel-buffer builder. The browser adapter owns ImageData/canvas; this
 // function only resolves material colors, tints, and render-only lighting.
 
-function buildRenderBuffer(data){
+function normalizeRenderBufferArgs(worldOrData,maybeData){
+  if(maybeData!==undefined){
+    useWorldState(worldOrData);
+    return maybeData;
+  }
+  return worldOrData;
+}
+
+function buildRenderBuffer(worldOrData,maybeData){
+  const data=normalizeRenderBufferArgs(worldOrData,maybeData);
   buildLightMask();
   for(let i=0;i<count;i++){
     const p=i*4,m=normalizeMaterialCell(i),base=baseRenderColor(i,m);
