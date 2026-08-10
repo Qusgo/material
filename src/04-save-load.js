@@ -14,7 +14,7 @@ function loadSnapshotMessage(result){
 function saveCanvasSnapshot(){
   if(typeof localStorage==='undefined')return{ok:false,message:'Local storage is unavailable'};
   try{
-    localStorage.setItem(CANVAS_SAVE_KEY,JSON.stringify(serializeWorldSnapshot()));
+    localStorage.setItem(CANVAS_SAVE_KEY,JSON.stringify(serializeAppSnapshot()));
     return{ok:true,message:'Canvas saved'};
   }catch(err){
     return{ok:false,message:'Save failed: storage may be full'};
@@ -31,7 +31,7 @@ function loadCanvasSnapshot(){
   }catch(err){
     return{ok:false,message:'Saved canvas is corrupted'};
   }
-  const result=restoreWorldSnapshot(saved);
+  const result=restoreAppSnapshot(saved);
   if(!result.ok)return{ok:false,message:loadSnapshotMessage(result)};
   if(typeof syncCanvasAfterSnapshotLoad==='function')syncCanvasAfterSnapshotLoad(result);
   return{ok:true,message:result.resampled?`Canvas loaded (${result.savedCols}x${result.savedRows} -> ${cols}x${rows})`:'Canvas loaded'};

@@ -37,6 +37,14 @@ function resizeAppWorld(nextCols,nextRows,options={}){
   return appContext.engine.resize(nextCols,nextRows,options);
 }
 
+function serializeAppSnapshot(){
+  return appContext.engine.serialize();
+}
+
+function restoreAppSnapshot(snapshot){
+  return appContext.engine.restore(snapshot);
+}
+
 function renderApp(){
   render(appWorld(),appContext);
 }

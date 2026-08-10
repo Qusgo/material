@@ -51,7 +51,8 @@ step/edit/resize/render call sites now go through app engine helpers in
 material configuration and runtime setting commands. `src/04-save-codec.js`
 exposes portable
 `serializeWorldSnapshot()`/`restoreWorldSnapshot()` APIs; `src/04-save-load.js`
-is only the browser `localStorage` adapter, and `src/04-save-ui-adapter.js`
+is only the browser `localStorage` adapter and now reaches snapshots through app
+engine helpers instead of direct codec calls. `src/04-save-ui-adapter.js`
 contains the browser-only post-load UI sync hook. `src/03-app-context.js` now
 groups browser app-shell state such as play/pause, status, debug display,
 material editor/menu state, pointer previews, and frame timing so those values

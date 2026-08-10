@@ -117,7 +117,9 @@ function createSimulationEngine(options){
     currentWorld(){calls.push('engine-current');return nextWorld},
     edit(command){calls.push('edit:'+command.type);return true},
     step(iterations){calls.push('step:'+iterations);return nextWorld},
-    resize(cols,rows,options){calls.push('resize:'+cols+'x'+rows+'/'+options.cellSize);return{changed:true,world:nextWorld}}
+    resize(cols,rows,options){calls.push('resize:'+cols+'x'+rows+'/'+options.cellSize);return{changed:true,world:nextWorld}},
+    serialize(){calls.push('serialize');return{version:1}},
+    restore(snapshot){calls.push('restore:'+snapshot.version);return{ok:true}}
   };
 }
 function render(world,context){if(world!==nextWorld||context!==appContext)throw new Error('renderApp should pass app world and context');calls.push('render')}
@@ -129,8 +131,10 @@ testAssert(applyAppEditCommand({type:'paint'}),'applyAppEditCommand should deleg
 testAssert(stepAppWorld(2)===nextWorld,'stepAppWorld should delegate to engine.step');
 const resized=resizeAppWorld(4,5,{cellSize:6});
 testAssert(resized.changed&&resized.world===nextWorld,'resizeAppWorld should delegate to engine.resize');
+testAssert(serializeAppSnapshot().version===1,'serializeAppSnapshot should delegate to engine.serialize');
+testAssert(restoreAppSnapshot({version:2}).ok,'restoreAppSnapshot should delegate to engine.restore');
 renderApp();
-testAssert(calls.includes('edit:paint')&&calls.includes('step:2')&&calls.includes('resize:4x5/6')&&calls.includes('render'),'appContext helpers changed');
+testAssert(calls.includes('edit:paint')&&calls.includes('step:2')&&calls.includes('resize:4x5/6')&&calls.includes('serialize')&&calls.includes('restore:2')&&calls.includes('render'),'appContext helpers changed');
 `;
   runIsolated('app context regression',source);
 }
@@ -827,11 +831,15 @@ function saveLoadAdapterRegression(){
 let cols=7,rows=5,clockReset=false;
 const appContext={running:true};
 const calls=[];
+let savedRaw='';
 const localStorage={
   getItem(){return JSON.stringify({version:1})},
-  setItem(){}
+  setItem(key,value){savedRaw=value;calls.push('store:'+key)}
 };
-function restoreWorldSnapshot(){return{ok:true,resampled:true,savedCols:2,savedRows:3}}
+function serializeAppSnapshot(){calls.push('serialize');return{version:1,cols:7,rows:5}}
+function restoreAppSnapshot(){calls.push('restore');return{ok:true,resampled:true,savedCols:2,savedRows:3}}
+function serializeWorldSnapshot(){throw new Error('save wrapper should use serializeAppSnapshot')}
+function restoreWorldSnapshot(){throw new Error('load wrapper should use restoreAppSnapshot')}
 function syncButtons(){calls.push('buttons')}
 function syncSourceRateControls(arg){if(arg!==null)throw new Error('source controls should sync from state');calls.push('source')}
 function syncLightingControls(arg){if(arg!==null)throw new Error('lighting controls should sync from state');calls.push('lighting')}
@@ -839,10 +847,12 @@ function updateFillPreview(){calls.push('preview')}
 function renderApp(){calls.push('render')}
 function resetRuntimeClock(){clockReset=true}
 function testAssert(condition,message){if(!condition)throw new Error(message)}
+const saved=saveCanvasSnapshot();
+testAssert(saved.ok&&savedRaw.includes('"cols":7'),'saveCanvasSnapshot should store serialized app snapshot');
 const result=loadCanvasSnapshot();
 testAssert(result.ok&&result.message==='Canvas loaded (2x3 -> 7x5)','loadCanvasSnapshot should return resampled message');
 testAssert(appContext.running===false&&clockReset,'save UI adapter should stop runtime clock');
-testAssert(calls.join(',')==='buttons,source,lighting,preview,render','save UI adapter sync order changed');
+testAssert(calls.join(',')==='serialize,store:material-force-lab.canvas.v1,restore,buttons,source,lighting,preview,render','save UI adapter sync order changed');
 `;
   runIsolated('save/load adapter regression',source);
 }
