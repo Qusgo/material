@@ -3,7 +3,16 @@
 // DOM-free force application. UI tools build a circle and arrow; this function
 // mutates flow cells and dynamic bodies using the same rules on every platform.
 
-function applyForce(circle,arrow){
+function normalizeForceArgs(worldOrCircle,circleOrArrow,maybeArrow){
+  if(maybeArrow!==undefined){
+    if(worldOrCircle&&typeof useWorldState==='function')useWorldState(worldOrCircle);
+    return{circle:circleOrArrow,arrow:maybeArrow};
+  }
+  return{circle:worldOrCircle,arrow:circleOrArrow};
+}
+
+function applyForce(worldOrCircle,circleOrArrow,maybeArrow){
+  const args=normalizeForceArgs(worldOrCircle,circleOrArrow,maybeArrow),circle=args.circle,arrow=args.arrow;
   const fx=arrow.x*.035,fy=arrow.y*.035;
   if(Math.hypot(fx,fy)<.02)return false;
   const minC=clamp(Math.floor((circle.x-circle.r)/cellSize),0,cols-1),maxC=clamp(Math.floor((circle.x+circle.r)/cellSize),0,cols-1);

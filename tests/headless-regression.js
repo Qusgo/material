@@ -308,6 +308,14 @@ testAssert(explicitSnapshot.cols===10&&explicitSnapshot.rows===9&&currentWorldSt
 installWorldState(savedActiveWorld);
 const explicitRestore=restoreWorldSnapshot(alternateWorld,explicitSnapshot);
 testAssert(explicitRestore.ok&&currentWorldState()===alternateWorld&&material.some(v=>v===WATER),'explicit-world restore should install and mutate the supplied world');
+sourceMat[idx(2,2)]=WATER;
+material[idx(2,2)]=EMPTY;
+installWorldState(savedActiveWorld);
+applySources(alternateWorld);
+testAssert(currentWorldState()===alternateWorld&&material[idx(2,2)]===WATER,'explicit-world applySources should install and use the supplied world');
+installWorldState(savedActiveWorld);
+applyForce(alternateWorld,{x:10,y:10,r:5},{x:20,y:0});
+testAssert(currentWorldState()===alternateWorld&&vx[idx(2,2)]>0,'explicit-world applyForce should install and use the supplied world');
 `;
   runIsolated('headless core smoke regression',source);
 }

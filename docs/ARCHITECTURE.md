@@ -61,8 +61,10 @@ should call helpers such as `isFlowMaterial()`, `isSolidMaterial()`,
 `defaultFlowDirForMaterial()` instead of adding new id checks.
 
 `src/02-sources.js` owns DOM-free infinite source data, source brush helpers,
-and source material generation. `src/03-source-render-adapter.js` owns only the
-canvas overlay for those source cells. `src/02-flow-and-water.js` owns algorithms:
+and source material generation; `applySources(world)` accepts an explicit world
+while preserving the old no-argument simulation call.
+`src/03-source-render-adapter.js` owns only the canvas overlay for those source
+cells. `src/02-flow-and-water.js` owns algorithms:
 gravity/sliding, slope relaxation, water's surface-jitter escape logic,
 stable/wake logic, and the optional legacy basin code.
 `src/02-erosion.js` owns lightweight carried-particle erosion.
@@ -73,9 +75,11 @@ owns the browser-only post-load hook that stops runtime playback, synchronizes
 controls, refreshes previews, and renders after a snapshot has been restored.
 Keep new material data out of algorithm files unless the material needs a
 genuinely new algorithm.
-`src/02-body-runtime.js` owns dynamic-body physics and grid displacement for
-non-fixed stone bodies. It is called from `src/02-step-world.js` and should stay
-free of browser events and drawing.
+`src/02-force.js` owns DOM-free force application for flow cells and dynamic
+bodies, and accepts either `applyForce(circle, arrow)` or
+`applyForce(world, circle, arrow)`. `src/02-body-runtime.js` owns dynamic-body
+physics and grid displacement for non-fixed stone bodies. It is called from
+`src/02-step-world.js` and should stay free of browser events and drawing.
 `src/03-lighting.js` owns DOM-free render preparation such as base material
 color, light masks, and simple light/shadow blending. `src/03-render-buffer.js`
 converts the current arrays into an RGBA buffer without touching `canvas` or

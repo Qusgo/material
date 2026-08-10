@@ -76,8 +76,9 @@ to work while migration continues.
 ## Next Migration Steps
 
 1. Continue changing hot-path functions to accept `world` or a small runtime
-   context explicitly, starting with low-risk wrappers around source generation,
-   fill computation, and save/restore.
+   context explicitly. Source generation, force application, and save/restore
+   now have explicit-world entry points; the next low-risk targets are fill
+   computation, body runtime helpers, and deeper flow-update helpers.
 2. Move body physics functions toward explicit `world` or body-state arguments
    before exposing dynamic stones in another platform.
 3. Keep browser adapters thin: they should translate platform input into engine

@@ -67,7 +67,8 @@ function placeSourceMaterial(i,mat){
   wakeFlowAroundCell(c,r);
 }
 
-function applySources(){
+function applySources(world){
+  if(world&&typeof useWorldState==='function')useWorldState(world);
   if(!sourceIntervalReady())return;
   for(let i=0;i<count;i++){
     const mat=sourceMat[i];
