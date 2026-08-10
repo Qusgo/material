@@ -78,8 +78,10 @@ contains the browser-only post-load UI sync hook.
    `src/02-body-runtime.js`, while browser canvas drawing and overlays live in
    `src/03-canvas-render-adapter.js`. Browser status, resize, coordinate,
    selection, and button state helpers now live in
-   `src/03-app-ui-state-adapter.js`. Continue by reducing direct global state
-   writes inside browser bootstrap.
+   `src/03-app-ui-state-adapter.js`. Browser play/pause state also lives there,
+   and browser frame timing now lives behind `resetRuntimeClock()` in
+   `src/03-app-bootstrap.js`. Continue by reducing
+   direct global state writes inside browser bootstrap and UI adapters.
 6. Only after the command boundary exists, migrate to TypeScript or a bundler
    such as Vite.
 7. If more speed is needed later, the headless core can be ported to Rust/WASM
@@ -114,13 +116,14 @@ contains the browser-only post-load UI sync hook.
 
 - Early app-shell DOM handles in `src/00-app-dom-refs.js`
 - Shared browser UI handles in `src/03-dom-refs.js`
-- Status text/display, resize, coordinate, brush/eraser radius, selection, and button sync helpers in
+- Play/pause state, status text/display, resize, coordinate, brush/eraser radius, selection, and button sync helpers in
   `src/03-app-ui-state-adapter.js`
 - Material menu/editor field sync in `src/03-material-ui-adapter.js`
 - Source-rate and lighting form sync in `src/03-settings-sync-adapter.js`
 - Toolbar/settings event binding in `src/03-controls-adapter.js`
 - Canvas pointer event binding in `src/03-canvas-input-adapter.js`
 - Resize and animation-loop startup in `src/03-app-bootstrap.js`
+- Browser frame timing and `resetRuntimeClock()` in `src/03-app-bootstrap.js`
 - Offscreen grid canvas, visible canvas drawing, and overlays in
   `src/03-canvas-render-adapter.js`
 - Source overlay drawing in `src/03-source-render-adapter.js`

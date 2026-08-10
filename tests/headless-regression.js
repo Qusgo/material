@@ -468,7 +468,7 @@ testAssert(material[idx(0,1)]===EMPTY,'source interval should throttle generatio
 
 function editCommandRegression(){
   const source=sharedPrelude()+read('src/00-materials.js')+read('src/00-world-arrays.js')+read('src/01-cell-state.js')+read('src/01-grid-editing.js')+read('src/01-fill-editing.js')+read('src/01-body-geometry.js')+read('src/02-sources.js')+read('src/02-force.js')+read('src/01-edit-commands.js')+`
-let cols=12,rows=8,count=cols*rows,cellSize=5,viewW=60,viewH=40,editDirty=false,WAKE_RADIUS=2,MAX_FILL_CELLS=100,accumulator=0,BODY_LIMIT=64;
+let cols=12,rows=8,count=cols*rows,cellSize=5,viewW=60,viewH=40,editDirty=false,WAKE_RADIUS=2,MAX_FILL_CELLS=100,BODY_LIMIT=64;
 let material,mass,vx,vy,bodyMask,flowDir,restAge,stableMask,tintR,tintG,tintB,tintA,bgTintR,bgTintG,bgTintB,bgTintA,sourceMat,lightMask;
 let moveHistory,moveFlip,horizontalDir,horizontalTurns,escapeDir,escapeTarget,carriedBy,carriedTTL,lastMoveTick;
 let waterSeen,waterSpaceMark,waterComponentMark,waterBasinMark,waterSleepBlockMark,waterTargetMark,waterWakeMark,waterQueue,rowCounts;
@@ -484,6 +484,7 @@ function wakeFlowAroundCell(){}
 function wakeFlowNearBody(){}
 function nextWaterWakeToken(){return 1}
 function isBodyMaterial(){return false}
+function resetRuntimeClock(){}
 function setStatus(){}
 function testAssert(condition,message){if(!condition)throw new Error(message)}
 testAssert(applyEditCommand({type:'paint',x:7,y:7,radius:0,material:SAND}),'paint command should apply');
@@ -687,7 +688,7 @@ testAssert(countWhere(bgTintA,v=>v)>0,'upsize lost background tint');
 
 function saveLoadAdapterRegression(){
   const source=read('src/04-save-load.js')+read('src/04-save-ui-adapter.js')+`
-let cols=7,rows=5,running=true,accumulator=12;
+let cols=7,rows=5,running=true,clockReset=false;
 const calls=[];
 const localStorage={
   getItem(){return JSON.stringify({version:1})},
@@ -699,10 +700,11 @@ function syncSourceRateControls(arg){if(arg!==null)throw new Error('source contr
 function syncLightingControls(arg){if(arg!==null)throw new Error('lighting controls should sync from state');calls.push('lighting')}
 function updateFillPreview(){calls.push('preview')}
 function render(){calls.push('render')}
+function resetRuntimeClock(){clockReset=true}
 function testAssert(condition,message){if(!condition)throw new Error(message)}
 const result=loadCanvasSnapshot();
 testAssert(result.ok&&result.message==='Canvas loaded (2x3 -> 7x5)','loadCanvasSnapshot should return resampled message');
-testAssert(running===false&&accumulator===0,'save UI adapter should stop runtime clock');
+testAssert(running===false&&clockReset,'save UI adapter should stop runtime clock');
 testAssert(calls.join(',')==='buttons,source,lighting,preview,render','save UI adapter sync order changed');
 `;
   runIsolated('save/load adapter regression',source);
@@ -868,7 +870,7 @@ testAssert(pointerDown===false&&lastPoint===null,'pointer state did not reset');
 function appBootstrapRegression(){
   const source=`
 const calls=[];
-let lastFrame=0,running=true,accumulator=0,SIM_STEP_MS=14;
+let running=true,SIM_STEP_MS=14;
 const window={addEventListener(type,handler){calls.push('window:'+type);this[type]=handler}};
 function resize(){calls.push('resize')}
 function simulationStep(){calls.push('step')}
@@ -880,6 +882,9 @@ testAssert(calls.join(',')==='window:resize,resize,raf','bootstrap startup order
 requestAnimationFrame.last(14);
 requestAnimationFrame.last(28);
 testAssert(calls.includes('step')&&calls.filter(v=>v==='render').length===2,'frame loop did not step and render');
+resetRuntimeClock();
+requestAnimationFrame.last(56);
+testAssert(calls.filter(v=>v==='step').length===1,'resetRuntimeClock should clear accumulated frame time');
 `;
   runIsolated('app bootstrap regression',source);
 }

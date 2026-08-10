@@ -5,7 +5,7 @@
 
 function syncCanvasAfterSnapshotLoad(){
   running=false;
-  accumulator=0;
+  resetRuntimeClock();
   if(typeof syncButtons==='function')syncButtons();
   if(typeof syncSourceRateControls==='function')syncSourceRateControls(null);
   if(typeof syncLightingControls==='function')syncLightingControls(null);

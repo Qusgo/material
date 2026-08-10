@@ -2,6 +2,13 @@
 
 // Browser-only resize and animation-loop bootstrap.
 
+let lastFrame=0,accumulator=0;
+
+function resetRuntimeClock(){
+  lastFrame=0;
+  accumulator=0;
+}
+
 function frame(ts){
   if(!lastFrame)lastFrame=ts;
   const dt=Math.min(50,ts-lastFrame);

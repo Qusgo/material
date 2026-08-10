@@ -64,7 +64,7 @@ function resetFlowStateAfterEdit(){
 function finishEditAsNewInitialState(){
   if(!editDirty)return;
   resetFlowStateAfterEdit();
-  accumulator=0;
+  resetRuntimeClock();
   editDirty=false;
 }
 function clearCell(c,r,wakeToken=0,clearTintFlag=true,clearSourceFlag=clearTintFlag){
