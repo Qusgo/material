@@ -1057,7 +1057,11 @@ function selectedSourceMaterial(){return WATER}
 function getTintColor(){return[1,2,3]}
 function updateFillPreview(){calls.push('preview')}
 function clearFillPreview(){calls.push('clear-preview')}
-function applyFill(){calls.push('fill')}
+function applyFill(point,runCommand){
+  if(point!==appContext.hoverPoint)throw new Error('fill should receive current hover point');
+  const ok=runCommand({type:'fill',x:point.x,y:point.y,material:WATER});
+  calls.push('fill:'+ok);
+}
 function applyAppEditCommand(command){calls.push('command:'+command.type);return true}
 function applyEditCommand(){throw new Error('canvas input should use applyAppEditCommand')}
 function currentWorldState(){throw new Error('canvas input should use app engine helpers')}
@@ -1074,6 +1078,9 @@ handlers.pointerup({pointerId:7,clientX:18,clientY:20});
 testAssert(calls.includes('command:paint')&&calls.includes('command:paintLine'),'brush commands were not routed');
 testAssert(calls.includes('finish')&&calls.includes('mask')&&calls.includes('release:7'),'pointerup cleanup changed');
 testAssert(appContext.pointerDown===false&&appContext.lastPoint===null,'pointer state did not reset');
+tool='fill';
+handlers.pointerdown({pointerId:8,clientX:5,clientY:6});
+testAssert(calls.includes('preview')&&calls.includes('command:fill')&&calls.includes('fill:true'),'fill gesture should route through app edit command');
 `;
   runIsolated('canvas input adapter regression',source);
 }

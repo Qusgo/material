@@ -45,11 +45,18 @@ function fillAtCell(c,r,mat){
   const res=computeFill(c,r);
   return fillCells(res.cells,mat);
 }
-function applyFill(){
-  if(!fillPreview.length||isBodyMaterial())return;
+function applyFill(point=null,runCommand=null){
+  if(!fillPreview.length||isBodyMaterial())return false;
   const mat=MATERIAL_FROM_NAME[selected]||WATER;
-  const filled=fillCells(fillPreview,mat);
+  const previewCount=fillPreview.length;
+  let filled=0;
+  if(point&&typeof runCommand==='function'){
+    filled=runCommand({type:'fill',x:point.x,y:point.y,material:mat})?previewCount:0;
+  }else{
+    filled=fillCells(fillPreview,mat);
+  }
   setStatus(`Filled ${filled} cells`);
   clearFillPreview();
-  finishEditAsNewInitialState();
+  if(filled>0)finishEditAsNewInitialState();
+  return filled>0;
 }

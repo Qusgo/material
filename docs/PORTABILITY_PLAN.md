@@ -100,7 +100,8 @@ native shell should connect to that facade.
    helpers live in `src/03-app-ui-state-adapter.js`. Material menu/editor field
    sync lives in `src/03-material-ui-adapter.js`, canvas pointer binding lives
    in `src/03-canvas-input-adapter.js`, and fill preview state lives in
-   `src/01-fill-editing.js`. Browser frame timing lives behind
+   `src/01-fill-editing.js`. Browser fill commits now call the app edit helper
+   instead of directly mutating fill cells. Browser frame timing lives behind
    `resetRuntimeClock()` in `src/03-app-bootstrap.js` and stores timing fields
    in `appContext`. Browser adapter entry points now use `appContext` engine
    helpers for edit, step, resize, and render. The first explicit-world
