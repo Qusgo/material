@@ -221,9 +221,10 @@ modify material ids, tint arrays, velocity, stability, or erosion state.
 `buildRenderBuffer(world, data)` is the explicit-world form for future adapters.
 Both rebuild the light mask and write one RGBA pixel per grid cell into `data`;
 the browser adapter is responsible only for putting that buffer into `ImageData`
-and drawing it. The browser canvas renderer calls the explicit-world form with
-`currentWorldState()`. Passing a world still installs the compatibility shell
-into the classic-script globals before rendering.
+and drawing it. The browser canvas adapter now also accepts
+`render(world, appContext)` while keeping the old `render()` convenience form.
+Passing a world still installs the compatibility shell into the classic-script
+globals before rendering.
 
 `buildLightMask()` scans each column from top to bottom with a boolean `lit`
 flag. When `lightingEnabled` is false, colors are drawn directly. When it is

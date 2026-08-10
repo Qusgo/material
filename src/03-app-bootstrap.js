@@ -11,16 +11,17 @@ function frame(ts){
   if(!appContext.lastFrame)appContext.lastFrame=ts;
   const dt=Math.min(50,ts-appContext.lastFrame);
   appContext.lastFrame=ts;
+  const world=currentWorldState();
   if(appContext.running){
     appContext.accumulator+=dt;
     let steps=0;
     while(appContext.accumulator>=SIM_STEP_MS&&steps<4){
-      simulationStep();
+      stepWorld(world);
       appContext.accumulator-=SIM_STEP_MS;
       steps++;
     }
   }else appContext.accumulator=0;
-  render();
+  render(world,appContext);
   requestAnimationFrame(frame);
 }
 

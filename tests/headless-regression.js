@@ -827,7 +827,7 @@ function syncSourceRateControls(source){calls.push('source:'+(source&&source.id)
 function syncLightingControls(source){calls.push('lighting:'+(source&&source.id))}
 function setStatus(text){calls.push('status:'+text)}
 function syncButtons(){calls.push('buttons')}
-function simulationStep(){calls.push('step')}
+function stepWorld(world){if(world!==adapterWorld)throw new Error('step button should pass current world');calls.push('step')}
 function applyEditCommand(world,command){if(world!==adapterWorld)throw new Error('controls should pass current world');calls.push('command:'+command.type);return true}
 function rebuildBodyMask(){calls.push('mask')}
 function saveCanvasSnapshot(){calls.push('save-canvas');return{message:'saved'}}
@@ -841,15 +841,72 @@ playBtn.click();
 brushSizeInput.input();
 sourceRateInput.input();
 lightingEnabledInput.input();
+elementMap.step.click();
 elementMap.clear.click();
 testAssert(calls.includes('tool:brush'),'tool button was not bound');
 testAssert(calls.includes('status:Running')&&calls.includes('buttons'),'play button was not bound');
 testAssert(calls.includes('pair:brush/brush-number'),'brush size controls were not bound');
 testAssert(calls.includes('source:source'),'source rate controls were not bound');
 testAssert(calls.includes('lighting:lighting'),'lighting controls were not bound');
+testAssert(calls.includes('step'),'step button was not bound');
 testAssert(calls.includes('command:clear')&&calls.includes('mask'),'clear button was not bound');
 `;
   runIsolated('controls adapter regression',source);
+}
+
+function canvasRenderAdapterRegression(){
+  const source=`
+const calls=[];
+function noop(){}
+const fakeCtx={
+  fillStyle:'',
+  strokeStyle:'',
+  lineWidth:1,
+  font:'',
+  textAlign:'',
+  textBaseline:'',
+  imageSmoothingEnabled:true,
+  clearRect:noop,
+  fillRect:noop,
+  strokeRect:noop,
+  putImageData:noop,
+  drawImage(){calls.push('draw')},
+  save:noop,
+  restore:noop,
+  beginPath:noop,
+  arc:noop,
+  fill:noop,
+  stroke:noop,
+  moveTo:noop,
+  lineTo:noop,
+  closePath:noop,
+  translate:noop,
+  rotate:noop,
+  rect:noop,
+  fillText:noop,
+  createImageData(w,h){return{width:w,height:h,data:new Uint8ClampedArray(w*h*4)}}
+};
+const document={createElement(){return{getContext(){return fakeCtx}}}};
+let ctx=fakeCtx,cols=2,rows=2,cellSize=3,viewW=6,viewH=6,airColor=[255,255,255],bodies=[],fillPreview=[],fillPreviewMaterial=1,tool='brush';
+const fallbackWorld={id:'fallback'},renderWorld={id:'render-world'},renderContext={debugBasins:false,placing:null,forceState:null,hoverPoint:null};
+const appContext={debugBasins:true,placing:{},forceState:{},hoverPoint:{x:1,y:1}};
+function currentWorldState(){return fallbackWorld}
+function buildRenderBuffer(world,data){if(world!==renderWorld)throw new Error('render should pass explicit world to render buffer');calls.push('buffer:'+data.length)}
+function renderSources(){calls.push('sources')}
+function renderBodies(){calls.push('bodies')}
+function updateStatus(){calls.push('status')}
+function buildWaterBasins(){throw new Error('explicit context should disable basin debug')}
+function materialColor(){return[0,0,0]}
+function makeBodyFromPlacement(){throw new Error('explicit context should disable placement preview')}
+function canPlaceBody(){return true}
+function getEraserRadius(){return 0}
+function pointToCell(){return{c:0,r:0}}
+function testAssert(condition,message){if(!condition)throw new Error(message)}
+`+read('src/03-canvas-render-adapter.js')+`
+render(renderWorld,renderContext);
+testAssert(calls.includes('buffer:16')&&calls.includes('draw')&&calls.includes('sources')&&calls.includes('status'),'render explicit world/context path changed');
+`;
+  runIsolated('canvas render adapter regression',source);
 }
 
 function settingsSyncAdapterRegression(){
@@ -938,10 +995,12 @@ const source=`
 const calls=[];
 let SIM_STEP_MS=14;
 const appContext={running:true,lastFrame:0,accumulator:0};
+const bootWorld={id:'boot-world'};
 const window={addEventListener(type,handler){calls.push('window:'+type);this[type]=handler}};
 function resize(){calls.push('resize')}
-function simulationStep(){calls.push('step')}
-function render(){calls.push('render')}
+function currentWorldState(){return bootWorld}
+function stepWorld(world){if(world!==bootWorld)throw new Error('frame loop should pass current world');calls.push('step')}
+function render(world,context){if(world!==bootWorld||context!==appContext)throw new Error('frame loop should pass explicit world/context');calls.push('render')}
 function requestAnimationFrame(handler){calls.push('raf');requestAnimationFrame.last=handler}
 function testAssert(condition,message){if(!condition)throw new Error(message)}
 `+read('src/03-app-bootstrap.js')+`
@@ -1027,5 +1086,6 @@ domRefsRegression();
 materialUiAdapterRegression();
 settingsSyncAdapterRegression();
 controlsAdapterRegression();
+canvasRenderAdapterRegression();
 canvasInputAdapterRegression();
 appBootstrapRegression();

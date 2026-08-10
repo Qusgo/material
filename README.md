@@ -124,7 +124,8 @@ global names, handles DOM-free grid resize resampling, and lets
 `buildRenderBuffer(world, data)` preserve the current update/edit/render order
 without changing gameplay in the same step. The old one-argument browser calls
 still work, but browser adapters now pass `currentWorldState()` at their
-step/edit/render call sites.
+step/edit/render call sites. The browser canvas adapter also accepts
+`render(world, appContext)` while keeping the old `render()` convenience form.
 Browser app-shell state lives in `src/03-app-context.js`. UI adapters read and
 write that plain `appContext` object for play/pause, status text, debug display,
 material menu/editor state, pointer/placement/force-preview state, and frame

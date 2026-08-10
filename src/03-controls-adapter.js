@@ -15,7 +15,7 @@ function bindBrowserControls(){
   if(materialSlopeInput)materialSlopeInput.addEventListener('input',()=>normalizeIntegerInput(materialSlopeInput,0,32,1));
   if(materialErosionInput)materialErosionInput.addEventListener('input',()=>normalizeIntegerInput(materialErosionInput,1,999,SAND_LIKE_FLOW.erosionResistance));
   playBtn.addEventListener('click',()=>{appContext.running=!appContext.running;setStatus(appContext.running?'Running':'Paused');syncButtons()});
-  document.getElementById('step').addEventListener('click',()=>{appContext.running=false;syncButtons();simulationStep();setStatus('Advanced one step');render()});
+  document.getElementById('step').addEventListener('click',()=>{const world=currentWorldState();appContext.running=false;syncButtons();stepWorld(world);setStatus('Advanced one step');render(world,appContext)});
   if(debugBasinsBtn)debugBasinsBtn.addEventListener('click',()=>{appContext.debugBasins=!appContext.debugBasins;syncButtons();setStatus(appContext.debugBasins?'Showing geometry basins':'Basin debug hidden');render()});
   if(fillAirColorBtn)fillAirColorBtn.addEventListener('click',()=>{applyEditCommand(currentWorldState(),{type:'fillAir',color:getTintColor()});setStatus('Air color filled');render()});
   if(saveCanvasBtn)saveCanvasBtn.addEventListener('click',()=>{const result=saveCanvasSnapshot();setStatus(result.message);render()});
