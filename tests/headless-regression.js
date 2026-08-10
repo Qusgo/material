@@ -491,7 +491,7 @@ testAssert(waterSpaceToken===1&&waterWakeToken===1,'editable clear reset water s
 
 function worldStateRegression(){
   const source=sharedPrelude()+read('src/00-materials.js')+read('src/00-world-arrays.js')+read('src/00-world-state.js')+`
-let cols=1,rows=1,count=1,cellSize=1;
+let cols=1,rows=1,count=1,cellSize=1,simTick=2,editDirty=true;
 let material,mass,vx,vy,bodyMask,flowDir,restAge,stableMask,tintR,tintG,tintB,tintA,bgTintR,bgTintG,bgTintB,bgTintA,sourceMat,lightMask;
 let moveHistory,moveFlip,horizontalDir,horizontalTurns,escapeDir,escapeTarget,carriedBy,carriedTTL,lastMoveTick;
 let waterSeen,waterSpaceMark,waterComponentMark,waterBasinMark,waterSleepBlockMark,waterTargetMark,waterWakeMark,waterQueue,rowCounts;
@@ -500,7 +500,7 @@ let bodies=[],nextBodyId=1;
 function idx(c,r){return r*cols+c}
 function testAssert(condition,message){if(!condition)throw new Error(message)}
 const seedBodies=[{id:7,x:1,y:2,radius:3}];
-const world=createWorldState(5,4,{cellSize:6,bodies:seedBodies,nextBodyId:8,airColor:[1,2,3]});
+const world=createWorldState(5,4,{cellSize:6,bodies:seedBodies,nextBodyId:8,airColor:[1,2,3],simTick:11,editDirty:false});
 testAssert(world.cols===5&&world.rows===4&&world.count===20&&world.cellSize===6,'world dimensions changed');
 testAssert(world.arrays.material.length===20&&world.arrays.rowCounts.length===4,'world array dimensions changed');
 installWorldState(world);
@@ -508,17 +508,20 @@ testAssert(cols===5&&rows===4&&count===20&&cellSize===6,'installWorldState did n
 testAssert(material===world.arrays.material&&rowCounts===world.arrays.rowCounts,'installWorldState did not install arrays');
 testAssert(bodies===seedBodies&&nextBodyId===8,'installWorldState did not install body state');
 testAssert(world.airColor[0]===1&&world.airColor[1]===2&&world.airColor[2]===3,'installWorldState did not install air color');
+testAssert(simTick===11&&editDirty===false&&world.simTick===11&&world.editDirty===false,'installWorldState did not install runtime flags');
 material[0]=SAND;
 waterWakeToken=7;
 bodies.push({id:8,x:2,y:3,radius:4});
 nextBodyId=9;
 setAirColorState([4,5,6]);
+setRuntimeFlagsState({simTick:13,editDirty:true});
 const current=currentWorldState();
 testAssert(current===world,'currentWorldState should return active world');
 testAssert(current.arrays.material[0]===SAND,'currentWorldState did not capture array references');
 testAssert(current.tokens.waterWakeToken===7,'currentWorldState did not capture scratch tokens');
 testAssert(current.bodies.length===2&&current.nextBodyId===9,'currentWorldState did not capture body state');
 testAssert(current.airColor[0]===4&&current.airColor[1]===5&&current.airColor[2]===6,'currentWorldState did not capture air color');
+testAssert(current.simTick===13&&current.editDirty===true,'currentWorldState did not capture runtime flags');
 clearEditableGridState();
 testAssert(current.tokens.waterWakeToken===1,'clearEditableGridState should reset active world tokens');
 const replacement=createWorldState(2,3,{cellSize:4});
@@ -527,6 +530,7 @@ testAssert(currentWorldState()===replacement&&cols===2&&rows===3&&material.lengt
 bodies.push({id:9,x:4,y:5,radius:6});
 nextBodyId=10;
 setAirColorState([12,13,14]);
+setRuntimeFlagsState({simTick:21,editDirty:true});
 material[idx(1,1)]=WATER;
 mass[idx(1,1)]=.7;
 vx[idx(1,1)]=2;
@@ -547,6 +551,7 @@ const resized=resizeWorldGrid(4,6,{cellSize:4});
 testAssert(resized.changed&&cols===4&&rows===6&&cellSize===4,'resizeWorldGrid did not install resized world');
 testAssert(resized.world.bodies===bodies&&bodies.length===1&&resized.world.nextBodyId===10,'resizeWorldGrid should preserve body state');
 testAssert(resized.world.airColor[0]===12&&currentAirColorState()[2]===14,'resizeWorldGrid should preserve air color state');
+testAssert(resized.world.simTick===21&&resized.world.editDirty===true&&simTick===21&&editDirty===true,'resizeWorldGrid should preserve runtime flags');
 testAssert(material[idx(1,1)]===WATER&&mass[idx(1,1)]>.69&&mass[idx(1,1)]<.71&&vx[idx(1,1)]===2&&vy[idx(1,1)]===3,'resizeWorldGrid lost material motion state');
 testAssert(flowDir[idx(1,1)]===1&&tintA[idx(1,1)]===255&&tintR[idx(1,1)]===9,'resizeWorldGrid lost flow direction or particle tint');
 testAssert(sourceMat[idx(0,2)]===SAND&&bgTintA[idx(0,2)]===255&&bgTintR[idx(0,2)]===6,'resizeWorldGrid lost source or background tint');
@@ -566,9 +571,9 @@ function rebuildBodyMask(){calls.push('mask')}
 function updateBodies(){calls.push('bodies')}
 function updateGridMaterials(){calls.push('grid')}
 function testAssert(condition,message){if(!condition)throw new Error(message)}
-const world=createWorldState(2,2,{cellSize:3});
+const world=createWorldState(2,2,{cellSize:3,simTick:4});
 stepWorld(world);
-testAssert(simTick===5,'stepWorld should increment simTick once');
+testAssert(simTick===5&&world.simTick===5,'stepWorld should increment world and legacy simTick once');
 testAssert(calls.join(',')==='mask,bodies,mask,grid,mask','stepWorld update order changed');
 testAssert(cols===2&&rows===2&&count===4&&cellSize===3,'stepWorld should install supplied world');
 testAssert(currentWorldState()===world,'stepWorld should leave supplied world active');

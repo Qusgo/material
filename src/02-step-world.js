@@ -5,7 +5,8 @@
 
 function stepWorld(world=currentWorldState()){
   useWorldState(world);
-  simTick++;
+  if(typeof incrementSimTickState==='function')incrementSimTickState();
+  else simTick++;
   rebuildBodyMask();
   updateBodies();
   rebuildBodyMask();

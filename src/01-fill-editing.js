@@ -50,7 +50,10 @@ function fillCells(cells,mat){
   for(const i of cells){
     const c=i%cols,r=Math.floor(i/cols);
     const oldMat=material[i];
-    if(oldMat!==mat)editDirty=true;
+    if(oldMat!==mat){
+      if(typeof setEditDirtyState==='function')setEditDirtyState(true);
+      else editDirty=true;
+    }
     if(oldMat!==mat)wakeWaterComponentsAroundCell(c,r,WAKE_RADIUS,wakeToken);
     wakeFlowAroundCell(c,r);
     material[i]=mat;

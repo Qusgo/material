@@ -8,7 +8,8 @@ function clearSimulationState(){
   if(typeof setBodyRuntimeState==='function')setBodyRuntimeState();
   else bodies=[];
   clearTransientEditUiState();
-  editDirty=false;
+  if(typeof setEditDirtyState==='function')setEditDirtyState(false);
+  else editDirty=false;
 }
 function setAllAirColor(color){
   const next=typeof setAirColorState==='function'?setAirColorState(color):(Array.isArray(color)?color:[255,255,255]);
@@ -50,7 +51,11 @@ function eraseAtRadius(x,y,rad){
   }
   const er=rad*cellSize,before=bodies.length;
   bodies=bodies.filter(b=>!bodyIntersectsCircle(b,x,y,er));
-  if(bodies.length!==before)editDirty=true;
+  if(bodies.length!==before){
+    if(typeof setBodyRuntimeState==='function')setBodyRuntimeState(bodies,nextBodyId);
+    if(typeof setEditDirtyState==='function')setEditDirtyState(true);
+    else editDirty=true;
+  }
   rebuildBodyMask();
 }
 function eraseAt(x,y){

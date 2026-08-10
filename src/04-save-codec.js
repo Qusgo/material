@@ -225,7 +225,8 @@ function restoreWorldSnapshot(saved){
   if(typeof setBodyRuntimeState==='function')setBodyRuntimeState();
   else bodies=[];
   clearTransientEditUiState();
-  editDirty=false;
+  if(typeof setEditDirtyState==='function')setEditDirtyState(false);
+  else editDirty=false;
   if(typeof rebuildBodyMask==='function')rebuildBodyMask();
   return{ok:true,resampled:savedCols!==cols||savedRows!==rows,savedCols,savedRows};
 }

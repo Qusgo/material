@@ -104,6 +104,63 @@ function currentAirColorState(){
   return next;
 }
 
+function normalizeSimTick(value){
+  const n=Math.floor(Number(value));
+  return Number.isFinite(n)&&n>=0?n:0;
+}
+
+function captureRuntimeFlagsState(world=currentWorld){
+  try{
+    if(typeof simTick!=='undefined'&&typeof editDirty!=='undefined'){
+      return{simTick:normalizeSimTick(simTick),editDirty:!!editDirty};
+    }
+  }catch(e){}
+  return{
+    simTick:normalizeSimTick(world&&world.simTick),
+    editDirty:!!(world&&world.editDirty)
+  };
+}
+
+function installRuntimeFlagsState(world){
+  const state=captureRuntimeFlagsState(world);
+  world.simTick=normalizeSimTick(world.simTick===undefined?state.simTick:world.simTick);
+  world.editDirty=world.editDirty===undefined?state.editDirty:!!world.editDirty;
+  try{
+    if(typeof simTick!=='undefined'){
+      simTick=world.simTick;
+      editDirty=world.editDirty;
+    }
+  }catch(e){}
+}
+
+function setRuntimeFlagsState(patch={}){
+  const current=captureRuntimeFlagsState();
+  const state={
+    simTick:Object.prototype.hasOwnProperty.call(patch,'simTick')?normalizeSimTick(patch.simTick):current.simTick,
+    editDirty:Object.prototype.hasOwnProperty.call(patch,'editDirty')?!!patch.editDirty:current.editDirty
+  };
+  try{
+    if(typeof simTick!=='undefined'){
+      simTick=state.simTick;
+      editDirty=state.editDirty;
+    }
+  }catch(e){}
+  if(currentWorld){
+    currentWorld.simTick=state.simTick;
+    currentWorld.editDirty=state.editDirty;
+  }
+  return state;
+}
+
+function incrementSimTickState(){
+  const state=captureRuntimeFlagsState();
+  return setRuntimeFlagsState({simTick:state.simTick+1}).simTick;
+}
+
+function setEditDirtyState(value=true){
+  return setRuntimeFlagsState({editDirty:value}).editDirty;
+}
+
 function createWorldState(worldCols,worldRows,options={}){
   const nextCols=normalizeWorldDimension(worldCols,1),nextRows=normalizeWorldDimension(worldRows,1);
   const world={
@@ -115,7 +172,9 @@ function createWorldState(worldCols,worldRows,options={}){
     tokens:createWaterScratchTokens(),
     bodies:Array.isArray(options.bodies)?options.bodies:[],
     nextBodyId:normalizeBodyId(options.nextBodyId),
-    airColor:normalizeAirColorState(options.airColor)
+    airColor:normalizeAirColorState(options.airColor),
+    simTick:normalizeSimTick(options.simTick),
+    editDirty:!!options.editDirty
   };
   return world;
 }
@@ -152,6 +211,7 @@ function installWorldState(world){
   installWaterScratchTokens(world.tokens);
   installBodyRuntimeState(world);
   installAirColorState(world);
+  installRuntimeFlagsState(world);
   return world;
 }
 
@@ -179,6 +239,9 @@ function currentWorldState(){
   currentWorld.bodies=bodyState.bodies;
   currentWorld.nextBodyId=bodyState.nextBodyId;
   currentWorld.airColor=currentAirColorState();
+  const flags=captureRuntimeFlagsState(currentWorld);
+  currentWorld.simTick=flags.simTick;
+  currentWorld.editDirty=flags.editDirty;
   return currentWorld;
 }
 
@@ -246,7 +309,8 @@ function resizeWorldGrid(nextCols,nextRows,options={}){
   const source=material&&material.length?captureResizeSource():null;
   const bodyState=captureBodyRuntimeState();
   const nextAirColor=currentAirColorState();
-  installWorldState(createWorldState(normalizedCols,normalizedRows,{cellSize:normalizedCell,bodies:bodyState.bodies,nextBodyId:bodyState.nextBodyId,airColor:nextAirColor}));
+  const flags=captureRuntimeFlagsState();
+  installWorldState(createWorldState(normalizedCols,normalizedRows,{cellSize:normalizedCell,bodies:bodyState.bodies,nextBodyId:bodyState.nextBodyId,airColor:nextAirColor,simTick:flags.simTick,editDirty:flags.editDirty}));
   if(source){
     for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
       restoreResizeCell(r*cols+c,sampleResizeSourceIndex(c,r,source),source);

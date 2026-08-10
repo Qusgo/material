@@ -65,6 +65,9 @@ to work while migration continues.
 - Canvas air color now lives on `WorldState.airColor`, but the old `airColor`
   global is still a synchronized mirror because render and save/load code are
   still classic scripts.
+- Runtime flags now live on `WorldState` as `simTick` and `editDirty`, but the
+  old globals are still synchronized mirrors because source generation, motion
+  traces, and edit-reset hooks still read classic-script names directly.
 - Some core helpers intentionally keep optional browser hooks, such as
   `resetRuntimeClock()` and optional status reporting. Non-browser adapters may
   leave those hooks as no-ops.

@@ -28,8 +28,8 @@ between save and load.
 - `src/00-world-arrays.js` - DOM-free typed-array allocation and clearing
   helpers for the simulation grid.
 - `src/00-world-state.js` - DOM-free world shell that groups dimensions, grid
-  arrays, dynamic body state, air color, water scratch tokens, and resize
-  resampling while still installing compatible globals.
+  arrays, dynamic body state, air color, runtime flags, water scratch tokens,
+  and resize resampling while still installing compatible globals.
 - `src/00-app-dom-refs.js` - Browser-only app shell DOM handles needed by early
   runtime state.
 - `src/00-core-state.js` - Runtime constants, mutable simulation state, and
@@ -128,8 +128,9 @@ or engine rewrite.
 
 The code is still loaded as classic scripts and still shares global typed
 arrays. `src/00-world-state.js` is a compatibility shell, not a full portable
-engine yet: it creates a world object, installs its arrays into the existing
-global names, handles DOM-free grid resize resampling, and lets
+engine yet: it creates a world object, installs its arrays, dynamic body state,
+air color, and runtime flags into the existing global names, handles DOM-free
+grid resize resampling, and lets
 `stepWorld(world)`, `applyEditCommand(world, command)`, and
 `buildRenderBuffer(world, data)` preserve the current update/edit/render order
 without changing gameplay in the same step. The old one-argument browser calls

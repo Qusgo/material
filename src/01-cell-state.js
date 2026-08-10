@@ -7,7 +7,10 @@ function writeCell(c,r,mat,wakeToken=0){
   const i=idx(c,r);
   if(bodyMask[i])return;
   const oldMat=material[i];
-  if(oldMat!==mat)editDirty=true;
+  if(oldMat!==mat){
+    if(typeof setEditDirtyState==='function')setEditDirtyState(true);
+    else editDirty=true;
+  }
   if(oldMat!==mat)wakeWaterComponentsAroundCell(c,r,WAKE_RADIUS,wakeToken);
   wakeFlowAroundCell(c,r);
   material[i]=mat;
@@ -65,13 +68,17 @@ function finishEditAsNewInitialState(){
   if(!editDirty)return;
   resetFlowStateAfterEdit();
   resetRuntimeClock();
-  editDirty=false;
+  if(typeof setEditDirtyState==='function')setEditDirtyState(false);
+  else editDirty=false;
 }
 function clearCell(c,r,wakeToken=0,clearTintFlag=true,clearSourceFlag=clearTintFlag){
   if(!inBounds(c,r))return;
   const i=idx(c,r);
   const oldMat=material[i];
-  if(oldMat!==EMPTY)editDirty=true;
+  if(oldMat!==EMPTY){
+    if(typeof setEditDirtyState==='function')setEditDirtyState(true);
+    else editDirty=true;
+  }
   if(oldMat!==EMPTY)wakeWaterComponentsAroundCell(c,r,WAKE_RADIUS,wakeToken);
   wakeFlowAroundCell(c,r);
   material[i]=EMPTY;
