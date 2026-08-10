@@ -14,7 +14,8 @@ function countSourceCells(mat){
 }
 
 function selectedSourceMaterial(){
-  const mat=MATERIAL_FROM_NAME[selected]||WATER;
+  const key=typeof currentSelectedKey==='function'?currentSelectedKey():selected;
+  const mat=MATERIAL_FROM_NAME[key]||WATER;
   return canSourceMaterial(mat)?mat:EMPTY;
 }
 

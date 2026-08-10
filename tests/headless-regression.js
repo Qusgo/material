@@ -103,6 +103,12 @@ const window={devicePixelRatio:1};
 `+read('src/00-app-dom-refs.js')+read('src/00-core-state.js')+`
 if(cols!==1||rows!==1||count!==1)throw new Error('core-state bootstrap dimensions changed');
 if(!currentWorldState()||currentWorldState().arrays.material!==material)throw new Error('core-state did not install active world');
+if(currentTool()!=='brush'||currentSelectedKey()!=='water')throw new Error('selection helpers should default to legacy globals');
+globalThis.appContext={tool:'eraser',selected:'sand'};
+if(currentTool()!=='eraser'||currentSelectedKey()!=='sand')throw new Error('selection helpers should read appContext when present');
+setCurrentTool('fill');
+setCurrentSelectedKey('stone');
+if(tool!=='fill'||selected!=='stone'||globalThis.appContext.tool!=='fill'||globalThis.appContext.selected!=='stone')throw new Error('selection helpers should sync legacy globals and appContext');
 `;
   runIsolated('runtime bootstrap regression',source);
 }

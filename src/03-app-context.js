@@ -9,6 +9,8 @@ const appContext={
   statusText:'Brush: paint material directly',
   running:false,
   debugBasins:false,
+  tool:typeof tool==='undefined'?'brush':tool,
+  selected:typeof selected==='undefined'?'water':selected,
   materialMenuOpen:false,
   materialEditorMode:null,
   materialEditorTarget:0,
@@ -22,6 +24,7 @@ const appContext={
   lastFrame:0,
   accumulator:0
 };
+if(typeof globalThis!=='undefined')globalThis.appContext=appContext;
 
 function appWorld(){
   return appContext.engine.currentWorld();

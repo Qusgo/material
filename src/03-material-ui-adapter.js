@@ -23,10 +23,21 @@ function getTintColor(){
   return hexToRgb(tintColorInput?tintColorInput.value:'#ef4444');
 }
 
+function materialUiSelectedKey(){
+  return typeof currentSelectedKey==='function'?currentSelectedKey():selected;
+}
+
+function setMaterialUiSelectedKey(key){
+  if(typeof setCurrentSelectedKey==='function')return setCurrentSelectedKey(key);
+  selected=key;
+  if(typeof appContext!=='undefined'&&appContext)appContext.selected=key;
+  return selected;
+}
+
 function renderMaterialMenu(){
   if(!materialButton)return;
-  if(!MATERIAL_FROM_NAME[selected])selected=materialKeyFromId(WATER);
-  const selectedMat=MATERIAL_FROM_NAME[selected]||WATER,def=materialDef(selectedMat),col=def.color;
+  if(!MATERIAL_FROM_NAME[materialUiSelectedKey()])setMaterialUiSelectedKey(materialKeyFromId(WATER));
+  const activeSelected=materialUiSelectedKey(),selectedMat=MATERIAL_FROM_NAME[activeSelected]||WATER,def=materialDef(selectedMat),col=def.color;
   materialSwatchEl.style.background=`rgb(${col[0]},${col[1]},${col[2]})`;
   materialLabelEl.textContent=def.name;
   materialButton.classList.toggle('active',appContext.materialMenuOpen);
@@ -45,7 +56,7 @@ function renderMaterialMenu(){
     label.textContent=item.name;
     b.appendChild(sw);
     b.appendChild(label);
-    b.classList.toggle('active',item.key===selected);
+    b.classList.toggle('active',item.key===activeSelected);
     b.addEventListener('click',()=>{appContext.materialMenuOpen=false;setSelected(item.key)});
     row.appendChild(b);
     if(item.custom){
@@ -161,7 +172,7 @@ function deleteExistingMaterial(id){
     renderMaterialMenu();
     return;
   }
-  if(selected===def.key)selected=materialKeyFromId(WATER);
+  if(materialUiSelectedKey()===def.key)setMaterialUiSelectedKey(materialKeyFromId(WATER));
   appContext.materialEditorMode=null;
   appContext.materialEditorTarget=0;
   setStatus('Custom material deleted');

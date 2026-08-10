@@ -76,8 +76,8 @@ between save and load.
   cells.
 - `src/03-dom-refs.js` - Browser-only DOM handles shared by UI adapters.
 - `src/03-app-context.js` - Browser-only app-shell state object for status,
-  play/pause, debug display, material editor/menu state, pointer previews, and
-  frame timing.
+  play/pause, debug display, tool/material selection, material editor/menu
+  state, pointer previews, and frame timing.
 - `src/03-app-ui-state-adapter.js` - Browser-only status display, resize,
   brush/eraser radius, tool selection, button sync, and canvas coordinate
   helpers.
@@ -143,10 +143,12 @@ object for `edit()`, `step()`, `renderBuffer()`, `serialize()`, `restore()`,
 `runtimeSettings()`.
 Browser app-shell state lives in `src/03-app-context.js`. UI adapters read and
 write that plain `appContext` object for play/pause, status text, debug display,
-material menu/editor state, pointer/placement/force-preview state, frame
-timing, and the browser-owned engine facade. Frame timing is still controlled
-through `resetRuntimeClock()` in `src/03-app-bootstrap.js`; core/edit code
-should call that hook instead of touching RAF accumulator state.
+tool/material selection, material menu/editor state,
+pointer/placement/force-preview state, frame timing, and the browser-owned
+engine facade. The old `tool` and `selected` globals are synchronized as a
+classic-script compatibility mirror. Frame timing is still controlled through
+`resetRuntimeClock()` in `src/03-app-bootstrap.js`; core/edit code should call
+that hook instead of touching RAF accumulator state.
 
 When changing water behavior, read `docs/ARCHITECTURE.md` first. Most previous
 bugs came from local water rules fighting the component-level water stabilizer.

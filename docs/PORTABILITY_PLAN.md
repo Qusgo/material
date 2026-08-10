@@ -55,8 +55,9 @@ is only the browser `localStorage` adapter and now reaches snapshots through app
 engine helpers instead of direct codec calls. `src/04-save-ui-adapter.js`
 contains the browser-only post-load UI sync hook. `src/03-app-context.js` now
 groups browser app-shell state such as play/pause, status, debug display,
-material editor/menu state, pointer previews, and frame timing so those values
-are visible as adapter context instead of being mixed into core state.
+tool/material selection, material editor/menu state, pointer previews, and frame
+timing so those values are visible as adapter context instead of being mixed
+into core state.
 `src/03-simulation-engine.js` now provides a DOM-free compatibility facade for
 browser and future non-browser adapters. It exposes one object for
 create/edit/step/material config/runtime settings/render
@@ -102,6 +103,8 @@ native shell should connect to that facade.
    sync lives in `src/03-material-ui-adapter.js`, canvas pointer binding lives
    in `src/03-canvas-input-adapter.js`, and browser fill preview state now lives
    in `appContext` with compatibility helpers in `src/01-fill-editing.js`.
+   Tool/material selection now lives in `appContext` too, with `tool` and
+   `selected` kept only as synchronized classic-script compatibility globals.
    Browser fill commits now call the app edit helper instead of directly
    mutating fill cells. Browser frame timing lives behind
    `resetRuntimeClock()` in `src/03-app-bootstrap.js` and stores timing fields

@@ -20,6 +20,14 @@ let bodies=[],nextBodyId=1,tool='brush',selected='water',simTick=0,editDirty=fal
 let sourceInterval=1;
 let airColor=[255,255,255];
 let lightingEnabled=true,lightStrength=.18,sideLightStrength=1,shadowStrength=.16;
+function appShellContext(){
+  if(typeof globalThis!=='undefined'&&globalThis.appContext)return globalThis.appContext;
+  try{return typeof appContext!=='undefined'&&appContext?appContext:null}catch(e){return null}
+}
+function currentTool(){const context=appShellContext();return context&&context.tool?context.tool:tool}
+function setCurrentTool(value){tool=value||'brush';const context=appShellContext();if(context)context.tool=tool;return tool}
+function currentSelectedKey(){const context=appShellContext();return context&&context.selected?context.selected:selected}
+function setCurrentSelectedKey(value){selected=value||'water';const context=appShellContext();if(context)context.selected=selected;return selected}
 function idx(c,r){return r*cols+c} function inBounds(c,r){return c>=0&&c<cols&&r>=0&&r<rows} function clamp(v,a,b){return Math.max(a,Math.min(b,v))} function randDir(){return Math.random()<.5?-1:1}
 function pointToCell(x,y){return{c:clamp(Math.floor(x/cellSize),0,cols-1),r:clamp(Math.floor(y/cellSize),0,rows-1)}} function cellCenter(c,r){return{x:(c+.5)*cellSize,y:(r+.5)*cellSize}}
 function resetRuntimeClock(){}

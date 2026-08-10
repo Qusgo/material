@@ -9,6 +9,10 @@ function renderAdapterWorld(world){
   return world||currentWorldState();
 }
 
+function renderAdapterTool(){
+  return typeof currentTool==='function'?currentTool():tool;
+}
+
 // Rendering is separated from simulation state: the grid draws to a tiny
 // offscreen canvas first, then scales up with image smoothing disabled.
 function renderGrid(world=currentWorldState()){
@@ -70,7 +74,7 @@ function renderFillPreview(context=appContext){
 function renderPlacement(context=appContext){if(!context.placing)return;const b=makeBodyFromPlacement(context.placing);if(!b)return;const ok=canPlaceBody(b);ctx.save();ctx.strokeStyle=ok?'rgba(58,58,58,.85)':'rgba(201,74,74,.9)';ctx.fillStyle=ok?'rgba(58,58,58,.22)':'rgba(201,74,74,.18)';ctx.lineWidth=2;if(b.type==='circle'){ctx.beginPath();ctx.arc(b.x,b.y,b.radius,0,Math.PI*2);ctx.fill();ctx.stroke()}else{ctx.beginPath();ctx.rect(b.x-b.hw,b.y-b.hh,b.hw*2,b.hh*2);ctx.fill();ctx.stroke()}ctx.restore()}
 function drawArrow(x1,y1,x2,y2){const a=Math.atan2(y2-y1,x2-x1);ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();ctx.beginPath();ctx.moveTo(x2,y2);ctx.lineTo(x2-Math.cos(a-.55)*14,y2-Math.sin(a-.55)*14);ctx.lineTo(x2-Math.cos(a+.55)*14,y2-Math.sin(a+.55)*14);ctx.closePath();ctx.fillStyle=ctx.strokeStyle;ctx.fill()}
 function renderForcePreview(context=appContext){const forceState=context.forceState;if(!forceState)return;ctx.save();ctx.strokeStyle='rgba(17,24,39,.78)';ctx.fillStyle='rgba(22,141,226,.1)';ctx.lineWidth=2;if(forceState.circle){ctx.beginPath();ctx.arc(forceState.circle.x,forceState.circle.y,forceState.circle.r,0,Math.PI*2);ctx.fill();ctx.stroke()}else if(forceState.start&&forceState.current){const r=Math.hypot(forceState.current.x-forceState.start.x,forceState.current.y-forceState.start.y);ctx.beginPath();ctx.arc(forceState.start.x,forceState.start.y,r,0,Math.PI*2);ctx.fill();ctx.stroke()}if(forceState.circle&&forceState.arrowEnd)drawArrow(forceState.circle.x,forceState.circle.y,forceState.arrowEnd.x,forceState.arrowEnd.y);ctx.restore()}
-function renderEraser(context=appContext){if(tool!=='eraser'||!context.hoverPoint)return;const rad=getEraserRadius();ctx.save();ctx.strokeStyle='rgba(201,74,74,.85)';ctx.lineWidth=2;if(rad===0){const p=pointToCell(context.hoverPoint.x,context.hoverPoint.y);ctx.strokeRect(p.c*cellSize+.5,p.r*cellSize+.5,Math.max(1,cellSize-1),Math.max(1,cellSize-1))}else{ctx.beginPath();ctx.arc(context.hoverPoint.x,context.hoverPoint.y,rad*cellSize,0,Math.PI*2);ctx.stroke()}ctx.restore()}
+function renderEraser(context=appContext){if(renderAdapterTool()!=='eraser'||!context.hoverPoint)return;const rad=getEraserRadius();ctx.save();ctx.strokeStyle='rgba(201,74,74,.85)';ctx.lineWidth=2;if(rad===0){const p=pointToCell(context.hoverPoint.x,context.hoverPoint.y);ctx.strokeRect(p.c*cellSize+.5,p.r*cellSize+.5,Math.max(1,cellSize-1),Math.max(1,cellSize-1))}else{ctx.beginPath();ctx.arc(context.hoverPoint.x,context.hoverPoint.y,rad*cellSize,0,Math.PI*2);ctx.stroke()}ctx.restore()}
 function render(world=currentWorldState(),context=appContext){
   const active=renderAdapterWorld(world);
   ctx.clearRect(0,0,viewW,viewH);

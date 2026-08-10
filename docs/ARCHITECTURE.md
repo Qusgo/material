@@ -89,13 +89,17 @@ basin debug, fill preview, force preview, eraser preview, and body drawing.
 core runtime state loads, such as the canvas, status label, play/debug buttons,
 and brush-size input.
 `src/03-app-context.js` owns the browser app-shell state object. This plain
-object holds status text, play/pause, debug display, material menu/editor state,
-pointer/hover/placement/force-preview state, frame timing, and the browser-owned
-simulation engine facade. Its helpers (`appWorld()`, `applyAppEditCommand()`,
+object holds status text, play/pause, debug display, tool/material selection,
+material menu/editor state, pointer/hover/placement/force-preview state, frame
+timing, and the browser-owned simulation engine facade. Its helpers
+(`appWorld()`, `applyAppEditCommand()`,
 `stepAppWorld()`, `resizeAppWorld()`, `applyAppMaterialCommand()`,
 `applyAppRuntimeSettingsCommand()`, `currentAppRuntimeSettings()`, and
 `renderApp()`) are the browser adapter's preferred path into the engine. This is
 adapter state, not simulation state; core files should not read it.
+`currentTool()`, `setCurrentTool()`, `currentSelectedKey()`, and
+`setCurrentSelectedKey()` keep `appContext` and the legacy `tool`/`selected`
+globals synchronized while classic-script compatibility remains.
 `src/03-dom-refs.js` owns browser DOM handles shared by material and controls
 adapters.
 `src/03-app-ui-state-adapter.js` owns browser-only status display, canvas resize,
@@ -112,10 +116,11 @@ source-rate and lighting controls, and delegates value clamping/mutation through
 wire DOM events to existing commands/helpers without adding simulation rules.
 `src/03-canvas-input-adapter.js` owns canvas pointer gestures and routes
 gestures to edit/force commands. Pointer, hover, placement, and force-preview
-state live in `appContext`. `src/03-app-bootstrap.js` owns browser resize
-binding, the `requestAnimationFrame` loop, and the runtime clock reset hook used
-after edits and snapshot loads. The loop stores its timing fields in
-`appContext`.
+state live in `appContext`; tool and material selection are read through the
+selection helpers instead of direct global reads. `src/03-app-bootstrap.js` owns
+browser resize binding, the `requestAnimationFrame` loop, and the runtime clock
+reset hook used after edits and snapshot loads. The loop stores its timing
+fields in `appContext`.
 `src/01-cell-state.js` owns low-level cell mutation, transient motion cleanup,
 tint/source clearing, and invalid-material normalization. `src/01-grid-editing.js`
 owns DOM-free brush stamps, tint edits, erasing, whole-grid edit commands, and

@@ -11,7 +11,7 @@ function serializeWorldSnapshot(){
     cols,
     rows,
     sourceInterval,
-    selected,
+    selected:typeof currentSelectedKey==='function'?currentSelectedKey():selected,
     airColor:airColor.slice(0,3),
     lightingEnabled,
     lightStrength,
@@ -204,7 +204,9 @@ function restoreWorldSnapshot(saved){
   if(!Number.isFinite(sideLightStrength))sideLightStrength=1;
   shadowStrength=clamp(Number(saved.shadowStrength),0,1);
   if(!Number.isFinite(shadowStrength))shadowStrength=.16;
-  selected=MATERIAL_FROM_NAME[saved.selected]?saved.selected:materialKeyFromId(WATER);
+  const restoredSelected=MATERIAL_FROM_NAME[saved.selected]?saved.selected:materialKeyFromId(WATER);
+  if(typeof setCurrentSelectedKey==='function')setCurrentSelectedKey(restoredSelected);
+  else selected=restoredSelected;
   bodies=[];
   clearTransientEditUiState();
   editDirty=false;

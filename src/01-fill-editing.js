@@ -25,6 +25,14 @@ function currentFillPreviewMaterial(){
     :fillPreviewMaterial;
 }
 
+function fillEditingTool(){
+  return typeof currentTool==='function'?currentTool():tool;
+}
+
+function fillEditingSelectedKey(){
+  return typeof currentSelectedKey==='function'?currentSelectedKey():selected;
+}
+
 function clearFillPreview(){
   setFillPreviewState([],EMPTY);
 }
@@ -35,7 +43,7 @@ function clearTransientEditUiState(){
 }
 
 function computeFill(c,r){const start=idx(c,r),target=material[start],seen=new Uint8Array(count),queue=new Int32Array(Math.min(count,MAX_FILL_CELLS+1)),out=[];let h=0,t=0;seen[start]=1;queue[t++]=start;while(h<t&&out.length<MAX_FILL_CELLS){const i=queue[h++];out.push(i);const cc=i%cols,rr=Math.floor(i/cols),ns=[i-1,i+1,i-cols,i+cols];for(const ni of ns){if(ni<0||ni>=count||seen[ni])continue;const nc=ni%cols,nr=Math.floor(ni/cols);if(Math.abs(nc-cc)+Math.abs(nr-rr)!==1)continue;if(bodyMask[ni]||material[ni]!==target)continue;seen[ni]=1;if(t<queue.length)queue[t++]=ni}}return{cells:out,target,clipped:h<t||out.length>=MAX_FILL_CELLS}}
-function updateFillPreview(hoverPoint=null){clearFillPreview();if(tool!=='fill'||isBodyMaterial()||!hoverPoint)return;const p=pointToCell(hoverPoint.x,hoverPoint.y),res=computeFill(p.c,p.r);setFillPreviewState(res.cells,MATERIAL_FROM_NAME[selected]||WATER);if(res.clipped)setStatus('Fill preview reached the cell limit')}
+function updateFillPreview(hoverPoint=null){clearFillPreview();if(fillEditingTool()!=='fill'||isBodyMaterial()||!hoverPoint)return;const p=pointToCell(hoverPoint.x,hoverPoint.y),res=computeFill(p.c,p.r);setFillPreviewState(res.cells,MATERIAL_FROM_NAME[fillEditingSelectedKey()]||WATER);if(res.clipped)setStatus('Fill preview reached the cell limit')}
 function fillCells(cells,mat){
   if(!cells.length||!isKnownMaterial(mat)||isBodyMaterial())return 0;
   const wakeToken=nextWaterWakeToken();
@@ -68,7 +76,7 @@ function fillAtCell(c,r,mat){
 function applyFill(point=null,runCommand=null){
   const preview=currentFillPreview();
   if(!preview.length||isBodyMaterial())return false;
-  const mat=MATERIAL_FROM_NAME[selected]||WATER;
+  const mat=MATERIAL_FROM_NAME[fillEditingSelectedKey()]||WATER;
   const previewCount=preview.length;
   let filled=0;
   if(point&&typeof runCommand==='function'){
