@@ -95,6 +95,8 @@ between save and load.
 - `app.js` - Legacy note only. Do not reintroduce runtime code there unless the
   HTML entry points are changed back.
 - `docs/ARCHITECTURE.md` - Detailed notes for future agents.
+- `docs/PORTABLE_ADAPTER_GUIDE.md` - Practical guide for wiring the DOM-free
+  engine facade into WebView, mini-program, or native shells.
 
 ## Development Notes
 
@@ -117,8 +119,10 @@ or `localStorage`. The separate simulation engine regression covers the same
 core chain through `createSimulationEngine()`.
 
 The migration path toward a portable simulation core is documented in
-`docs/PORTABILITY_PLAN.md`. Follow that plan instead of doing a large
-all-at-once TypeScript or engine rewrite.
+`docs/PORTABILITY_PLAN.md`. `docs/PORTABLE_ADAPTER_GUIDE.md` describes how a
+future WebView, mini-program, or native shell should connect to the current
+engine facade. Follow those docs instead of doing a large all-at-once TypeScript
+or engine rewrite.
 
 The code is still loaded as classic scripts and still shares global typed
 arrays. `src/00-world-state.js` is a compatibility shell, not a full portable

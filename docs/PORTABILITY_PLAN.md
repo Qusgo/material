@@ -58,7 +58,8 @@ are visible as adapter context instead of being mixed into core state.
 `src/03-simulation-engine.js` now provides a DOM-free compatibility facade for
 future non-browser adapters. It exposes one object for create/edit/step/render
 buffer/serialize/restore/resize/clear while still using the classic-script
-world shell internally.
+world shell internally. `docs/PORTABLE_ADAPTER_GUIDE.md` describes how a
+WebView, mini-program, or native shell should connect to that facade.
 
 ## Migration Order
 
@@ -145,6 +146,10 @@ world shell internally.
   boundary grows.
 
 ## Web Adapter Candidates
+
+Read `docs/PORTABLE_ADAPTER_GUIDE.md` before writing another platform adapter.
+The adapter should use `createSimulationEngine()` and keep platform input,
+storage, canvas upload, and transient UI state outside the core.
 
 - Browser app-shell state in `src/03-app-context.js`
 - `src/04-save-load.js` for localStorage messages and persistence.
