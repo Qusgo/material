@@ -7,16 +7,17 @@ to reuse from a WebView, mini-program, or native shell.
 ## Current Evidence
 
 - `node tests/headless-regression.js` covers syntax, browser bootstrap, the
-  DOM-free core smoke path, and the simulation engine facade.
+  DOM-free core smoke path, the simulation engine facade, and the automated
+  portability boundary scan.
 - The DOM-free smoke creates a world, applies explicit-world edit commands,
   steps physics, builds an RGBA render buffer, serializes, clears, and restores
   without defining `document`, `canvas`, or `localStorage`.
 - A browser smoke test still loads the full ordered script chain with fake DOM
   and canvas handles.
-- The core candidate scan for `document`, `window`, `canvas`, `localStorage`,
-  DOM event binding, and `ImageData` finds no real browser API calls inside the
-  reusable core files. Mentions that remain there are comments or user-facing
-  text.
+- The core candidate scan strips comments and strings, then checks for
+  `document`, `window`, `canvas`, `localStorage`, DOM event binding, and
+  `ImageData`. It currently finds no real browser API calls inside the reusable
+  core files.
 
 ## Portable Boundary Today
 
@@ -95,4 +96,6 @@ node tests/headless-regression.js
 
 When a change claims to improve portability, it should either reduce browser API
 usage in a core candidate file, move adapter state into `appContext`, or add a
-test that proves a facade method works without browser globals.
+test that proves a facade method works without browser globals. The regression
+suite now includes the core browser-API scan, so keep its candidate file list in
+sync when files move between portable core and browser adapters.

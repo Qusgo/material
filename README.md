@@ -118,7 +118,9 @@ portable snapshot save/load. It also includes a DOM-free core smoke regression
 that creates a world, applies edit commands, steps physics, builds a render
 buffer, serializes, clears, and restores without defining `document`, `canvas`,
 or `localStorage`. The separate simulation engine regression covers the same
-core chain through `createSimulationEngine()`.
+core chain through `createSimulationEngine()`. A portability boundary regression
+also scans core candidate files after stripping comments and strings, and fails
+if real browser API identifiers are reintroduced there.
 
 The migration path toward a portable simulation core is documented in
 `docs/PORTABILITY_PLAN.md`. `docs/PORTABLE_ADAPTER_GUIDE.md` describes how a

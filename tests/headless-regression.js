@@ -39,6 +39,27 @@ const RUNTIME_FILES=[
   'src/03-canvas-input-adapter.js',
   'src/03-app-bootstrap.js'
 ];
+const CORE_CANDIDATE_FILES=[
+  'src/00-materials.js',
+  'src/00-world-arrays.js',
+  'src/00-world-state.js',
+  'src/01-cell-state.js',
+  'src/01-grid-editing.js',
+  'src/01-fill-editing.js',
+  'src/01-body-geometry.js',
+  'src/02-sources.js',
+  'src/02-flow-and-water.js',
+  'src/02-force.js',
+  'src/01-runtime-config.js',
+  'src/01-edit-commands.js',
+  'src/02-erosion.js',
+  'src/02-body-runtime.js',
+  'src/02-step-world.js',
+  'src/04-save-codec.js',
+  'src/03-lighting.js',
+  'src/03-render-buffer.js',
+  'src/03-simulation-engine.js'
+];
 
 function read(file){
   return fs.readFileSync(path.join(ROOT,file),'utf8');
@@ -72,6 +93,51 @@ function syntaxRegression(){
   for(const file of RUNTIME_FILES)new Function(read(file));
   new Function(RUNTIME_FILES.map(read).join('\n'));
   console.log('syntax ok');
+}
+
+function stripCommentsAndStrings(source){
+  let out='',i=0,mode='code',quote='';
+  while(i<source.length){
+    const ch=source[i],next=source[i+1];
+    if(mode==='code'){
+      if(ch==='/'&&next==='/'){mode='line';out+='  ';i+=2;continue}
+      if(ch==='/'&&next==='*'){mode='block';out+='  ';i+=2;continue}
+      if(ch==='"'||ch==="'"||ch==='`'){mode='string';quote=ch;out+=' ';i++;continue}
+      out+=ch;i++;continue;
+    }
+    if(mode==='line'){
+      if(ch==='\n'){mode='code';out+='\n'}else out+=' ';
+      i++;continue;
+    }
+    if(mode==='block'){
+      if(ch==='*'&&next==='/'){mode='code';out+='  ';i+=2;continue}
+      out+=ch==='\n'?'\n':' ';i++;continue;
+    }
+    if(mode==='string'){
+      if(ch==='\\'){out+='  ';i+=2;continue}
+      if(ch===quote){mode='code';quote='';out+=' ';i++;continue}
+      out+=ch==='\n'?'\n':' ';i++;continue;
+    }
+  }
+  return out;
+}
+
+function portabilityBoundaryRegression(){
+  const browserApiPattern=/\b(document|window|canvas|ctx|localStorage|addEventListener|getElementById|querySelector|requestAnimationFrame|ImageData)\b/g;
+  const violations=[];
+  for(const file of CORE_CANDIDATE_FILES){
+    const source=stripCommentsAndStrings(read(file));
+    const lines=source.split(/\r?\n/);
+    for(let row=0;row<lines.length;row++){
+      browserApiPattern.lastIndex=0;
+      let match;
+      while((match=browserApiPattern.exec(lines[row]))){
+        violations.push(`${file}:${row+1}: ${match[1]}`);
+      }
+    }
+  }
+  assert(!violations.length,`core boundary references browser APIs:\n${violations.join('\n')}`);
+  console.log('portability boundary regression ok');
 }
 
 function sharedPrelude(){
@@ -1220,6 +1286,7 @@ testAssert(hexToRgb('bad').join(',')==='36,168,198','hexToRgb should fallback fo
 }
 
 syntaxRegression();
+portabilityBoundaryRegression();
 appDomRefsRegression();
 runtimeBootstrapRegression();
 appContextRegression();
