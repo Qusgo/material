@@ -162,6 +162,8 @@ native shell should connect to that facade.
 Read `docs/PORTABLE_ADAPTER_GUIDE.md` before writing another platform adapter.
 The adapter should use `createSimulationEngine()` and keep platform input,
 storage, canvas upload, and transient UI state outside the core.
+Use `docs/PORTABILITY_AUDIT.md` as the current checklist for proven boundaries
+and remaining compatibility bridges.
 
 - Browser app-shell state in `src/03-app-context.js`
 - `src/04-save-load.js` for localStorage messages and persistence.

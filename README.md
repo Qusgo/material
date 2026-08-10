@@ -97,6 +97,8 @@ between save and load.
 - `docs/ARCHITECTURE.md` - Detailed notes for future agents.
 - `docs/PORTABLE_ADAPTER_GUIDE.md` - Practical guide for wiring the DOM-free
   engine facade into WebView, mini-program, or native shells.
+- `docs/PORTABILITY_AUDIT.md` - Current evidence, remaining bridges, and next
+  migration steps for the portable boundary.
 
 ## Development Notes
 
