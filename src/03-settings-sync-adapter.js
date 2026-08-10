@@ -11,44 +11,46 @@ function syncIntegerPair(rangeInput,numberInput,min,max,fallback,source){
 }
 
 function syncSourceRateControls(source=sourceRateInput){
-  if(!sourceRateInput||!sourceRateNumberInput)return sourceInterval;
-  if(source)applyRuntimeSettingsCommand({type:'sourceInterval',value:syncIntegerPair(sourceRateInput,sourceRateNumberInput,1,60,1,source)});
+  const settings=currentAppRuntimeSettings();
+  if(!sourceRateInput||!sourceRateNumberInput)return settings.sourceInterval;
+  if(source)applyAppRuntimeSettingsCommand({type:'sourceInterval',value:syncIntegerPair(sourceRateInput,sourceRateNumberInput,1,60,1,source)});
   else{
-    applyRuntimeSettingsCommand({type:'sourceInterval',value:sourceInterval});
-    sourceRateInput.value=String(sourceInterval);
+    applyAppRuntimeSettingsCommand({type:'sourceInterval',value:settings.sourceInterval});
+    sourceRateInput.value=String(settings.sourceInterval);
     sourceRateNumberInput.value=sourceRateInput.value;
   }
-  return sourceInterval;
+  return currentAppRuntimeSettings().sourceInterval;
 }
 
 function syncLightingControls(source=null){
+  const settings=currentAppRuntimeSettings();
   if(lightingEnabledInput){
-    if(source===lightingEnabledInput)applyRuntimeSettingsCommand({type:'lighting',enabled:lightingEnabledInput.checked});
-    else lightingEnabledInput.checked=!!lightingEnabled;
+    if(source===lightingEnabledInput)applyAppRuntimeSettingsCommand({type:'lighting',enabled:lightingEnabledInput.checked});
+    else lightingEnabledInput.checked=!!settings.lightingEnabled;
   }
   if(lightStrengthInput&&lightStrengthNumberInput){
     const value=source===lightStrengthInput||source===lightStrengthNumberInput
       ?syncIntegerPair(lightStrengthInput,lightStrengthNumberInput,0,100,18,source)
-      :clampInt(Math.round(lightStrength*100),0,100,18);
-    applyRuntimeSettingsCommand({type:'lighting',lightStrength:value/100});
+      :clampInt(Math.round(settings.lightStrength*100),0,100,18);
+    applyAppRuntimeSettingsCommand({type:'lighting',lightStrength:value/100});
     lightStrengthInput.value=String(value);
     lightStrengthNumberInput.value=String(value);
   }
   if(sideLightStrengthInput&&sideLightStrengthNumberInput){
     const value=source===sideLightStrengthInput||source===sideLightStrengthNumberInput
       ?syncIntegerPair(sideLightStrengthInput,sideLightStrengthNumberInput,0,200,100,source)
-      :clampInt(Math.round(sideLightStrength*100),0,200,100);
-    applyRuntimeSettingsCommand({type:'lighting',sideLightStrength:value/100});
+      :clampInt(Math.round(settings.sideLightStrength*100),0,200,100);
+    applyAppRuntimeSettingsCommand({type:'lighting',sideLightStrength:value/100});
     sideLightStrengthInput.value=String(value);
     sideLightStrengthNumberInput.value=String(value);
   }
   if(shadowStrengthInput&&shadowStrengthNumberInput){
     const value=source===shadowStrengthInput||source===shadowStrengthNumberInput
       ?syncIntegerPair(shadowStrengthInput,shadowStrengthNumberInput,0,100,16,source)
-      :clampInt(Math.round(shadowStrength*100),0,100,16);
-    applyRuntimeSettingsCommand({type:'lighting',shadowStrength:value/100});
+      :clampInt(Math.round(settings.shadowStrength*100),0,100,16);
+    applyAppRuntimeSettingsCommand({type:'lighting',shadowStrength:value/100});
     shadowStrengthInput.value=String(value);
     shadowStrengthNumberInput.value=String(value);
   }
-  if(source===null&&lightingEnabledInput)lightingEnabledInput.checked=lightingEnabled;
+  if(source===null&&lightingEnabledInput)lightingEnabledInput.checked=currentAppRuntimeSettings().lightingEnabled;
 }

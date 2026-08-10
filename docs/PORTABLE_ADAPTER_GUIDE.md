@@ -61,6 +61,11 @@ The facade currently exposes:
 - `engine.currentWorld()` - installs and returns the engine world.
 - `engine.edit(command)` - applies one edit command.
 - `engine.step(iterations)` - advances one or more physics ticks.
+- `engine.materialCommand(command)` - adds, updates, or deletes runtime custom
+  material definitions.
+- `engine.runtimeSettingsCommand(command)` - changes clamped runtime settings
+  such as source rate and lighting.
+- `engine.runtimeSettings()` - returns the current runtime settings snapshot.
 - `engine.renderBuffer(data)` - writes RGBA bytes into `data`, or allocates a
   `Uint8ClampedArray`.
 - `engine.serialize()` - returns a portable snapshot object.
@@ -85,7 +90,8 @@ A platform adapter owns:
 
 The core owns:
 
-- Material definitions and runtime material config commands.
+- Material definitions, runtime material config commands, and runtime setting
+  command validation.
 - Grid allocation and world resize.
 - Paint, fill, tint, erase, source, force, and body-placement commands.
 - Flow, gravity, erosion, body simulation, and update order.

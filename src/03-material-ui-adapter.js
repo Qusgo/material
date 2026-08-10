@@ -130,7 +130,7 @@ function saveCustomMaterial(){
   const density=normalizeIntegerInput(materialDensityInput,1,98,appContext.materialEditorMode===MATERIAL_KIND_GRANULAR?2:1);
   const color=hexToRgb(materialColorInput.value);
   const name=materialNameInput.value;
-  const result=applyMaterialCommand({
+  const result=applyAppMaterialCommand({
     type:appContext.materialEditorTarget?'update':'add',
     id:appContext.materialEditorTarget,
     kind:appContext.materialEditorMode,
@@ -154,7 +154,7 @@ function saveCustomMaterial(){
 
 function deleteExistingMaterial(id){
   const def=materialDef(id);
-  const result=applyMaterialCommand({type:'delete',id});
+  const result=applyAppMaterialCommand({type:'delete',id});
   if(!result.ok){
     if(result.reason==='in-use')setStatus(`Erase ${result.uses} cells or sources of ${def.name} before deleting`);
     else setStatus('Built-in materials are locked');

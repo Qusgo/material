@@ -45,6 +45,18 @@ function restoreAppSnapshot(snapshot){
   return appContext.engine.restore(snapshot);
 }
 
+function applyAppMaterialCommand(command){
+  return appContext.engine.materialCommand(command);
+}
+
+function applyAppRuntimeSettingsCommand(command){
+  return appContext.engine.runtimeSettingsCommand(command);
+}
+
+function currentAppRuntimeSettings(){
+  return appContext.engine.runtimeSettings();
+}
+
 function renderApp(){
   render(appWorld(),appContext);
 }

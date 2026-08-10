@@ -119,7 +119,10 @@ function createSimulationEngine(options){
     step(iterations){calls.push('step:'+iterations);return nextWorld},
     resize(cols,rows,options){calls.push('resize:'+cols+'x'+rows+'/'+options.cellSize);return{changed:true,world:nextWorld}},
     serialize(){calls.push('serialize');return{version:1}},
-    restore(snapshot){calls.push('restore:'+snapshot.version);return{ok:true}}
+    restore(snapshot){calls.push('restore:'+snapshot.version);return{ok:true}},
+    materialCommand(command){calls.push('material:'+command.type);return{ok:true}},
+    runtimeSettingsCommand(command){calls.push('runtime:'+command.type);return{ok:true}},
+    runtimeSettings(){calls.push('runtime-current');return{sourceInterval:1,lightingEnabled:true,lightStrength:.18,sideLightStrength:1,shadowStrength:.16}}
   };
 }
 function render(world,context){if(world!==nextWorld||context!==appContext)throw new Error('renderApp should pass app world and context');calls.push('render')}
@@ -133,8 +136,11 @@ const resized=resizeAppWorld(4,5,{cellSize:6});
 testAssert(resized.changed&&resized.world===nextWorld,'resizeAppWorld should delegate to engine.resize');
 testAssert(serializeAppSnapshot().version===1,'serializeAppSnapshot should delegate to engine.serialize');
 testAssert(restoreAppSnapshot({version:2}).ok,'restoreAppSnapshot should delegate to engine.restore');
+testAssert(applyAppMaterialCommand({type:'add'}).ok,'applyAppMaterialCommand should delegate to engine.materialCommand');
+testAssert(applyAppRuntimeSettingsCommand({type:'sourceInterval'}).ok,'applyAppRuntimeSettingsCommand should delegate to engine.runtimeSettingsCommand');
+testAssert(currentAppRuntimeSettings().sourceInterval===1,'currentAppRuntimeSettings should delegate to engine.runtimeSettings');
 renderApp();
-testAssert(calls.includes('edit:paint')&&calls.includes('step:2')&&calls.includes('resize:4x5/6')&&calls.includes('serialize')&&calls.includes('restore:2')&&calls.includes('render'),'appContext helpers changed');
+testAssert(calls.includes('edit:paint')&&calls.includes('step:2')&&calls.includes('resize:4x5/6')&&calls.includes('serialize')&&calls.includes('restore:2')&&calls.includes('material:add')&&calls.includes('runtime:sourceInterval')&&calls.includes('runtime-current')&&calls.includes('render'),'appContext helpers changed');
 `;
   runIsolated('app context regression',source);
 }
@@ -232,6 +238,10 @@ const restored=engine.restore(snapshot);
 testAssert(restored.ok&&material.some(v=>v===SAND),'engine restore failed');
 const resized=engine.resize(8,6,{cellSize:4});
 testAssert(resized.changed&&engine.world.cols===8&&engine.world.rows===6&&cellSize===4,'engine resize failed');
+const custom=engine.materialCommand({type:'add',kind:MATERIAL_KIND_FLUID,name:'Engine Oil',density:3,color:[3,4,5]});
+testAssert(custom.ok&&materialDef(custom.def.id).name==='Engine Oil','engine material command failed');
+engine.runtimeSettingsCommand({type:'sourceInterval',value:9});
+testAssert(engine.runtimeSettings().sourceInterval===9,'engine runtime settings command failed');
 `;
   runIsolated('simulation engine regression',source);
 }
@@ -1004,7 +1014,8 @@ function fakeInput(id,value='0'){return{id,value,checked:false}}
 let sourceInterval=4,lightingEnabled=true,lightStrength=.18,sideLightStrength=1,shadowStrength=.16;
 let sourceRateInput=fakeInput('source-rate','90'),sourceRateNumberInput=fakeInput('source-rate-number','1');
 let lightingEnabledInput=fakeInput('lighting-enabled'),lightStrengthInput=fakeInput('light','200'),lightStrengthNumberInput=fakeInput('light-number','0'),sideLightStrengthInput=fakeInput('side','150'),sideLightStrengthNumberInput=fakeInput('side-number','0'),shadowStrengthInput=fakeInput('shadow','50'),shadowStrengthNumberInput=fakeInput('shadow-number','0');
-function applyRuntimeSettingsCommand(command){
+function currentAppRuntimeSettings(){return{sourceInterval,lightingEnabled,lightStrength,sideLightStrength,shadowStrength}}
+function applyAppRuntimeSettingsCommand(command){
   commands.push(command);
   if(command.type==='sourceInterval')sourceInterval=clampInt(command.value,1,60,1);
   if(command.type==='lighting'){
@@ -1014,6 +1025,7 @@ function applyRuntimeSettingsCommand(command){
     if(Object.prototype.hasOwnProperty.call(command,'shadowStrength'))shadowStrength=command.shadowStrength;
   }
 }
+function applyRuntimeSettingsCommand(){throw new Error('settings adapter should use applyAppRuntimeSettingsCommand')}
 function testAssert(condition,message){if(!condition)throw new Error(message)}
 `+read('src/03-settings-sync-adapter.js')+`
 testAssert(syncSourceRateControls(sourceRateInput)===60&&sourceRateInput.value==='60'&&sourceRateNumberInput.value==='60','source rate clamp changed');
@@ -1135,6 +1147,9 @@ let addFluidBtn=fakeElement('add-fluid'),addGranularBtn=fakeElement('add-granula
 let statusText='';
 function setStatus(text){statusText=text}
 function setSelected(key){selected=key}
+const coreApplyMaterialCommand=applyMaterialCommand;
+function applyAppMaterialCommand(command){return coreApplyMaterialCommand(command)}
+applyMaterialCommand=function(){throw new Error('material UI adapter should use applyAppMaterialCommand')};
 function testAssert(condition,message){if(!condition)throw new Error(message)}
 `+read('src/03-material-ui-adapter.js')+`
 openMaterialEditor(MATERIAL_KIND_FLUID);

@@ -51,6 +51,18 @@ function createSimulationEngine(options={}){
     engine.world=result.world;
     return result;
   };
+  engine.materialCommand=function(command){
+    engine.useWorld();
+    return applyMaterialCommand(command);
+  };
+  engine.runtimeSettingsCommand=function(command){
+    engine.useWorld();
+    return applyRuntimeSettingsCommand(command);
+  };
+  engine.runtimeSettings=function(){
+    engine.useWorld();
+    return currentRuntimeSettings();
+  };
   engine.clear=function(){
     return engine.edit({type:'clear'});
   };

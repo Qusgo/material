@@ -78,12 +78,13 @@ converts the current arrays into an RGBA buffer without touching `canvas` or
 `document`. `src/03-simulation-engine.js` owns the DOM-free compatibility
 facade for future adapters. It groups `createWorldState()`,
 `applyEditCommand()`, `stepWorld()`, `buildRenderBuffer()`,
-`serializeWorldSnapshot()`, `restoreWorldSnapshot()`, `resizeWorldGrid()`, and
-clear into one engine object while still installing that world into the current
-classic-script compatibility shell internally. `src/03-canvas-render-adapter.js`
-owns the browser-only offscreen grid canvas/ImageData, visible canvas drawing,
-and transient overlays such as basin debug, fill preview, force preview, eraser
-preview, and body drawing.
+`serializeWorldSnapshot()`, `restoreWorldSnapshot()`, `resizeWorldGrid()`,
+`applyMaterialCommand()`, `applyRuntimeSettingsCommand()`,
+`currentRuntimeSettings()`, and clear into one engine object while still
+installing that world into the current classic-script compatibility shell
+internally. `src/03-canvas-render-adapter.js` owns the browser-only offscreen
+grid canvas/ImageData, visible canvas drawing, and transient overlays such as
+basin debug, fill preview, force preview, eraser preview, and body drawing.
 `src/00-app-dom-refs.js` owns early browser app-shell DOM handles needed before
 core runtime state loads, such as the canvas, status label, play/debug buttons,
 and brush-size input.
@@ -91,9 +92,10 @@ and brush-size input.
 object holds status text, play/pause, debug display, material menu/editor state,
 pointer/hover/placement/force-preview state, frame timing, and the browser-owned
 simulation engine facade. Its helpers (`appWorld()`, `applyAppEditCommand()`,
-`stepAppWorld()`, `resizeAppWorld()`, and `renderApp()`) are the browser
-adapter's preferred path into the engine. This is adapter state, not simulation
-state; core files should not read it.
+`stepAppWorld()`, `resizeAppWorld()`, `applyAppMaterialCommand()`,
+`applyAppRuntimeSettingsCommand()`, `currentAppRuntimeSettings()`, and
+`renderApp()`) are the browser adapter's preferred path into the engine. This is
+adapter state, not simulation state; core files should not read it.
 `src/03-dom-refs.js` owns browser DOM handles shared by material and controls
 adapters.
 `src/03-app-ui-state-adapter.js` owns browser-only status display, canvas resize,
@@ -102,11 +104,10 @@ helpers, and button active-state synchronization. Persistent adapter state comes
 from `appContext`.
 `src/03-material-ui-adapter.js` owns browser material menu/editor field
 synchronization, reads/writes material editor state through `appContext`, and
-delegates material mutation to
-`src/01-runtime-config.js`.
+delegates material mutation through `applyAppMaterialCommand()`.
 `src/03-settings-sync-adapter.js` owns browser form value synchronization for
-source-rate and lighting controls, and delegates value clamping/mutation to
-`src/01-runtime-config.js`.
+source-rate and lighting controls, and delegates value clamping/mutation through
+`applyAppRuntimeSettingsCommand()` and `currentAppRuntimeSettings()`.
 `src/03-controls-adapter.js` owns browser toolbar/settings bindings; it should
 wire DOM events to existing commands/helpers without adding simulation rules.
 `src/03-canvas-input-adapter.js` owns canvas pointer gestures and routes
@@ -143,7 +144,10 @@ bodies.
 configuration and global runtime settings. It owns use-count checks for custom
 materials, `add`/`update`/`delete` material commands, source interval clamping,
 and lighting setting clamping. The browser UI still owns input widgets and
-status messages, but should not duplicate these rules.
+status messages, but should not duplicate these rules. Browser adapters should
+reach these commands through the app engine helpers rather than calling
+runtime-config globals directly; this keeps a future WebView or mini-program
+adapter on the same facade.
 
 The Material menu can register up to `MAX_CUSTOM_MATERIALS` temporary materials
 per page load. Custom fluid inputs are name, color, and integer density

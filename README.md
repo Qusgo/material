@@ -68,8 +68,8 @@ between save and load.
 - `src/03-render-buffer.js` - DOM-free RGBA buffer construction from material
   color, tint, and lighting state.
 - `src/03-simulation-engine.js` - DOM-free compatibility facade for future
-  adapters: create, edit, step, render buffer, serialize, restore, resize, and
-  clear.
+  adapters: create, edit, step, material/runtime settings, render buffer,
+  serialize, restore, resize, and clear.
 - `src/03-canvas-render-adapter.js` - Browser-only offscreen grid canvas,
   visible canvas drawing, and transient overlays.
 - `src/03-source-render-adapter.js` - Browser-only canvas overlay for source
@@ -82,9 +82,9 @@ between save and load.
   brush/eraser radius, tool selection, button sync, and canvas coordinate
   helpers.
 - `src/03-material-ui-adapter.js` - Browser-only material menu/editor field
-  synchronization backed by `appContext`.
+  synchronization backed by `appContext` and app engine material commands.
 - `src/03-settings-sync-adapter.js` - Browser-only source-rate and lighting
-  form value synchronization.
+  form value synchronization through app engine runtime-setting commands.
 - `src/03-controls-adapter.js` - Browser-only toolbar, material menu, save/load,
   and settings control bindings.
 - `src/03-canvas-input-adapter.js` - Browser-only canvas pointer gestures routed
@@ -139,7 +139,8 @@ canvas adapter also accepts
 portable facade for future adapters. It still installs its world into the
 classic-script compatibility shell internally, but external callers can use one
 object for `edit()`, `step()`, `renderBuffer()`, `serialize()`, `restore()`,
-`resize()`, and `clear()`.
+`resize()`, `clear()`, `materialCommand()`, `runtimeSettingsCommand()`, and
+`runtimeSettings()`.
 Browser app-shell state lives in `src/03-app-context.js`. UI adapters read and
 write that plain `appContext` object for play/pause, status text, debug display,
 material menu/editor state, pointer/placement/force-preview state, frame
