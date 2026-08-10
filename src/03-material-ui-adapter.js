@@ -3,8 +3,6 @@
 // Browser-only material menu/editor helpers. Material validation and mutation
 // stay in 01-runtime-config.js; this file only translates DOM fields.
 
-let materialMenuOpen=false,materialEditorMode=null,materialEditorTarget=0;
-
 function rgbToHex(col){
   return `#${col.map(v=>clamp(Math.round(v),0,255).toString(16).padStart(2,'0')).join('')}`;
 }
@@ -31,8 +29,8 @@ function renderMaterialMenu(){
   const selectedMat=MATERIAL_FROM_NAME[selected]||WATER,def=materialDef(selectedMat),col=def.color;
   materialSwatchEl.style.background=`rgb(${col[0]},${col[1]},${col[2]})`;
   materialLabelEl.textContent=def.name;
-  materialButton.classList.toggle('active',materialMenuOpen);
-  materialMenu.classList.toggle('hidden',!materialMenuOpen);
+  materialButton.classList.toggle('active',appContext.materialMenuOpen);
+  materialMenu.classList.toggle('hidden',!appContext.materialMenuOpen);
   materialListEl.innerHTML='';
   for(const item of listSelectableMaterials()){
     const row=document.createElement('div');
@@ -48,7 +46,7 @@ function renderMaterialMenu(){
     b.appendChild(sw);
     b.appendChild(label);
     b.classList.toggle('active',item.key===selected);
-    b.addEventListener('click',()=>{materialMenuOpen=false;setSelected(item.key)});
+    b.addEventListener('click',()=>{appContext.materialMenuOpen=false;setSelected(item.key)});
     row.appendChild(b);
     if(item.custom){
       const edit=document.createElement('button'),del=document.createElement('button'),used=countMaterialUses(item.id);
@@ -70,11 +68,11 @@ function renderMaterialMenu(){
   const atLimit=customMaterialCount>=MAX_CUSTOM_MATERIALS;
   addFluidBtn.disabled=atLimit;
   addGranularBtn.disabled=atLimit;
-  materialEditor.classList.toggle('hidden',!materialEditorMode);
-  materialSlopeRow.classList.toggle('hidden',materialEditorMode!==MATERIAL_KIND_GRANULAR);
-  materialErosionRow.classList.toggle('hidden',materialEditorMode!==MATERIAL_KIND_GRANULAR);
-  deleteMaterialBtn.classList.toggle('hidden',!materialEditorTarget);
-  if(materialEditorTarget)deleteMaterialBtn.disabled=countMaterialUses(materialEditorTarget)>0;
+  materialEditor.classList.toggle('hidden',!appContext.materialEditorMode);
+  materialSlopeRow.classList.toggle('hidden',appContext.materialEditorMode!==MATERIAL_KIND_GRANULAR);
+  materialErosionRow.classList.toggle('hidden',appContext.materialEditorMode!==MATERIAL_KIND_GRANULAR);
+  deleteMaterialBtn.classList.toggle('hidden',!appContext.materialEditorTarget);
+  if(appContext.materialEditorTarget)deleteMaterialBtn.disabled=countMaterialUses(appContext.materialEditorTarget)>0;
 }
 
 function openMaterialEditor(mode){
@@ -82,9 +80,9 @@ function openMaterialEditor(mode){
     setStatus('Custom material limit reached');
     return;
   }
-  materialMenuOpen=true;
-  materialEditorMode=mode;
-  materialEditorTarget=0;
+  appContext.materialMenuOpen=true;
+  appContext.materialEditorMode=mode;
+  appContext.materialEditorTarget=0;
   const isGranular=mode===MATERIAL_KIND_GRANULAR;
   materialNameInput.value=isGranular?`Granular ${customGranularCount+1}`:`Fluid ${customFluidCount+1}`;
   materialColorInput.value=isGranular?'#d0a44f':'#24a8c6';
@@ -108,9 +106,9 @@ function openExistingMaterialEditor(id){
     setStatus('Built-in materials are locked');
     return;
   }
-  materialMenuOpen=true;
-  materialEditorMode=def.kind;
-  materialEditorTarget=id;
+  appContext.materialMenuOpen=true;
+  appContext.materialEditorMode=def.kind;
+  appContext.materialEditorTarget=id;
   materialNameInput.value=def.name;
   materialColorInput.value=rgbToHex(def.color);
   materialDensityInput.value=String(def.density);
@@ -122,20 +120,20 @@ function openExistingMaterialEditor(id){
 }
 
 function closeMaterialEditor(){
-  materialEditorMode=null;
-  materialEditorTarget=0;
+  appContext.materialEditorMode=null;
+  appContext.materialEditorTarget=0;
   renderMaterialMenu();
 }
 
 function saveCustomMaterial(){
-  if(!materialEditorMode)return;
-  const density=normalizeIntegerInput(materialDensityInput,1,98,materialEditorMode===MATERIAL_KIND_GRANULAR?2:1);
+  if(!appContext.materialEditorMode)return;
+  const density=normalizeIntegerInput(materialDensityInput,1,98,appContext.materialEditorMode===MATERIAL_KIND_GRANULAR?2:1);
   const color=hexToRgb(materialColorInput.value);
   const name=materialNameInput.value;
   const result=applyMaterialCommand({
-    type:materialEditorTarget?'update':'add',
-    id:materialEditorTarget,
-    kind:materialEditorMode,
+    type:appContext.materialEditorTarget?'update':'add',
+    id:appContext.materialEditorTarget,
+    kind:appContext.materialEditorMode,
     name,
     color,
     density,
@@ -148,9 +146,9 @@ function saveCustomMaterial(){
     setStatus(result.reason==='limit'?'Custom material limit reached':'Could not save material');
     return;
   }
-  materialEditorMode=null;
-  materialEditorTarget=0;
-  materialMenuOpen=false;
+  appContext.materialEditorMode=null;
+  appContext.materialEditorTarget=0;
+  appContext.materialMenuOpen=false;
   setSelected(result.def.key);
 }
 
@@ -164,8 +162,8 @@ function deleteExistingMaterial(id){
     return;
   }
   if(selected===def.key)selected=materialKeyFromId(WATER);
-  materialEditorMode=null;
-  materialEditorTarget=0;
+  appContext.materialEditorMode=null;
+  appContext.materialEditorTarget=0;
   setStatus('Custom material deleted');
   renderMaterialMenu();
 }

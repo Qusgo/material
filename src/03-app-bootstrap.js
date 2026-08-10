@@ -2,26 +2,24 @@
 
 // Browser-only resize and animation-loop bootstrap.
 
-let lastFrame=0,accumulator=0;
-
 function resetRuntimeClock(){
-  lastFrame=0;
-  accumulator=0;
+  appContext.lastFrame=0;
+  appContext.accumulator=0;
 }
 
 function frame(ts){
-  if(!lastFrame)lastFrame=ts;
-  const dt=Math.min(50,ts-lastFrame);
-  lastFrame=ts;
-  if(running){
-    accumulator+=dt;
+  if(!appContext.lastFrame)appContext.lastFrame=ts;
+  const dt=Math.min(50,ts-appContext.lastFrame);
+  appContext.lastFrame=ts;
+  if(appContext.running){
+    appContext.accumulator+=dt;
     let steps=0;
-    while(accumulator>=SIM_STEP_MS&&steps<4){
+    while(appContext.accumulator>=SIM_STEP_MS&&steps<4){
       simulationStep();
-      accumulator-=SIM_STEP_MS;
+      appContext.accumulator-=SIM_STEP_MS;
       steps++;
     }
-  }else accumulator=0;
+  }else appContext.accumulator=0;
   render();
   requestAnimationFrame(frame);
 }

@@ -51,7 +51,10 @@ material configuration and runtime setting commands. `src/04-save-codec.js`
 exposes portable
 `serializeWorldSnapshot()`/`restoreWorldSnapshot()` APIs; `src/04-save-load.js`
 is only the browser `localStorage` adapter, and `src/04-save-ui-adapter.js`
-contains the browser-only post-load UI sync hook.
+contains the browser-only post-load UI sync hook. `src/03-app-context.js` now
+groups browser app-shell state such as play/pause, status, debug display,
+material editor/menu state, pointer previews, and frame timing so those values
+are visible as adapter context instead of being mixed into core state.
 
 ## Migration Order
 
@@ -83,17 +86,17 @@ contains the browser-only post-load UI sync hook.
    `src/03-app-bootstrap.js`. Source-rate and lighting form synchronization now
    lives in `src/03-settings-sync-adapter.js`. Dynamic-body runtime now lives in
    `src/02-body-runtime.js`, while browser canvas drawing and overlays live in
-   `src/03-canvas-render-adapter.js`. Browser status, resize, coordinate,
-   selection, and button state helpers now live in
-   `src/03-app-ui-state-adapter.js`. Browser play/pause and debug-display state
-   also live there. Material menu/editor state now lives in
-   `src/03-material-ui-adapter.js`; pointer/hover/placement/force-preview state
-   now lives in `src/03-canvas-input-adapter.js`; fill preview state now lives in
-   `src/01-fill-editing.js`. Browser frame timing now lives behind
-   `resetRuntimeClock()` in `src/03-app-bootstrap.js`. Continue by reducing
-   direct global state writes inside browser bootstrap and UI adapters. The
-   first explicit-world compatibility forms are now in place for step, edit, and
-   render buffer calls, and browser adapters now use those forms.
+   `src/03-canvas-render-adapter.js`. Browser app-shell state now lives in
+   `src/03-app-context.js`, while status/resize/coordinate/selection/button
+   helpers live in `src/03-app-ui-state-adapter.js`. Material menu/editor field
+   sync lives in `src/03-material-ui-adapter.js`, canvas pointer binding lives
+   in `src/03-canvas-input-adapter.js`, and fill preview state lives in
+   `src/01-fill-editing.js`. Browser frame timing lives behind
+   `resetRuntimeClock()` in `src/03-app-bootstrap.js` and stores timing fields
+   in `appContext`. Continue by making browser adapter entry points receive an
+   explicit world/context pair consistently. The first explicit-world
+   compatibility forms are now in place for step, edit, and render buffer calls,
+   and browser adapters now use those forms.
 6. Only after the command boundary exists, migrate to TypeScript or a bundler
    such as Vite.
 7. If more speed is needed later, the headless core can be ported to Rust/WASM
@@ -135,18 +138,18 @@ contains the browser-only post-load UI sync hook.
 
 ## Web Adapter Candidates
 
+- Browser app-shell state in `src/03-app-context.js`
 - `src/04-save-load.js` for localStorage messages and persistence.
 - `src/04-save-ui-adapter.js` for post-load browser control/render sync.
 
 - Early app-shell DOM handles in `src/00-app-dom-refs.js`
 - Shared browser UI handles in `src/03-dom-refs.js`
-- Play/pause state, debug-display state, status text/display, resize, coordinate, brush/eraser radius, selection, and button sync helpers in
+- Status display, resize, coordinate, brush/eraser radius, selection, and button sync helpers in
   `src/03-app-ui-state-adapter.js`
-- Material menu/editor state and field sync in `src/03-material-ui-adapter.js`
+- Material menu/editor field sync in `src/03-material-ui-adapter.js`
 - Source-rate and lighting form sync in `src/03-settings-sync-adapter.js`
 - Toolbar/settings event binding in `src/03-controls-adapter.js`
-- Canvas pointer event binding and pointer/placement/force-preview state in
-  `src/03-canvas-input-adapter.js`
+- Canvas pointer event binding in `src/03-canvas-input-adapter.js`
 - Resize and animation-loop startup in `src/03-app-bootstrap.js`
 - Browser frame timing and `resetRuntimeClock()` in `src/03-app-bootstrap.js`
 - Offscreen grid canvas, visible canvas drawing, and overlays in

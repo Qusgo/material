@@ -3,10 +3,6 @@
 // Browser-only app UI state helpers for status, resize, tool selection, and
 // canvas coordinate conversion.
 
-let statusText='Brush: paint material directly';
-let running=false;
-let debugBasins=false;
-
 function countVisibleMaterials(){
   const counts={flow:0,stone:0,sources:0,waterMass:0,byId:{}};
   for(let i=0;i<count;i++){
@@ -23,9 +19,9 @@ function countVisibleMaterials(){
 }
 function updateStatus(){
   const c=countVisibleMaterials();
-  statusEl.textContent=`${statusText} | Flow ${c.flow} Stone ${c.stone} Source ${c.sources}`;
+  statusEl.textContent=`${appContext.statusText} | Flow ${c.flow} Stone ${c.stone} Source ${c.sources}`;
 }
-function setStatus(t){statusText=t;updateStatus()}
+function setStatus(t){appContext.statusText=t;updateStatus()}
 function resize(){
   // Resizing changes the cell size and reallocates all hot arrays. Existing
   // material is resampled by canvas position rather than copied by raw index.
@@ -40,7 +36,7 @@ function resize(){
 function canvasPoint(e){const r=canvas.getBoundingClientRect();return{x:clamp(e.clientX-r.left,0,viewW),y:clamp(e.clientY-r.top,0,viewH)}}
 function getBrushRadius(){return clampInt(brushSizeInput.value,0,10,4)}
 function getEraserRadius(){return typeof eraserSizeInput==='undefined'||!eraserSizeInput?getBrushRadius():clampInt(eraserSizeInput.value,0,10,3)}
-function syncButtons(){document.querySelectorAll('[data-tool]').forEach(b=>b.classList.toggle('active',b.dataset.tool===tool));document.querySelectorAll('[data-material]').forEach(b=>b.classList.toggle('active',b.dataset.material===selected));playBtn.textContent=running?'Pause':'Play';if(debugBasinsBtn){debugBasinsBtn.classList.toggle('active',debugBasins);debugBasinsBtn.textContent=debugBasins?'Basins On':'Basins'}if(typeof renderMaterialMenu==='function')renderMaterialMenu()}
-function setTool(t){tool=t;clearTransientEditUiState();if(tool==='eraser'){running=false;setStatus('Erase: time paused; removes material, tint, and source')}else if(tool==='fill'){running=false;setStatus('Fill: replace one connected region')}else if(tool==='force'){running=false;setStatus('Force: draw an area circle, then an arrow')}else if(tool==='color'){setStatus('Color: tint cells without changing material')}else if(tool==='source'){setStatus('Source: paint an infinite flow-material generator')}else setStatus('Brush: paint material directly');syncButtons();updateFillPreview();render()}
-function setSelected(s){selected=s;clearFillPreview();const mat=MATERIAL_FROM_NAME[selected]||WATER;setStatus(isSolidMaterial(mat)?'Stone: fixed stone is drawn':'Material changed');syncButtons();updateFillPreview();render()}
-function pauseForEdit(){if(running){running=false;resetRuntimeClock();syncButtons()}}
+function syncButtons(){document.querySelectorAll('[data-tool]').forEach(b=>b.classList.toggle('active',b.dataset.tool===tool));document.querySelectorAll('[data-material]').forEach(b=>b.classList.toggle('active',b.dataset.material===selected));playBtn.textContent=appContext.running?'Pause':'Play';if(debugBasinsBtn){debugBasinsBtn.classList.toggle('active',appContext.debugBasins);debugBasinsBtn.textContent=appContext.debugBasins?'Basins On':'Basins'}if(typeof renderMaterialMenu==='function')renderMaterialMenu()}
+function setTool(t){tool=t;clearTransientEditUiState();if(tool==='eraser'){appContext.running=false;setStatus('Erase: time paused; removes material, tint, and source')}else if(tool==='fill'){appContext.running=false;setStatus('Fill: replace one connected region')}else if(tool==='force'){appContext.running=false;setStatus('Force: draw an area circle, then an arrow')}else if(tool==='color'){setStatus('Color: tint cells without changing material')}else if(tool==='source'){setStatus('Source: paint an infinite flow-material generator')}else setStatus('Brush: paint material directly');syncButtons();updateFillPreview(appContext.hoverPoint);render()}
+function setSelected(s){selected=s;clearFillPreview();const mat=MATERIAL_FROM_NAME[selected]||WATER;setStatus(isSolidMaterial(mat)?'Stone: fixed stone is drawn':'Material changed');syncButtons();updateFillPreview(appContext.hoverPoint);render()}
+function pauseForEdit(){if(appContext.running){appContext.running=false;resetRuntimeClock();syncButtons()}}

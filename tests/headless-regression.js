@@ -30,6 +30,7 @@ const RUNTIME_FILES=[
   'src/03-canvas-render-adapter.js',
   'src/03-source-render-adapter.js',
   'src/03-dom-refs.js',
+  'src/03-app-context.js',
   'src/03-app-ui-state-adapter.js',
   'src/03-material-ui-adapter.js',
   'src/03-settings-sync-adapter.js',
@@ -746,7 +747,8 @@ testAssert(countWhere(bgTintA,v=>v)>0,'upsize lost background tint');
 
 function saveLoadAdapterRegression(){
   const source=read('src/04-save-load.js')+read('src/04-save-ui-adapter.js')+`
-let cols=7,rows=5,running=true,clockReset=false;
+let cols=7,rows=5,clockReset=false;
+const appContext={running:true};
 const calls=[];
 const localStorage={
   getItem(){return JSON.stringify({version:1})},
@@ -762,7 +764,7 @@ function resetRuntimeClock(){clockReset=true}
 function testAssert(condition,message){if(!condition)throw new Error(message)}
 const result=loadCanvasSnapshot();
 testAssert(result.ok&&result.message==='Canvas loaded (2x3 -> 7x5)','loadCanvasSnapshot should return resampled message');
-testAssert(running===false&&clockReset,'save UI adapter should stop runtime clock');
+testAssert(appContext.running===false&&clockReset,'save UI adapter should stop runtime clock');
 testAssert(calls.join(',')==='buttons,source,lighting,preview,render','save UI adapter sync order changed');
 `;
   runIsolated('save/load adapter regression',source);
@@ -803,7 +805,7 @@ const document={
   getElementById(id){return elementMap[id]||(elementMap[id]=fakeElement(id))}
 };
 const MATERIAL_KIND_FLUID='fluid',MATERIAL_KIND_GRANULAR='granular',SAND_LIKE_FLOW={erosionResistance:24};
-let materialEditorMode=MATERIAL_KIND_GRANULAR,materialEditorTarget=0,running=false,debugBasins=false;
+const appContext={materialEditorMode:MATERIAL_KIND_GRANULAR,materialEditorTarget:0,running:false,debugBasins:false,materialMenuOpen:false};
 let materialButton=fakeElement('material-button'),addFluidBtn=fakeElement('add-fluid'),addGranularBtn=fakeElement('add-granular'),cancelMaterialBtn=fakeElement('cancel-material'),deleteMaterialBtn=fakeElement('delete-material'),saveMaterialBtn=fakeElement('save-material');
 let materialDensityInput=fakeElement('density','2'),materialSlopeInput=fakeElement('slope','1'),materialErosionInput=fakeElement('erosion','24');
 let playBtn=fakeElement('play'),debugBasinsBtn=fakeElement('debug'),fillAirColorBtn=fakeElement('fill-air'),saveCanvasBtn=fakeElement('save'),loadCanvasBtn=fakeElement('load');
@@ -899,11 +901,12 @@ const canvas={
   releasePointerCapture(id){calls.push('release:'+id)}
 };
 const MATERIAL_FROM_NAME={water:1},WATER=1;
-let tool='brush',selected='water',running=true,accumulator=9;
+let tool='brush',selected='water';
+const appContext={running:true,accumulator:9,pointerDown:false,lastPoint:null,hoverPoint:null,placing:null,forceState:null};
 const inputWorld={id:'input-world'};
 function currentWorldState(){return inputWorld}
 function canvasPoint(e){return{x:e.clientX,y:e.clientY}}
-function pauseForEdit(){running=false;accumulator=0;calls.push('pause')}
+function pauseForEdit(){appContext.running=false;appContext.accumulator=0;calls.push('pause')}
 function isBodyMaterial(){return false}
 function getBrushRadius(){return 2}
 function getEraserRadius(){return 3}
@@ -925,15 +928,16 @@ handlers.pointermove({pointerId:7,clientX:14,clientY:16});
 handlers.pointerup({pointerId:7,clientX:18,clientY:20});
 testAssert(calls.includes('command:paint')&&calls.includes('command:paintLine'),'brush commands were not routed');
 testAssert(calls.includes('finish')&&calls.includes('mask')&&calls.includes('release:7'),'pointerup cleanup changed');
-testAssert(pointerDown===false&&lastPoint===null,'pointer state did not reset');
+testAssert(appContext.pointerDown===false&&appContext.lastPoint===null,'pointer state did not reset');
 `;
   runIsolated('canvas input adapter regression',source);
 }
 
 function appBootstrapRegression(){
-  const source=`
+const source=`
 const calls=[];
-let running=true,SIM_STEP_MS=14;
+let SIM_STEP_MS=14;
+const appContext={running:true,lastFrame:0,accumulator:0};
 const window={addEventListener(type,handler){calls.push('window:'+type);this[type]=handler}};
 function resize(){calls.push('resize')}
 function simulationStep(){calls.push('step')}
@@ -972,6 +976,7 @@ function fakeElement(id){
 }
 const document={createElement(tag){return fakeElement(tag)}};
 let selected='water';
+const appContext={materialMenuOpen:false,materialEditorMode:null,materialEditorTarget:0};
 let materialButton=fakeElement('material-button'),materialMenu=fakeElement('material-menu'),materialListEl=fakeElement('material-list'),materialSwatchEl=fakeElement('swatch'),materialLabelEl=fakeElement('label'),materialEditor=fakeElement('editor');
 let materialNameInput=fakeElement('name'),materialColorInput=fakeElement('color'),materialDensityInput=fakeElement('density'),materialBlocksLightInput=fakeElement('blocks'),materialEmissiveInput=fakeElement('emissive'),materialSlopeInput=fakeElement('slope'),materialSlopeRow=fakeElement('slope-row'),materialErosionInput=fakeElement('erosion'),materialErosionRow=fakeElement('erosion-row');
 let addFluidBtn=fakeElement('add-fluid'),addGranularBtn=fakeElement('add-granular'),deleteMaterialBtn=fakeElement('delete');
@@ -981,7 +986,7 @@ function setSelected(key){selected=key}
 function testAssert(condition,message){if(!condition)throw new Error(message)}
 `+read('src/03-material-ui-adapter.js')+`
 openMaterialEditor(MATERIAL_KIND_FLUID);
-testAssert(materialMenuOpen&&materialEditorMode===MATERIAL_KIND_FLUID&&materialEditorTarget===0,'openMaterialEditor should open a new fluid draft');
+testAssert(appContext.materialMenuOpen&&appContext.materialEditorMode===MATERIAL_KIND_FLUID&&appContext.materialEditorTarget===0,'openMaterialEditor should open a new fluid draft');
 materialNameInput.value='Ui Oil';
 materialColorInput.value='#010203';
 materialDensityInput.value='5';
@@ -992,7 +997,7 @@ const oilId=MATERIAL_FROM_NAME[selected];
 testAssert(oilId&&materialDef(oilId).name==='Ui Oil'&&materialDef(oilId).density===5,'saveCustomMaterial should register custom fluid');
 testAssert(materialDef(oilId).color[0]===1&&materialBlocksLight(oilId)&&materialEmissive(oilId),'saveCustomMaterial should preserve color and light flags');
 openExistingMaterialEditor(oilId);
-testAssert(materialEditorMode===MATERIAL_KIND_FLUID&&materialEditorTarget===oilId&&materialNameInput.value==='Ui Oil','openExistingMaterialEditor should load existing material');
+testAssert(appContext.materialEditorMode===MATERIAL_KIND_FLUID&&appContext.materialEditorTarget===oilId&&materialNameInput.value==='Ui Oil','openExistingMaterialEditor should load existing material');
 deleteExistingMaterial(oilId);
 testAssert(!isKnownMaterial(oilId)&&selected==='water'&&statusText==='Custom material deleted','deleteExistingMaterial should remove unused custom material');
 testAssert(hexToRgb('bad').join(',')==='36,168,198','hexToRgb should fallback for invalid color');

@@ -81,25 +81,31 @@ basin debug, fill preview, force preview, eraser preview, and body drawing.
 `src/00-app-dom-refs.js` owns early browser app-shell DOM handles needed before
 core runtime state loads, such as the canvas, status label, play/debug buttons,
 and brush-size input.
+`src/03-app-context.js` owns the browser app-shell state object. This plain
+object holds status text, play/pause, debug display, material menu/editor state,
+pointer/hover/placement/force-preview state, and frame timing. It is adapter
+state, not simulation state; core files should not read it.
 `src/03-dom-refs.js` owns browser DOM handles shared by material and controls
 adapters.
-`src/03-app-ui-state-adapter.js` owns browser-only play/pause state, debug basin
-display state, status text/display, canvas resize, canvas coordinate conversion,
-brush/eraser radius reads, tool/material selection helpers, and button
-active-state synchronization.
-`src/03-material-ui-adapter.js` owns browser material menu/editor state and
-field synchronization, and delegates material mutation to
+`src/03-app-ui-state-adapter.js` owns browser-only status display, canvas resize,
+canvas coordinate conversion, brush/eraser radius reads, tool/material selection
+helpers, and button active-state synchronization. Persistent adapter state comes
+from `appContext`.
+`src/03-material-ui-adapter.js` owns browser material menu/editor field
+synchronization, reads/writes material editor state through `appContext`, and
+delegates material mutation to
 `src/01-runtime-config.js`.
 `src/03-settings-sync-adapter.js` owns browser form value synchronization for
 source-rate and lighting controls, and delegates value clamping/mutation to
 `src/01-runtime-config.js`.
 `src/03-controls-adapter.js` owns browser toolbar/settings bindings; it should
 wire DOM events to existing commands/helpers without adding simulation rules.
-`src/03-canvas-input-adapter.js` owns canvas pointer gestures,
-pointer/hover/placement/force-preview state, and routes gestures to edit/force
-commands. `src/03-app-bootstrap.js` owns browser resize binding, the
-`requestAnimationFrame` loop, and the runtime clock reset hook used after edits
-and snapshot loads.
+`src/03-canvas-input-adapter.js` owns canvas pointer gestures and routes
+gestures to edit/force commands. Pointer, hover, placement, and force-preview
+state live in `appContext`. `src/03-app-bootstrap.js` owns browser resize
+binding, the `requestAnimationFrame` loop, and the runtime clock reset hook used
+after edits and snapshot loads. The loop stores its timing fields in
+`appContext`.
 `src/01-cell-state.js` owns low-level cell mutation, transient motion cleanup,
 tint/source clearing, and invalid-material normalization. `src/01-grid-editing.js`
 owns DOM-free brush stamps, tint edits, erasing, whole-grid edit commands, and
@@ -519,8 +525,9 @@ an RGBA buffer, serialize, clear, and restore without browser globals.
   `src/02-body-runtime.js` must load before `src/02-step-world.js`.
   `src/03-canvas-render-adapter.js` must load after `src/03-render-buffer.js`
   and before UI adapters that call `render()`. `src/03-dom-refs.js` must load
-  before `src/03-app-ui-state-adapter.js` and other material/control adapters.
-  `src/03-settings-sync-adapter.js` must load
+  before `src/03-app-context.js`. `src/03-app-context.js` must load before
+  `src/03-app-ui-state-adapter.js` and other material/control/input/bootstrap
+  adapters that read `appContext`. `src/03-settings-sync-adapter.js` must load
   before `src/03-controls-adapter.js` because controls bind to those helper
   functions. `src/03-canvas-input-adapter.js` and `src/03-app-bootstrap.js` load
   after the UI adapters.

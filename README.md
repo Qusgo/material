@@ -72,17 +72,21 @@ between save and load.
 - `src/03-source-render-adapter.js` - Browser-only canvas overlay for source
   cells.
 - `src/03-dom-refs.js` - Browser-only DOM handles shared by UI adapters.
-- `src/03-app-ui-state-adapter.js` - Browser-only running/status/debug state,
-  resize, brush/eraser radius, tool selection, button sync, and canvas
-  coordinate helpers.
+- `src/03-app-context.js` - Browser-only app-shell state object for status,
+  play/pause, debug display, material editor/menu state, pointer previews, and
+  frame timing.
+- `src/03-app-ui-state-adapter.js` - Browser-only status display, resize,
+  brush/eraser radius, tool selection, button sync, and canvas coordinate
+  helpers.
 - `src/03-material-ui-adapter.js` - Browser-only material menu/editor field
-  state and synchronization.
+  synchronization backed by `appContext`.
 - `src/03-settings-sync-adapter.js` - Browser-only source-rate and lighting
   form value synchronization.
 - `src/03-controls-adapter.js` - Browser-only toolbar, material menu, save/load,
   and settings control bindings.
 - `src/03-canvas-input-adapter.js` - Browser-only canvas pointer gestures routed
-  to edit and force commands, plus pointer/placement/force-preview state.
+  to edit and force commands, with transient pointer previews stored in
+  `appContext`.
 - `src/03-app-bootstrap.js` - Browser-only resize binding, animation loop, and
   runtime clock reset.
 - `app.js` - Legacy note only. Do not reintroduce runtime code there unless the
@@ -121,12 +125,12 @@ global names, handles DOM-free grid resize resampling, and lets
 without changing gameplay in the same step. The old one-argument browser calls
 still work, but browser adapters now pass `currentWorldState()` at their
 step/edit/render call sites.
-Browser play/pause and debug-display state live in
-`src/03-app-ui-state-adapter.js`, material menu/editor state lives in
-`src/03-material-ui-adapter.js`, and pointer/placement/force-preview state lives
-in `src/03-canvas-input-adapter.js`. Frame timing lives behind
-`resetRuntimeClock()` in `src/03-app-bootstrap.js`; core/edit code should call
-that hook instead of touching RAF accumulator state.
+Browser app-shell state lives in `src/03-app-context.js`. UI adapters read and
+write that plain `appContext` object for play/pause, status text, debug display,
+material menu/editor state, pointer/placement/force-preview state, and frame
+timing. Frame timing is still controlled through `resetRuntimeClock()` in
+`src/03-app-bootstrap.js`; core/edit code should call that hook instead of
+touching RAF accumulator state.
 
 When changing water behavior, read `docs/ARCHITECTURE.md` first. Most previous
 bugs came from local water rules fighting the component-level water stabilizer.
