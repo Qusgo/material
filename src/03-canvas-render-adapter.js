@@ -77,8 +77,9 @@ function renderForcePreview(context=appContext){const forceState=context.forceSt
 function renderEraser(context=appContext){if(renderAdapterTool()!=='eraser'||!context.hoverPoint)return;const rad=getEraserRadius();ctx.save();ctx.strokeStyle='rgba(201,74,74,.85)';ctx.lineWidth=2;if(rad===0){const p=pointToCell(context.hoverPoint.x,context.hoverPoint.y);ctx.strokeRect(p.c*cellSize+.5,p.r*cellSize+.5,Math.max(1,cellSize-1),Math.max(1,cellSize-1))}else{ctx.beginPath();ctx.arc(context.hoverPoint.x,context.hoverPoint.y,rad*cellSize,0,Math.PI*2);ctx.stroke()}ctx.restore()}
 function render(world=currentWorldState(),context=appContext){
   const active=renderAdapterWorld(world);
+  const canvasAirColor=typeof currentAirColorState==='function'?currentAirColorState():airColor;
   ctx.clearRect(0,0,viewW,viewH);
-  ctx.fillStyle=`rgb(${airColor[0]},${airColor[1]},${airColor[2]})`;
+  ctx.fillStyle=`rgb(${canvasAirColor[0]},${canvasAirColor[1]},${canvasAirColor[2]})`;
   ctx.fillRect(0,0,viewW,viewH);
   renderGrid(active);
   if(typeof renderSources==='function')renderSources(active);

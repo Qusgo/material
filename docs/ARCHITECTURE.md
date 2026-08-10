@@ -19,7 +19,8 @@ parallel typed arrays:
 - `bgTintR`, `bgTintG`, `bgTintB`, `bgTintA` - background tint for empty air.
   It stays at the canvas location and is hidden whenever material occupies that
   cell.
-- `airColor` - global fallback color for all empty air not covered by `bgTint*`.
+- `WorldState.airColor` - fallback color for all empty air not covered by
+  `bgTint*`; the legacy `airColor` global is a synchronized mirror.
 - `sourceMat` - location-based infinite source layer. `0` means no source;
   otherwise the value is a flow material id generated when the cell is empty.
 - `carriedBy`, `carriedTTL` - temporary erosion/entrainment state for granular
@@ -39,16 +40,16 @@ state with `clearEditableGridState()` instead of hand-writing long fill blocks.
 This keeps resize, clear, and load on one lifecycle path.
 
 `src/00-world-state.js` is the current world boundary. `createWorldState()`
-groups dimensions, cell size, typed arrays, dynamic body state, and water
-scratch tokens.
+groups dimensions, cell size, typed arrays, dynamic body state, air color, and
+water scratch tokens.
 `installWorldState()` deliberately installs that world back into the legacy
 global bindings (`cols`, `material`, `mass`, `bodies`, and so on) so existing
 physics code keeps running unchanged. `currentWorldState()` refreshes the active
 shell from the globals. `resizeWorldGrid()` owns DOM-free grid resize resampling
 for materials, flow state, tint layers, and source cells, while preserving body
-state; browser resize code should only supply the new dimensions and rebuild
-presentation buffers. Treat this as a bridge toward a real `World` object, not
-as permission to mix DOM state into the core.
+state and air color; browser resize code should only supply the new dimensions
+and rebuild presentation buffers. Treat this as a bridge toward a real `World`
+object, not as permission to mix DOM state into the core.
 
 ## Material Configuration
 
@@ -239,10 +240,11 @@ particle and must move or swap in `moveCell()` with the material arrays. Physics
 deletion clears particle tint only. Direct material edits (`writeCell`, fill,
 and user erase) clear both tint layers in the affected cells.
 
-`Fill Air` changes `airColor` to the current tint color and clears all `bgTint*`
-overrides. This is a global canvas background operation, not a material edit:
-covered cells do not need individual background tint to reveal the new air color
-later.
+`Fill Air` changes `WorldState.airColor` to the current tint color and clears
+all `bgTint*` overrides. This is a canvas background operation, not a material
+edit: covered cells do not need individual background tint to reveal the new air
+color later. Use `setAirColorState()` and `currentAirColorState()` rather than
+assigning the legacy `airColor` mirror directly.
 
 ## Rendering And Lighting
 

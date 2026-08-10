@@ -7,13 +7,14 @@ const WORLD_SNAPSHOT_VERSION=1;
 
 function serializeWorldSnapshot(){
   const settings=typeof currentRuntimeSettingsState==='function'?currentRuntimeSettingsState():{sourceInterval,lightingEnabled,lightStrength,sideLightStrength,shadowStrength};
+  const currentAirColor=typeof currentAirColorState==='function'?currentAirColorState():airColor;
   return{
     version:WORLD_SNAPSHOT_VERSION,
     cols,
     rows,
     sourceInterval:settings.sourceInterval,
     selected:typeof currentSelectedKey==='function'?currentSelectedKey():selected,
-    airColor:airColor.slice(0,3),
+    airColor:currentAirColor.slice(0,3),
     lightingEnabled:settings.lightingEnabled,
     lightStrength:settings.lightStrength,
     sideLightStrength:settings.sideLightStrength,
@@ -154,8 +155,11 @@ function restoreEditableArrays(saved){
   const savedParticleTint=decodeTintCells(hasSplitTint?saved.particleTint:saved.tint,savedCount);
   const savedBackgroundTint=decodeTintCells(hasSplitTint?saved.backgroundTint:[],savedCount);
   clearEditableGridState();
-  airColor=Array.isArray(saved.airColor)?saved.airColor.map(v=>clampInt(v,0,255,255)).slice(0,3):[255,255,255];
-  while(airColor.length<3)airColor.push(255);
+  if(typeof setAirColorState==='function')setAirColorState(saved.airColor);
+  else{
+    airColor=Array.isArray(saved.airColor)?saved.airColor.map(v=>clampInt(v,0,255,255)).slice(0,3):[255,255,255];
+    while(airColor.length<3)airColor.push(255);
+  }
   const sameSize=savedCols===cols&&savedRows===rows;
   if(!sameSize){
     restoreResampledEditableArrays(savedCols,savedRows,savedMaterial,savedSource,savedParticleTint,savedBackgroundTint,hasSplitTint);

@@ -16,10 +16,10 @@ let moveHistory,moveFlip,horizontalDir,horizontalTurns,escapeDir,escapeTarget,ca
 let waterSeen,waterSpaceMark,waterComponentMark,waterBasinMark,waterSleepBlockMark,waterTargetMark,waterWakeMark,waterQueue,rowCounts;
 let waterSpaceToken=1,waterComponentToken=1,waterBasinToken=1,waterTargetToken=1,waterWakeToken=1;
 let bodies=[],nextBodyId=1;
-installWorldState(createWorldState(cols,rows,{cellSize,bodies,nextBodyId}));
+let airColor=[255,255,255];
+installWorldState(createWorldState(cols,rows,{cellSize,bodies,nextBodyId,airColor}));
 let tool='brush',selected='water',simTick=0,editDirty=false;
 let sourceInterval=1;
-let airColor=[255,255,255];
 let lightingEnabled=true,lightStrength=.18,sideLightStrength=1,shadowStrength=.16;
 const runtimeSettings={sourceInterval,lightingEnabled,lightStrength,sideLightStrength,shadowStrength};
 function captureRuntimeSettingsFromGlobals(){

@@ -500,22 +500,25 @@ let bodies=[],nextBodyId=1;
 function idx(c,r){return r*cols+c}
 function testAssert(condition,message){if(!condition)throw new Error(message)}
 const seedBodies=[{id:7,x:1,y:2,radius:3}];
-const world=createWorldState(5,4,{cellSize:6,bodies:seedBodies,nextBodyId:8});
+const world=createWorldState(5,4,{cellSize:6,bodies:seedBodies,nextBodyId:8,airColor:[1,2,3]});
 testAssert(world.cols===5&&world.rows===4&&world.count===20&&world.cellSize===6,'world dimensions changed');
 testAssert(world.arrays.material.length===20&&world.arrays.rowCounts.length===4,'world array dimensions changed');
 installWorldState(world);
 testAssert(cols===5&&rows===4&&count===20&&cellSize===6,'installWorldState did not update dimensions');
 testAssert(material===world.arrays.material&&rowCounts===world.arrays.rowCounts,'installWorldState did not install arrays');
 testAssert(bodies===seedBodies&&nextBodyId===8,'installWorldState did not install body state');
+testAssert(world.airColor[0]===1&&world.airColor[1]===2&&world.airColor[2]===3,'installWorldState did not install air color');
 material[0]=SAND;
 waterWakeToken=7;
 bodies.push({id:8,x:2,y:3,radius:4});
 nextBodyId=9;
+setAirColorState([4,5,6]);
 const current=currentWorldState();
 testAssert(current===world,'currentWorldState should return active world');
 testAssert(current.arrays.material[0]===SAND,'currentWorldState did not capture array references');
 testAssert(current.tokens.waterWakeToken===7,'currentWorldState did not capture scratch tokens');
 testAssert(current.bodies.length===2&&current.nextBodyId===9,'currentWorldState did not capture body state');
+testAssert(current.airColor[0]===4&&current.airColor[1]===5&&current.airColor[2]===6,'currentWorldState did not capture air color');
 clearEditableGridState();
 testAssert(current.tokens.waterWakeToken===1,'clearEditableGridState should reset active world tokens');
 const replacement=createWorldState(2,3,{cellSize:4});
@@ -523,6 +526,7 @@ installWorldState(replacement);
 testAssert(currentWorldState()===replacement&&cols===2&&rows===3&&material.length===6&&bodies===replacement.bodies,'replacement world install failed');
 bodies.push({id:9,x:4,y:5,radius:6});
 nextBodyId=10;
+setAirColorState([12,13,14]);
 material[idx(1,1)]=WATER;
 mass[idx(1,1)]=.7;
 vx[idx(1,1)]=2;
@@ -542,6 +546,7 @@ testAssert(!unchanged.changed&&currentWorldState()===replacement,'resizeWorldGri
 const resized=resizeWorldGrid(4,6,{cellSize:4});
 testAssert(resized.changed&&cols===4&&rows===6&&cellSize===4,'resizeWorldGrid did not install resized world');
 testAssert(resized.world.bodies===bodies&&bodies.length===1&&resized.world.nextBodyId===10,'resizeWorldGrid should preserve body state');
+testAssert(resized.world.airColor[0]===12&&currentAirColorState()[2]===14,'resizeWorldGrid should preserve air color state');
 testAssert(material[idx(1,1)]===WATER&&mass[idx(1,1)]>.69&&mass[idx(1,1)]<.71&&vx[idx(1,1)]===2&&vy[idx(1,1)]===3,'resizeWorldGrid lost material motion state');
 testAssert(flowDir[idx(1,1)]===1&&tintA[idx(1,1)]===255&&tintR[idx(1,1)]===9,'resizeWorldGrid lost flow direction or particle tint');
 testAssert(sourceMat[idx(0,2)]===SAND&&bgTintA[idx(0,2)]===255&&bgTintR[idx(0,2)]===6,'resizeWorldGrid lost source or background tint');
@@ -686,6 +691,7 @@ testAssert(applyEditCommand({type:'force',circle:{x:7.5,y:7.5,r:8},arrow:{x:20,y
 testAssert(vx[idx(1,1)]>0,'force command should accelerate flow material');
 testAssert(applyEditCommand({type:'fillAir',color:[11,12,13]}),'fillAir command should apply');
 testAssert(airColor[0]===11&&airColor[1]===12&&airColor[2]===13,'fillAir command should set global air color');
+testAssert(currentWorldState().airColor[0]===11&&currentWorldState().airColor[2]===13,'fillAir command should sync world air color');
 testAssert(bgTintA[idx(0,0)]===0,'fillAir command should clear background tint overrides');
 testAssert(applyEditCommand({type:'clear'}),'clear command should apply');
 testAssert(material.every(v=>v===EMPTY)&&sourceMat.every(v=>v===EMPTY),'clear command should empty material and source layers');
@@ -697,6 +703,7 @@ testAssert(appContext.fillPreview.length===count&&appContext.fillPreview===fillP
 testAssert(applyFill({x:1,y:1},applyEditCommand),'applyFill should commit the preview through the edit command boundary');
 testAssert(appContext.fillPreview.length===0&&fillPreview.length===0,'applyFill should clear appContext preview state');
 testAssert(applyEditCommand({type:'clear'}),'clear command should reset after fill preview check');
+testAssert(currentWorldState().airColor[0]===255&&currentWorldState().airColor[1]===255&&currentWorldState().airColor[2]===255,'clear command should reset world air color');
 testAssert(!applyEditCommand({type:'paint',x:NaN,y:1,radius:0,material:SAND}),'point commands should reject invalid coordinates');
 material[idx(6,5)]=WATER;
 testAssert(!applyEditCommand({type:'placeBody',kind:'bad',start:{x:20,y:20},current:{x:40,y:30}}),'placeBody command should reject invalid body kinds');

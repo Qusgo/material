@@ -2,7 +2,8 @@
 
 // Brush stamps, tinting, erasing, and whole-grid edit commands.
 function clearSimulationState(){
-  airColor=[255,255,255];
+  if(typeof setAirColorState==='function')setAirColorState();
+  else airColor=[255,255,255];
   clearEditableGridState();
   if(typeof setBodyRuntimeState==='function')setBodyRuntimeState();
   else bodies=[];
@@ -10,8 +11,8 @@ function clearSimulationState(){
   editDirty=false;
 }
 function setAllAirColor(color){
-  const next=Array.isArray(color)?color:[255,255,255];
-  airColor=[clampInt(next[0],0,255,255),clampInt(next[1],0,255,255),clampInt(next[2],0,255,255)];
+  const next=typeof setAirColorState==='function'?setAirColorState(color):(Array.isArray(color)?color:[255,255,255]);
+  if(typeof setAirColorState!=='function')airColor=[clampInt(next[0],0,255,255),clampInt(next[1],0,255,255),clampInt(next[2],0,255,255)];
   bgTintR.fill(0);
   bgTintG.fill(0);
   bgTintB.fill(0);

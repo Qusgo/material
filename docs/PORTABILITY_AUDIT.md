@@ -62,6 +62,9 @@ to work while migration continues.
 - Dynamic body state now lives on `WorldState` as `bodies` and `nextBodyId`,
   but the old globals are still synchronized mirrors because body physics still
   reads and mutates them directly.
+- Canvas air color now lives on `WorldState.airColor`, but the old `airColor`
+  global is still a synchronized mirror because render and save/load code are
+  still classic scripts.
 - Some core helpers intentionally keep optional browser hooks, such as
   `resetRuntimeClock()` and optional status reporting. Non-browser adapters may
   leave those hooks as no-ops.

@@ -66,6 +66,44 @@ function setBodyRuntimeState(nextBodies=[],nextId=1){
   return state;
 }
 
+function normalizeAirColorState(color){
+  const source=Array.isArray(color)?color:[255,255,255];
+  return[
+    clampInt(source[0],0,255,255),
+    clampInt(source[1],0,255,255),
+    clampInt(source[2],0,255,255)
+  ];
+}
+
+function captureAirColorState(world=currentWorld){
+  try{
+    if(typeof airColor!=='undefined'&&Array.isArray(airColor))return normalizeAirColorState(airColor);
+  }catch(e){}
+  return normalizeAirColorState(world&&world.airColor);
+}
+
+function installAirColorState(world){
+  world.airColor=normalizeAirColorState(world.airColor);
+  try{
+    if(typeof airColor!=='undefined')airColor=world.airColor;
+  }catch(e){}
+}
+
+function setAirColorState(color=[255,255,255]){
+  const next=normalizeAirColorState(color);
+  try{
+    if(typeof airColor!=='undefined')airColor=next;
+  }catch(e){}
+  if(currentWorld)currentWorld.airColor=next;
+  return next;
+}
+
+function currentAirColorState(){
+  const next=captureAirColorState(currentWorld);
+  if(currentWorld)currentWorld.airColor=next;
+  return next;
+}
+
 function createWorldState(worldCols,worldRows,options={}){
   const nextCols=normalizeWorldDimension(worldCols,1),nextRows=normalizeWorldDimension(worldRows,1);
   const world={
@@ -76,7 +114,8 @@ function createWorldState(worldCols,worldRows,options={}){
     arrays:createGridArrays(nextCols*nextRows,nextRows),
     tokens:createWaterScratchTokens(),
     bodies:Array.isArray(options.bodies)?options.bodies:[],
-    nextBodyId:normalizeBodyId(options.nextBodyId)
+    nextBodyId:normalizeBodyId(options.nextBodyId),
+    airColor:normalizeAirColorState(options.airColor)
   };
   return world;
 }
@@ -112,6 +151,7 @@ function installWorldState(world){
   installGridArrays(world.arrays);
   installWaterScratchTokens(world.tokens);
   installBodyRuntimeState(world);
+  installAirColorState(world);
   return world;
 }
 
@@ -138,6 +178,7 @@ function currentWorldState(){
   const bodyState=captureBodyRuntimeState(currentWorld);
   currentWorld.bodies=bodyState.bodies;
   currentWorld.nextBodyId=bodyState.nextBodyId;
+  currentWorld.airColor=currentAirColorState();
   return currentWorld;
 }
 
@@ -204,7 +245,8 @@ function resizeWorldGrid(nextCols,nextRows,options={}){
   }
   const source=material&&material.length?captureResizeSource():null;
   const bodyState=captureBodyRuntimeState();
-  installWorldState(createWorldState(normalizedCols,normalizedRows,{cellSize:normalizedCell,bodies:bodyState.bodies,nextBodyId:bodyState.nextBodyId}));
+  const nextAirColor=currentAirColorState();
+  installWorldState(createWorldState(normalizedCols,normalizedRows,{cellSize:normalizedCell,bodies:bodyState.bodies,nextBodyId:bodyState.nextBodyId,airColor:nextAirColor}));
   if(source){
     for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
       restoreResizeCell(r*cols+c,sampleResizeSourceIndex(c,r,source),source);
