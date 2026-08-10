@@ -316,6 +316,11 @@ testAssert(currentWorldState()===alternateWorld&&material[idx(2,2)]===WATER,'exp
 installWorldState(savedActiveWorld);
 applyForce(alternateWorld,{x:10,y:10,r:5},{x:20,y:0});
 testAssert(currentWorldState()===alternateWorld&&vx[idx(2,2)]>0,'explicit-world applyForce should install and use the supplied world');
+installWorldState(savedActiveWorld);
+const explicitFill=computeFill(alternateWorld,2,2);
+testAssert(currentWorldState()===alternateWorld&&explicitFill.cells.length>0&&explicitFill.target===WATER,'explicit-world computeFill should install and read the supplied world');
+installWorldState(savedActiveWorld);
+testAssert(fillAtCell(alternateWorld,2,2,SAND)>0&&currentWorldState()===alternateWorld&&material[idx(2,2)]===SAND,'explicit-world fillAtCell should install and mutate the supplied world');
 `;
   runIsolated('headless core smoke regression',source);
 }

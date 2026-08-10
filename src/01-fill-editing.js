@@ -42,7 +42,44 @@ function clearTransientEditUiState(){
   if(typeof clearCanvasInteractionState==='function')clearCanvasInteractionState();
 }
 
-function computeFill(c,r){const start=idx(c,r),target=material[start],seen=new Uint8Array(count),queue=new Int32Array(Math.min(count,MAX_FILL_CELLS+1)),out=[];let h=0,t=0;seen[start]=1;queue[t++]=start;while(h<t&&out.length<MAX_FILL_CELLS){const i=queue[h++];out.push(i);const cc=i%cols,rr=Math.floor(i/cols),ns=[i-1,i+1,i-cols,i+cols];for(const ni of ns){if(ni<0||ni>=count||seen[ni])continue;const nc=ni%cols,nr=Math.floor(ni/cols);if(Math.abs(nc-cc)+Math.abs(nr-rr)!==1)continue;if(bodyMask[ni]||material[ni]!==target)continue;seen[ni]=1;if(t<queue.length)queue[t++]=ni}}return{cells:out,target,clipped:h<t||out.length>=MAX_FILL_CELLS}}
+function normalizeFillCellArgs(worldOrC,cOrR,rOrMat,maybeMat){
+  if(maybeMat!==undefined){
+    if(worldOrC&&typeof useWorldState==='function')useWorldState(worldOrC);
+    return{c:cOrR,r:rOrMat,mat:maybeMat};
+  }
+  return{c:worldOrC,r:cOrR,mat:rOrMat};
+}
+
+function normalizeComputeFillArgs(worldOrC,cOrR,maybeR){
+  if(maybeR!==undefined){
+    if(worldOrC&&typeof useWorldState==='function')useWorldState(worldOrC);
+    return{c:cOrR,r:maybeR};
+  }
+  return{c:worldOrC,r:cOrR};
+}
+
+function computeFill(worldOrC,cOrR,maybeR){
+  const args=normalizeComputeFillArgs(worldOrC,cOrR,maybeR);
+  const c=args.c,r=args.r,start=idx(c,r),target=material[start];
+  const seen=new Uint8Array(count),queue=new Int32Array(Math.min(count,MAX_FILL_CELLS+1)),out=[];
+  let h=0,t=0;
+  seen[start]=1;
+  queue[t++]=start;
+  while(h<t&&out.length<MAX_FILL_CELLS){
+    const i=queue[h++];
+    out.push(i);
+    const cc=i%cols,rr=Math.floor(i/cols),ns=[i-1,i+1,i-cols,i+cols];
+    for(const ni of ns){
+      if(ni<0||ni>=count||seen[ni])continue;
+      const nc=ni%cols,nr=Math.floor(ni/cols);
+      if(Math.abs(nc-cc)+Math.abs(nr-rr)!==1)continue;
+      if(bodyMask[ni]||material[ni]!==target)continue;
+      seen[ni]=1;
+      if(t<queue.length)queue[t++]=ni;
+    }
+  }
+  return{cells:out,target,clipped:h<t||out.length>=MAX_FILL_CELLS};
+}
 function updateFillPreview(hoverPoint=null){clearFillPreview();if(fillEditingTool()!=='fill'||isBodyMaterial()||!hoverPoint)return;const p=pointToCell(hoverPoint.x,hoverPoint.y),res=computeFill(p.c,p.r);setFillPreviewState(res.cells,MATERIAL_FROM_NAME[fillEditingSelectedKey()]||WATER);if(res.clipped)setStatus('Fill preview reached the cell limit')}
 function fillCells(cells,mat){
   if(!cells.length||!isKnownMaterial(mat)||isBodyMaterial())return 0;
@@ -71,7 +108,8 @@ function fillCells(cells,mat){
   }
   return cells.length;
 }
-function fillAtCell(c,r,mat){
+function fillAtCell(worldOrC,cOrR,rOrMat,maybeMat){
+  const args=normalizeFillCellArgs(worldOrC,cOrR,rOrMat,maybeMat),c=args.c,r=args.r,mat=args.mat;
   if(!inBounds(c,r)||!isKnownMaterial(mat)||isBodyMaterial())return 0;
   const res=computeFill(c,r);
   return fillCells(res.cells,mat);

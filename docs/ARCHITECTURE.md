@@ -135,7 +135,9 @@ fields in `appContext`.
 tint/source clearing, and invalid-material normalization. `src/01-grid-editing.js`
 owns DOM-free brush stamps, tint edits, erasing, whole-grid edit commands, and
 edit-state reset. `src/01-fill-editing.js` owns connected-region fill selection,
-fill preview helpers, and fill application. Browser fill commits pass
+fill preview helpers, and fill application. `computeFill(world, c, r)` and
+`fillAtCell(world, c, r, mat)` support explicit world calls; preview state
+remains browser adapter state. Browser fill commits pass
 `applyAppEditCommand()` into `applyFill()` so the actual grid mutation still goes
 through the engine command boundary; browser preview cells are stored in
 `appContext` with legacy globals kept only as a compatibility fallback.
