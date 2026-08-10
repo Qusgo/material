@@ -67,6 +67,9 @@ between save and load.
 - `src/03-lighting.js` - DOM-free base color and light-mask helpers.
 - `src/03-render-buffer.js` - DOM-free RGBA buffer construction from material
   color, tint, and lighting state.
+- `src/03-simulation-engine.js` - DOM-free compatibility facade for future
+  adapters: create, edit, step, render buffer, serialize, restore, resize, and
+  clear.
 - `src/03-canvas-render-adapter.js` - Browser-only offscreen grid canvas,
   visible canvas drawing, and transient overlays.
 - `src/03-source-render-adapter.js` - Browser-only canvas overlay for source
@@ -110,7 +113,8 @@ runtime config commands, lighting, render buffers, sources, tint movement, and
 portable snapshot save/load. It also includes a DOM-free core smoke regression
 that creates a world, applies edit commands, steps physics, builds a render
 buffer, serializes, clears, and restores without defining `document`, `canvas`,
-or `localStorage`.
+or `localStorage`. The separate simulation engine regression covers the same
+core chain through `createSimulationEngine()`.
 
 The migration path toward a portable simulation core is documented in
 `docs/PORTABILITY_PLAN.md`. Follow that plan instead of doing a large
@@ -126,6 +130,11 @@ without changing gameplay in the same step. The old one-argument browser calls
 still work, but browser adapters now pass `currentWorldState()` at their
 step/edit/render call sites. The browser canvas adapter also accepts
 `render(world, appContext)` while keeping the old `render()` convenience form.
+`createSimulationEngine()` in `src/03-simulation-engine.js` is the preferred
+portable facade for future adapters. It still installs its world into the
+classic-script compatibility shell internally, but external callers can use one
+object for `edit()`, `step()`, `renderBuffer()`, `serialize()`, `restore()`,
+`resize()`, and `clear()`.
 Browser app-shell state lives in `src/03-app-context.js`. UI adapters read and
 write that plain `appContext` object for play/pause, status text, debug display,
 material menu/editor state, pointer/placement/force-preview state, and frame

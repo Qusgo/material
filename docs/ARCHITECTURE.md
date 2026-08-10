@@ -75,9 +75,15 @@ free of browser events and drawing.
 `src/03-lighting.js` owns DOM-free render preparation such as base material
 color, light masks, and simple light/shadow blending. `src/03-render-buffer.js`
 converts the current arrays into an RGBA buffer without touching `canvas` or
-`document`. `src/03-canvas-render-adapter.js` owns the browser-only offscreen
-grid canvas/ImageData, visible canvas drawing, and transient overlays such as
-basin debug, fill preview, force preview, eraser preview, and body drawing.
+`document`. `src/03-simulation-engine.js` owns the DOM-free compatibility
+facade for future adapters. It groups `createWorldState()`,
+`applyEditCommand()`, `stepWorld()`, `buildRenderBuffer()`,
+`serializeWorldSnapshot()`, `restoreWorldSnapshot()`, `resizeWorldGrid()`, and
+clear into one engine object while still installing that world into the current
+classic-script compatibility shell internally. `src/03-canvas-render-adapter.js`
+owns the browser-only offscreen grid canvas/ImageData, visible canvas drawing,
+and transient overlays such as basin debug, fill preview, force preview, eraser
+preview, and body drawing.
 `src/00-app-dom-refs.js` owns early browser app-shell DOM handles needed before
 core runtime state loads, such as the canvas, status label, play/debug buttons,
 and brush-size input.
@@ -225,6 +231,12 @@ and drawing it. The browser canvas adapter now also accepts
 `render(world, appContext)` while keeping the old `render()` convenience form.
 Passing a world still installs the compatibility shell into the classic-script
 globals before rendering.
+
+`createSimulationEngine()` is the preferred non-browser entry point. It is a
+facade, not a second implementation of the simulation. Do not duplicate physics,
+editing, rendering, or snapshot logic inside it; add capabilities to the
+underlying core boundary functions and expose them through the facade only after
+the core function exists.
 
 `buildLightMask()` scans each column from top to bottom with a boolean `lit`
 flag. When `lightingEnabled` is false, colors are drawn directly. When it is
@@ -524,11 +536,13 @@ an RGBA buffer, serialize, clear, and restore without browser globals.
   rasterized masks.
 - The code uses classic scripts to avoid build tooling. Respect the load order.
   `src/02-body-runtime.js` must load before `src/02-step-world.js`.
-  `src/03-canvas-render-adapter.js` must load after `src/03-render-buffer.js`
-  and before UI adapters that call `render()`. `src/03-dom-refs.js` must load
-  before `src/03-app-context.js`. `src/03-app-context.js` must load before
-  `src/03-app-ui-state-adapter.js` and other material/control/input/bootstrap
-  adapters that read `appContext`. `src/03-settings-sync-adapter.js` must load
-  before `src/03-controls-adapter.js` because controls bind to those helper
-  functions. `src/03-canvas-input-adapter.js` and `src/03-app-bootstrap.js` load
-  after the UI adapters.
+  `src/03-simulation-engine.js` must load after `src/03-render-buffer.js` and
+  `src/04-save-codec.js`. `src/03-canvas-render-adapter.js` must load after
+  `src/03-render-buffer.js` and before UI adapters that call `render()`.
+  `src/03-dom-refs.js` must load before `src/03-app-context.js`.
+  `src/03-app-context.js` must load before `src/03-app-ui-state-adapter.js` and
+  other material/control/input/bootstrap adapters that read `appContext`.
+  `src/03-settings-sync-adapter.js` must load before
+  `src/03-controls-adapter.js` because controls bind to those helper functions.
+  `src/03-canvas-input-adapter.js` and `src/03-app-bootstrap.js` load after the
+  UI adapters.

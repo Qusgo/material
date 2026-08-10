@@ -55,6 +55,10 @@ contains the browser-only post-load UI sync hook. `src/03-app-context.js` now
 groups browser app-shell state such as play/pause, status, debug display,
 material editor/menu state, pointer previews, and frame timing so those values
 are visible as adapter context instead of being mixed into core state.
+`src/03-simulation-engine.js` now provides a DOM-free compatibility facade for
+future non-browser adapters. It exposes one object for create/edit/step/render
+buffer/serialize/restore/resize/clear while still using the classic-script
+world shell internally.
 
 ## Migration Order
 
@@ -95,8 +99,9 @@ are visible as adapter context instead of being mixed into core state.
    `resetRuntimeClock()` in `src/03-app-bootstrap.js` and stores timing fields
    in `appContext`. Continue by making browser adapter entry points receive an
    explicit world/context pair consistently. The first explicit-world
-   compatibility forms are now in place for step, edit, and render buffer calls,
-   and browser adapters now use those forms.
+   compatibility forms are now in place for step, edit, render buffer, and the
+   browser canvas render call. `createSimulationEngine()` now wraps those
+   boundaries for future adapters.
 6. Only after the command boundary exists, migrate to TypeScript or a bundler
    such as Vite.
 7. If more speed is needed later, the headless core can be ported to Rust/WASM
@@ -124,6 +129,7 @@ are visible as adapter context instead of being mixed into core state.
   blending
 - `src/03-render-buffer.js` for DOM-free RGBA buffer construction
 - `src/02-sources.js` for source data and generation
+- `src/03-simulation-engine.js` for the current portable facade
 
 ## Current Portability Evidence
 
@@ -132,6 +138,8 @@ are visible as adapter context instead of being mixed into core state.
 - That smoke test creates a world shell, applies explicit-world edit commands,
   steps physics, builds a render buffer, serializes the world, clears it, and
   restores the snapshot.
+- The simulation engine regression repeats that chain through
+  `createSimulationEngine()` and also verifies engine resize.
 - Browser smoke regression still loads the full ordered script chain with fake
   DOM/canvas handles, so direct browser use remains covered while the headless
   boundary grows.

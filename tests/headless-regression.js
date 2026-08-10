@@ -27,6 +27,7 @@ const RUNTIME_FILES=[
   'src/04-save-ui-adapter.js',
   'src/03-lighting.js',
   'src/03-render-buffer.js',
+  'src/03-simulation-engine.js',
   'src/03-canvas-render-adapter.js',
   'src/03-source-render-adapter.js',
   'src/03-dom-refs.js',
@@ -126,7 +127,8 @@ function headlessCoreSmokeRegression(){
     'src/02-step-world.js',
     'src/04-save-codec.js',
     'src/03-lighting.js',
-    'src/03-render-buffer.js'
+    'src/03-render-buffer.js',
+    'src/03-simulation-engine.js'
   ];
   const source=coreFiles.map(read).join('\n')+`
 function testAssert(condition,message){if(!condition)throw new Error(message)}
@@ -153,6 +155,53 @@ const restored=restoreWorldSnapshot(snapshot);
 testAssert(restored.ok&&material.some(v=>v===FIXED_STONE)&&sourceMat.some(v=>v===WATER),'headless snapshot restore lost material or source cells');
 `;
   runIsolated('headless core smoke regression',source);
+}
+
+function simulationEngineRegression(){
+  const coreFiles=[
+    'src/00-materials.js',
+    'src/00-world-arrays.js',
+    'src/00-world-state.js',
+    'src/00-core-state.js',
+    'src/01-cell-state.js',
+    'src/01-grid-editing.js',
+    'src/01-fill-editing.js',
+    'src/01-body-geometry.js',
+    'src/02-sources.js',
+    'src/02-flow-and-water.js',
+    'src/02-force.js',
+    'src/01-runtime-config.js',
+    'src/01-edit-commands.js',
+    'src/02-erosion.js',
+    'src/02-body-runtime.js',
+    'src/02-step-world.js',
+    'src/04-save-codec.js',
+    'src/03-lighting.js',
+    'src/03-render-buffer.js',
+    'src/03-simulation-engine.js'
+  ];
+  const source=coreFiles.map(read).join('\n')+`
+function testAssert(condition,message){if(!condition)throw new Error(message)}
+function setStatus(){}
+testAssert(typeof document==='undefined'&&typeof canvas==='undefined'&&typeof localStorage==='undefined','simulation engine should be DOM-free');
+const engine=createSimulationEngine({cols:12,rows:10,cellSize:3});
+testAssert(currentWorldState()===engine.world&&cols===12&&rows===10,'engine did not install its world');
+testAssert(engine.edit({type:'paint',x:6,y:6,radius:0,material:SAND}),'engine edit failed');
+testAssert(material.some(v=>v===SAND),'engine edit did not write material');
+engine.step(3);
+testAssert(simTick===3&&currentWorldState()===engine.world,'engine step did not use its world');
+const buffer=engine.renderBuffer();
+testAssert(buffer.length===engine.world.count*4&&buffer.some(v=>v!==0),'engine renderBuffer failed');
+const snapshot=engine.serialize();
+testAssert(snapshot.cols===12&&snapshot.rows===10,'engine serialize returned wrong dimensions');
+engine.clear();
+testAssert(!material.some(v=>v!==EMPTY),'engine clear failed');
+const restored=engine.restore(snapshot);
+testAssert(restored.ok&&material.some(v=>v===SAND),'engine restore failed');
+const resized=engine.resize(8,6,{cellSize:4});
+testAssert(resized.changed&&engine.world.cols===8&&engine.world.rows===6&&cellSize===4,'engine resize failed');
+`;
+  runIsolated('simulation engine regression',source);
 }
 
 function browserLoadSmokeRegression(){
@@ -1068,6 +1117,7 @@ syntaxRegression();
 appDomRefsRegression();
 runtimeBootstrapRegression();
 headlessCoreSmokeRegression();
+simulationEngineRegression();
 browserLoadSmokeRegression();
 materialRegistryRegression();
 runtimeConfigRegression();
