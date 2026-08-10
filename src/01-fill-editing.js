@@ -4,9 +4,29 @@
 
 let fillPreview=[],fillPreviewMaterial=EMPTY;
 
+function setFillPreviewState(cells=[],mat=EMPTY){
+  fillPreview=cells;
+  fillPreviewMaterial=mat;
+  if(typeof appContext!=='undefined'&&appContext){
+    appContext.fillPreview=cells;
+    appContext.fillPreviewMaterial=mat;
+  }
+}
+
+function currentFillPreview(){
+  return typeof appContext!=='undefined'&&appContext&&Array.isArray(appContext.fillPreview)
+    ?appContext.fillPreview
+    :fillPreview;
+}
+
+function currentFillPreviewMaterial(){
+  return typeof appContext!=='undefined'&&appContext&&Object.prototype.hasOwnProperty.call(appContext,'fillPreviewMaterial')
+    ?appContext.fillPreviewMaterial
+    :fillPreviewMaterial;
+}
+
 function clearFillPreview(){
-  fillPreview=[];
-  fillPreviewMaterial=EMPTY;
+  setFillPreviewState([],EMPTY);
 }
 
 function clearTransientEditUiState(){
@@ -15,7 +35,7 @@ function clearTransientEditUiState(){
 }
 
 function computeFill(c,r){const start=idx(c,r),target=material[start],seen=new Uint8Array(count),queue=new Int32Array(Math.min(count,MAX_FILL_CELLS+1)),out=[];let h=0,t=0;seen[start]=1;queue[t++]=start;while(h<t&&out.length<MAX_FILL_CELLS){const i=queue[h++];out.push(i);const cc=i%cols,rr=Math.floor(i/cols),ns=[i-1,i+1,i-cols,i+cols];for(const ni of ns){if(ni<0||ni>=count||seen[ni])continue;const nc=ni%cols,nr=Math.floor(ni/cols);if(Math.abs(nc-cc)+Math.abs(nr-rr)!==1)continue;if(bodyMask[ni]||material[ni]!==target)continue;seen[ni]=1;if(t<queue.length)queue[t++]=ni}}return{cells:out,target,clipped:h<t||out.length>=MAX_FILL_CELLS}}
-function updateFillPreview(hoverPoint=null){clearFillPreview();if(tool!=='fill'||isBodyMaterial()||!hoverPoint)return;const p=pointToCell(hoverPoint.x,hoverPoint.y),res=computeFill(p.c,p.r);fillPreview=res.cells;fillPreviewMaterial=MATERIAL_FROM_NAME[selected]||WATER;if(res.clipped)setStatus('Fill preview reached the cell limit')}
+function updateFillPreview(hoverPoint=null){clearFillPreview();if(tool!=='fill'||isBodyMaterial()||!hoverPoint)return;const p=pointToCell(hoverPoint.x,hoverPoint.y),res=computeFill(p.c,p.r);setFillPreviewState(res.cells,MATERIAL_FROM_NAME[selected]||WATER);if(res.clipped)setStatus('Fill preview reached the cell limit')}
 function fillCells(cells,mat){
   if(!cells.length||!isKnownMaterial(mat)||isBodyMaterial())return 0;
   const wakeToken=nextWaterWakeToken();
@@ -46,14 +66,15 @@ function fillAtCell(c,r,mat){
   return fillCells(res.cells,mat);
 }
 function applyFill(point=null,runCommand=null){
-  if(!fillPreview.length||isBodyMaterial())return false;
+  const preview=currentFillPreview();
+  if(!preview.length||isBodyMaterial())return false;
   const mat=MATERIAL_FROM_NAME[selected]||WATER;
-  const previewCount=fillPreview.length;
+  const previewCount=preview.length;
   let filled=0;
   if(point&&typeof runCommand==='function'){
     filled=runCommand({type:'fill',x:point.x,y:point.y,material:mat})?previewCount:0;
   }else{
-    filled=fillCells(fillPreview,mat);
+    filled=fillCells(preview,mat);
   }
   setStatus(`Filled ${filled} cells`);
   clearFillPreview();

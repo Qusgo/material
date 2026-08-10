@@ -620,7 +620,8 @@ let material,mass,vx,vy,bodyMask,flowDir,restAge,stableMask,tintR,tintG,tintB,ti
 let moveHistory,moveFlip,horizontalDir,horizontalTurns,escapeDir,escapeTarget,carriedBy,carriedTTL,lastMoveTick;
 let waterSeen,waterSpaceMark,waterComponentMark,waterBasinMark,waterSleepBlockMark,waterTargetMark,waterWakeMark,waterQueue,rowCounts;
 let waterSpaceToken=1,waterComponentToken=1,waterBasinToken=1,waterTargetToken=1,waterWakeToken=1;
-let bodies=[],nextBodyId=1,airColor=[255,255,255];
+let bodies=[],nextBodyId=1,airColor=[255,255,255],tool='brush',selected='water';
+const appContext={fillPreview:[],fillPreviewMaterial:0};
 const editWorld=createWorldState(cols,rows,{cellSize});
 installWorldState(editWorld);
 function idx(c,r){return r*cols+c}
@@ -663,6 +664,13 @@ testAssert(bgTintA[idx(0,0)]===0,'fillAir command should clear background tint o
 testAssert(applyEditCommand({type:'clear'}),'clear command should apply');
 testAssert(material.every(v=>v===EMPTY)&&sourceMat.every(v=>v===EMPTY),'clear command should empty material and source layers');
 testAssert(airColor[0]===255&&airColor[1]===255&&airColor[2]===255,'clear command should reset air color');
+tool='fill';
+selected='sand';
+updateFillPreview({x:1,y:1});
+testAssert(appContext.fillPreview.length===count&&appContext.fillPreview===fillPreview&&appContext.fillPreviewMaterial===SAND,'fill preview should live in appContext during browser use');
+testAssert(applyFill({x:1,y:1},applyEditCommand),'applyFill should commit the preview through the edit command boundary');
+testAssert(appContext.fillPreview.length===0&&fillPreview.length===0,'applyFill should clear appContext preview state');
+testAssert(applyEditCommand({type:'clear'}),'clear command should reset after fill preview check');
 testAssert(!applyEditCommand({type:'paint',x:NaN,y:1,radius:0,material:SAND}),'point commands should reject invalid coordinates');
 material[idx(6,5)]=WATER;
 testAssert(!applyEditCommand({type:'placeBody',kind:'bad',start:{x:20,y:20},current:{x:40,y:30}}),'placeBody command should reject invalid body kinds');

@@ -38,8 +38,8 @@ between save and load.
   tint/source clearing, and cell normalization.
 - `src/01-grid-editing.js` - Brush, erase, tint, grid mutation, and whole-grid
   edit commands.
-- `src/01-fill-editing.js` - Connected-region fill selection, fill preview
-  state, and fill application.
+- `src/01-fill-editing.js` - Connected-region fill selection/application and
+  browser-preview helpers backed by `appContext` when available.
 - `src/01-body-geometry.js` - Dynamic-body construction, shape tests, placement,
   and body-mask rasterization.
 - `src/02-sources.js` - DOM-free infinite source layer editing and material

@@ -120,9 +120,10 @@ after edits and snapshot loads. The loop stores its timing fields in
 tint/source clearing, and invalid-material normalization. `src/01-grid-editing.js`
 owns DOM-free brush stamps, tint edits, erasing, whole-grid edit commands, and
 edit-state reset. `src/01-fill-editing.js` owns connected-region fill selection,
-fill preview state, and fill application. Browser fill commits pass
+fill preview helpers, and fill application. Browser fill commits pass
 `applyAppEditCommand()` into `applyFill()` so the actual grid mutation still goes
-through the engine command boundary; the preview remains local UI state.
+through the engine command boundary; browser preview cells are stored in
+`appContext` with legacy globals kept only as a compatibility fallback.
 `src/01-body-geometry.js` owns dynamic-body
 construction, shape intersection tests, placement checks, grid clearing under a
 placed body, and body-mask rasterization.

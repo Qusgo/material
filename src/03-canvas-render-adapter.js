@@ -54,7 +54,19 @@ function renderBasinDebug(world=currentWorldState(),context=appContext){
   ctx.restore();
 }
 function renderBodies(){for(const b of bodies){ctx.save();ctx.translate(b.x,b.y);ctx.rotate(b.angle);ctx.fillStyle='#4b4b4b';ctx.strokeStyle='#202020';ctx.lineWidth=2;if(b.type==='circle'){ctx.beginPath();ctx.arc(0,0,b.radius,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(b.radius*.82,0);ctx.strokeStyle='rgba(255,255,255,.55)';ctx.stroke()}else{ctx.beginPath();ctx.rect(-b.hw,-b.hh,b.hw*2,b.hh*2);ctx.fill();ctx.stroke();ctx.strokeStyle='rgba(255,255,255,.45)';ctx.beginPath();ctx.moveTo(-b.hw,0);ctx.lineTo(b.hw,0);ctx.moveTo(0,-b.hh);ctx.lineTo(0,b.hh);ctx.stroke()}ctx.restore()}}
-function renderFillPreview(){if(!fillPreview.length)return;const col=materialColor(fillPreviewMaterial);ctx.save();ctx.fillStyle=`rgba(${col[0]},${col[1]},${col[2]},.32)`;for(const i of fillPreview){const c=i%cols,r=Math.floor(i/cols);ctx.fillRect(c*cellSize,r*cellSize,cellSize,cellSize)}ctx.restore()}
+function renderFillPreview(context=appContext){
+  const preview=context&&Array.isArray(context.fillPreview)?context.fillPreview:fillPreview;
+  if(!preview.length)return;
+  const previewMaterial=context&&Object.prototype.hasOwnProperty.call(context,'fillPreviewMaterial')?context.fillPreviewMaterial:fillPreviewMaterial;
+  const col=materialColor(previewMaterial);
+  ctx.save();
+  ctx.fillStyle=`rgba(${col[0]},${col[1]},${col[2]},.32)`;
+  for(const i of preview){
+    const c=i%cols,r=Math.floor(i/cols);
+    ctx.fillRect(c*cellSize,r*cellSize,cellSize,cellSize);
+  }
+  ctx.restore();
+}
 function renderPlacement(context=appContext){if(!context.placing)return;const b=makeBodyFromPlacement(context.placing);if(!b)return;const ok=canPlaceBody(b);ctx.save();ctx.strokeStyle=ok?'rgba(58,58,58,.85)':'rgba(201,74,74,.9)';ctx.fillStyle=ok?'rgba(58,58,58,.22)':'rgba(201,74,74,.18)';ctx.lineWidth=2;if(b.type==='circle'){ctx.beginPath();ctx.arc(b.x,b.y,b.radius,0,Math.PI*2);ctx.fill();ctx.stroke()}else{ctx.beginPath();ctx.rect(b.x-b.hw,b.y-b.hh,b.hw*2,b.hh*2);ctx.fill();ctx.stroke()}ctx.restore()}
 function drawArrow(x1,y1,x2,y2){const a=Math.atan2(y2-y1,x2-x1);ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();ctx.beginPath();ctx.moveTo(x2,y2);ctx.lineTo(x2-Math.cos(a-.55)*14,y2-Math.sin(a-.55)*14);ctx.lineTo(x2-Math.cos(a+.55)*14,y2-Math.sin(a+.55)*14);ctx.closePath();ctx.fillStyle=ctx.strokeStyle;ctx.fill()}
 function renderForcePreview(context=appContext){const forceState=context.forceState;if(!forceState)return;ctx.save();ctx.strokeStyle='rgba(17,24,39,.78)';ctx.fillStyle='rgba(22,141,226,.1)';ctx.lineWidth=2;if(forceState.circle){ctx.beginPath();ctx.arc(forceState.circle.x,forceState.circle.y,forceState.circle.r,0,Math.PI*2);ctx.fill();ctx.stroke()}else if(forceState.start&&forceState.current){const r=Math.hypot(forceState.current.x-forceState.start.x,forceState.current.y-forceState.start.y);ctx.beginPath();ctx.arc(forceState.start.x,forceState.start.y,r,0,Math.PI*2);ctx.fill();ctx.stroke()}if(forceState.circle&&forceState.arrowEnd)drawArrow(forceState.circle.x,forceState.circle.y,forceState.arrowEnd.x,forceState.arrowEnd.y);ctx.restore()}
@@ -67,7 +79,7 @@ function render(world=currentWorldState(),context=appContext){
   renderGrid(active);
   if(typeof renderSources==='function')renderSources(active);
   renderBasinDebug(active,context);
-  renderFillPreview();
+  renderFillPreview(context);
   renderBodies();
   renderPlacement(context);
   renderForcePreview(context);

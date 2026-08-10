@@ -15,6 +15,8 @@ const appContext={
   pointerDown:false,
   lastPoint:null,
   hoverPoint:null,
+  fillPreview:[],
+  fillPreviewMaterial:0,
   placing:null,
   forceState:null,
   lastFrame:0,

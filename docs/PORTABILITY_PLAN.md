@@ -100,9 +100,10 @@ native shell should connect to that facade.
    `src/03-app-context.js`, while status/resize/coordinate/selection/button
    helpers live in `src/03-app-ui-state-adapter.js`. Material menu/editor field
    sync lives in `src/03-material-ui-adapter.js`, canvas pointer binding lives
-   in `src/03-canvas-input-adapter.js`, and fill preview state lives in
-   `src/01-fill-editing.js`. Browser fill commits now call the app edit helper
-   instead of directly mutating fill cells. Browser frame timing lives behind
+   in `src/03-canvas-input-adapter.js`, and browser fill preview state now lives
+   in `appContext` with compatibility helpers in `src/01-fill-editing.js`.
+   Browser fill commits now call the app edit helper instead of directly
+   mutating fill cells. Browser frame timing lives behind
    `resetRuntimeClock()` in `src/03-app-bootstrap.js` and stores timing fields
    in `appContext`. Browser adapter entry points now use `appContext` engine
    helpers for edit, material config, runtime settings, step, resize, and
@@ -129,7 +130,7 @@ native shell should connect to that facade.
 - `src/01-cell-state.js` for low-level cell mutation and cleanup
 - `src/01-grid-editing.js` for DOM-free grid edit helpers
 - `src/01-fill-editing.js` for connected-region fill selection/application and
-  fill preview state
+  compatibility helpers for browser-owned fill preview state
 - `src/01-body-geometry.js` for dynamic-body construction and body masks
 - `src/04-save-codec.js` for portable snapshot serialize/restore and
   editable-array resampling
