@@ -323,16 +323,32 @@ installWorldState(savedActiveWorld);
 testAssert(fillAtCell(alternateWorld,2,2,SAND)>0&&currentWorldState()===alternateWorld&&material[idx(2,2)]===SAND,'explicit-world fillAtCell should install and mutate the supplied world');
 const explicitBody={id:40,type:'circle',x:8,y:28,vx:0,vy:0,angle:0,av:0,radius:3,hw:3,hh:3,mass:10,invMass:.1,inertia:45,invInertia:1/45};
 installWorldState(savedActiveWorld);
+testAssert(canPlaceBody(alternateWorld,explicitBody)&&currentWorldState()===alternateWorld,'explicit-world canPlaceBody should install and inspect the supplied world');
+material[idx(2,7)]=FIXED_STONE;
+installWorldState(savedActiveWorld);
+testAssert(bodyHitsFixed(alternateWorld,explicitBody)&&currentWorldState()===alternateWorld,'explicit-world bodyHitsFixed should install and inspect the supplied world');
+material[idx(2,7)]=WATER;
+installWorldState(savedActiveWorld);
+clearGridUnderBody(alternateWorld,explicitBody);
+testAssert(currentWorldState()===alternateWorld&&material[idx(2,7)]===EMPTY,'explicit-world clearGridUnderBody should install and mutate the supplied world');
+installWorldState(savedActiveWorld);
 testAssert(addBody(alternateWorld,explicitBody)&&currentWorldState()===alternateWorld&&bodies[0]===explicitBody,'explicit-world addBody should install and mutate the supplied world');
 bodyMask.fill(0);
 installWorldState(savedActiveWorld);
 rebuildBodyMask(alternateWorld);
 testAssert(currentWorldState()===alternateWorld&&bodyMask.some(v=>v===1),'explicit-world rebuildBodyMask should install and rasterize the supplied world');
+alternateWorld.bodies=[
+  {id:41,type:'circle',x:20,y:12,vx:0,vy:0,angle:0,av:0,radius:5,hw:5,hh:5,mass:10,invMass:.1,inertia:45,invInertia:1/45},
+  {id:42,type:'circle',x:22,y:12,vx:0,vy:0,angle:0,av:0,radius:5,hw:5,hh:5,mass:10,invMass:.1,inertia:45,invInertia:1/45}
+];
+installWorldState(savedActiveWorld);
+resolveBodyBodyCollisions(alternateWorld);
+testAssert(currentWorldState()===alternateWorld&&bodies[0].x<20&&bodies[1].x>22,'explicit-world resolveBodyBodyCollisions should install and separate supplied bodies');
 alternateWorld.bodies=[{id:42,type:'circle',x:20,y:12,vx:0,vy:0,angle:0,av:0,radius:3,hw:3,hh:3,mass:10,invMass:.1,inertia:45,invInertia:1/45}];
 alternateWorld.nextBodyId=43;
 installWorldState(savedActiveWorld);
 updateBodies(alternateWorld);
-testAssert(currentWorldState()===alternateWorld&&viewW===alternateWorld.viewW&&viewH===alternateWorld.viewH&&bodies[0].y>12,'explicit-world updateBodies should install view size and update the supplied world');
+testAssert(currentWorldState()===alternateWorld&&viewW===alternateWorld.viewW&&viewH===alternateWorld.viewH&&bodies[0].y>12&&alternateWorld.bodies===bodies,'explicit-world updateBodies should install view size and update the supplied world');
 installWorldState(alternateWorld);
 clearEditableGridState();
 sourceMat[idx(1,1)]=WATER;

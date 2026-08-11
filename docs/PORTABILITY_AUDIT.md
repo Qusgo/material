@@ -63,9 +63,11 @@ to work while migration continues.
   `currentRuntimeSettingsState()` and `applyRuntimeSettingsState()`, but the
   old `sourceInterval`, `lightingEnabled`, and light-strength globals are still
   synchronized mirrors for classic-script compatibility.
-- Dynamic body state now lives on `WorldState` as `bodies` and `nextBodyId`,
-  but the old globals are still synchronized mirrors because body physics still
-  reads and mutates them directly.
+- Dynamic body state now lives on `WorldState` as `bodies` and `nextBodyId`.
+  Body placement, body-mask, collision, fixed-hit, displacement, and frame-level
+  update helpers all accept explicit worlds, but the old globals are still
+  synchronized mirrors because the hot body loops run through the compatibility
+  shell.
 - Canvas air color now lives on `WorldState.airColor`, but the old `airColor`
   global is still a synchronized mirror because render and save/load code are
   still classic scripts.
@@ -84,13 +86,11 @@ to work while migration continues.
 
 1. Continue changing hot-path functions to accept `world` or a small runtime
    context explicitly. Source generation, force application, fill computation,
-   fill application, and save/restore now have explicit-world entry points; the
-   body runtime and frame-level flow-update public entries also accept explicit
-   worlds, and body add/mask geometry can be called with an explicit world. The
-   next low-risk targets are body runtime internals and deeper flow-update
-   helpers.
-2. Move body physics functions toward explicit `world` or body-state arguments
-   before exposing dynamic stones in another platform.
+   fill application, body geometry/runtime helpers, frame-level flow update, and
+   save/restore now have explicit-world entry points. The next low-risk targets
+   are deeper flow-update helpers that still assume the installed global grid.
+2. Keep dynamic stones disabled in UI until another pass audits gameplay
+   stability, even though the core body helpers now support explicit worlds.
 3. Keep browser adapters thin: they should translate platform input into engine
    commands, upload RGBA buffers, and own transient UI state only.
 4. After the classic global bridge is small and well tested, consider adding a

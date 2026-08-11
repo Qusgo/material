@@ -150,7 +150,8 @@ through the engine command boundary; browser preview cells are stored in
 `appContext` with legacy globals kept only as a compatibility fallback.
 `src/01-body-geometry.js` owns dynamic-body
 construction, shape intersection tests, placement checks, grid clearing under a
-placed body, and body-mask rasterization. `addBody(world, body)` and
+placed body, and body-mask rasterization. `canPlaceBody(world, body)`,
+`clearGridUnderBody(world, body)`, `addBody(world, body)`, and
 `rebuildBodyMask(world)` support explicit world calls while preserving their old
 single-argument/no-argument forms.
 `src/01-edit-commands.js` is the command-style boundary for editor operations:
@@ -165,7 +166,11 @@ browser-owned engine facade. The material editor, dynamic body preview, browser
 storage wrapper, button synchronization, and runtime loop are still
 browser/runtime responsibilities.
 `src/02-force.js` owns DOM-free force application for flow cells and dynamic
-bodies.
+bodies. `src/02-body-runtime.js` keeps the body physics update DOM-free.
+`bodyHitsFixed(world, body)`, `displaceGridUnderBody(world, body)`,
+`resolveBodyBodyCollisions(world)`, and `updateBodies(world)` support explicit
+world calls, but still work by installing the compatibility world before running
+the classic hot-path code.
 
 `src/01-runtime-config.js` is the command-style boundary for custom material
 configuration and global runtime settings. It owns use-count checks for custom

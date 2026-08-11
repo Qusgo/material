@@ -110,8 +110,9 @@ native shell should connect to that facade.
    `resetRuntimeClock()` in `src/03-app-bootstrap.js` and stores timing fields
    in `appContext`. Browser adapter entry points now use `appContext` engine
    helpers for edit, material config, runtime settings, step, resize, and
-   render. The first explicit-world compatibility forms are now in place for
-   step, edit, render buffer, and the browser canvas render call.
+   render. Explicit-world compatibility forms are now in place for step, edit,
+   render buffer, the browser canvas render call, body geometry helpers, and
+   body runtime helpers.
    `createSimulationEngine()` now wraps those boundaries for browser and future
    adapters.
 6. Only after the command boundary exists, migrate to TypeScript or a bundler

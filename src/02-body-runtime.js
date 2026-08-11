@@ -2,8 +2,37 @@
 
 // Dynamic-body physics and grid displacement for non-fixed stone bodies.
 
-function bodyHitsFixed(b){const samples=[];if(b.type==='circle'){samples.push([0,0]);for(let k=0;k<12;k++){const a=k/12*Math.PI*2;samples.push([Math.cos(a)*b.radius,Math.sin(a)*b.radius])}}else{for(const sx of[-1,0,1])for(const sy of[-1,0,1])samples.push([sx*b.hw,sy*b.hh]);samples.push([b.hw,0],[-b.hw,0],[0,b.hh],[0,-b.hh])}const ca=Math.cos(b.angle),sa=Math.sin(b.angle);for(const [lx,ly]of samples){const x=b.x+lx*ca-ly*sa,y=b.y+lx*sa+ly*ca;if(x<0||x>=viewW||y<0||y>=viewH)return true;const p=pointToCell(x,y);if(material[idx(p.c,p.r)]===FIXED_STONE)return true}return false}
-function displaceGridUnderBody(b){
+function normalizeBodyRuntimeWorldArg(worldOrBody,maybeBody){
+  if(maybeBody!==undefined){
+    if(worldOrBody&&typeof useWorldState==='function')useWorldState(worldOrBody);
+    return maybeBody;
+  }
+  return worldOrBody;
+}
+function bodyHitsFixed(worldOrBody,maybeBody){
+  const b=normalizeBodyRuntimeWorldArg(worldOrBody,maybeBody);
+  const samples=[];
+  if(b.type==='circle'){
+    samples.push([0,0]);
+    for(let k=0;k<12;k++){
+      const a=k/12*Math.PI*2;
+      samples.push([Math.cos(a)*b.radius,Math.sin(a)*b.radius]);
+    }
+  }else{
+    for(const sx of[-1,0,1])for(const sy of[-1,0,1])samples.push([sx*b.hw,sy*b.hh]);
+    samples.push([b.hw,0],[-b.hw,0],[0,b.hh],[0,-b.hh]);
+  }
+  const ca=Math.cos(b.angle),sa=Math.sin(b.angle);
+  for(const [lx,ly]of samples){
+    const x=b.x+lx*ca-ly*sa,y=b.y+lx*sa+ly*ca;
+    if(x<0||x>=viewW||y<0||y>=viewH)return true;
+    const p=pointToCell(x,y);
+    if(material[idx(p.c,p.r)]===FIXED_STONE)return true;
+  }
+  return false;
+}
+function displaceGridUnderBody(worldOrBody,maybeBody){
+  const b=normalizeBodyRuntimeWorldArg(worldOrBody,maybeBody);
   wakeFlowNearBody(b);
   const minC=clamp(Math.floor((b.x-b.radius)/cellSize),0,cols-1),maxC=clamp(Math.floor((b.x+b.radius)/cellSize),0,cols-1);
   const minR=clamp(Math.floor((b.y-b.radius)/cellSize),0,rows-1),maxR=clamp(Math.floor((b.y+b.radius)/cellSize),0,rows-1);
@@ -41,7 +70,20 @@ function displaceGridUnderBody(b){
     }
   }
 }
-function resolveBodyBodyCollisions(){for(let a=0;a<bodies.length;a++)for(let b=a+1;b<bodies.length;b++){const A=bodies[a],B=bodies[b];if(!bodiesOverlap(A,B))continue;let dx=B.x-A.x,dy=B.y-A.y,d=Math.hypot(dx,dy)||1;dx/=d;dy/=d;const push=Math.min(8,(A.radius+B.radius-d)*.22+1);A.x-=dx*push;A.y-=dy*push;B.x+=dx*push;B.y+=dy*push;const avx=A.vx,avy=A.vy;A.vx=B.vx*.65;A.vy=B.vy*.65;B.vx=avx*.65;B.vy=avy*.65;A.av*=.75;B.av*=.75}}
+function resolveBodyBodyCollisions(world){
+  if(world&&typeof useWorldState==='function')useWorldState(world);
+  for(let a=0;a<bodies.length;a++)for(let b=a+1;b<bodies.length;b++){
+    const A=bodies[a],B=bodies[b];
+    if(!bodiesOverlap(A,B))continue;
+    let dx=B.x-A.x,dy=B.y-A.y,d=Math.hypot(dx,dy)||1;
+    dx/=d;dy/=d;
+    const push=Math.min(8,(A.radius+B.radius-d)*.22+1);
+    A.x-=dx*push;A.y-=dy*push;B.x+=dx*push;B.y+=dy*push;
+    const avx=A.vx,avy=A.vy;
+    A.vx=B.vx*.65;A.vy=B.vy*.65;B.vx=avx*.65;B.vy=avy*.65;
+    A.av*=.75;B.av*=.75;
+  }
+}
 function updateBodies(world){
   if(world&&typeof useWorldState==='function')useWorldState(world);
   // Bodies are continuous shapes. They interact with particles by rasterizing
@@ -78,4 +120,5 @@ function updateBodies(world){
   rebuildBodyMask();
   for(const b of bodies)displaceGridUnderBody(b);
   bodies=bodies.filter(b=>b.y-b.radius<viewH+160&&b.x+b.radius>-160&&b.x-b.radius<viewW+160);
+  if(typeof setBodyRuntimeState==='function')setBodyRuntimeState(bodies,nextBodyId);
 }

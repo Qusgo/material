@@ -9,8 +9,22 @@ function rectCorners(b){const ca=Math.cos(b.angle),sa=Math.sin(b.angle),pts=[];f
 function project(pts,ax,ay){let min=Infinity,max=-Infinity;for(const p of pts){const v=p.x*ax+p.y*ay;min=Math.min(min,v);max=Math.max(max,v)}return{min,max}}
 function rectRectOverlap(a,b){const ap=rectCorners(a),bp=rectCorners(b),axes=[];for(const body of[a,b]){const ca=Math.cos(body.angle),sa=Math.sin(body.angle);axes.push({x:ca,y:sa},{x:-sa,y:ca})}for(const axis of axes){const pa=project(ap,axis.x,axis.y),pb=project(bp,axis.x,axis.y);if(pa.max<pb.min||pb.max<pa.min)return false}return true}
 function bodiesOverlap(a,b){const broad=a.radius+b.radius,dx=b.x-a.x,dy=b.y-a.y;if(dx*dx+dy*dy>broad*broad)return false;if(a.type==='circle'&&b.type==='circle')return Math.hypot(dx,dy)<broad;if(a.type==='circle'&&b.type==='rect')return bodyIntersectsCircle(b,a.x,a.y,a.radius);if(a.type==='rect'&&b.type==='circle')return bodyIntersectsCircle(a,b.x,b.y,b.radius);return rectRectOverlap(a,b)}
-function canPlaceBody(body){if(bodies.length>=BODY_LIMIT)return false;if(body.x-body.radius<0||body.x+body.radius>viewW||body.y-body.radius<0||body.y+body.radius>viewH)return false;return!bodies.some(o=>bodiesOverlap(body,o))}
-function clearGridUnderBody(body){const minC=clamp(Math.floor((body.x-body.radius)/cellSize),0,cols-1),maxC=clamp(Math.floor((body.x+body.radius)/cellSize),0,cols-1),minR=clamp(Math.floor((body.y-body.radius)/cellSize),0,rows-1),maxR=clamp(Math.floor((body.y+body.radius)/cellSize),0,rows-1),wakeToken=nextWaterWakeToken();for(let r=minR;r<=maxR;r++)for(let c=minC;c<=maxC;c++){const p=cellCenter(c,r);if(bodyContainsPoint(body,p.x,p.y))clearCell(c,r,wakeToken)}}
+function canPlaceBody(worldOrBody,maybeBody){
+  const body=normalizeBodyWorldArg(worldOrBody,maybeBody);
+  if(!body)return false;
+  if(bodies.length>=BODY_LIMIT)return false;
+  if(body.x-body.radius<0||body.x+body.radius>viewW||body.y-body.radius<0||body.y+body.radius>viewH)return false;
+  return!bodies.some(o=>bodiesOverlap(body,o));
+}
+function clearGridUnderBody(worldOrBody,maybeBody){
+  const body=normalizeBodyWorldArg(worldOrBody,maybeBody);
+  if(!body)return;
+  const minC=clamp(Math.floor((body.x-body.radius)/cellSize),0,cols-1),maxC=clamp(Math.floor((body.x+body.radius)/cellSize),0,cols-1),minR=clamp(Math.floor((body.y-body.radius)/cellSize),0,rows-1),maxR=clamp(Math.floor((body.y+body.radius)/cellSize),0,rows-1),wakeToken=nextWaterWakeToken();
+  for(let r=minR;r<=maxR;r++)for(let c=minC;c<=maxC;c++){
+    const p=cellCenter(c,r);
+    if(bodyContainsPoint(body,p.x,p.y))clearCell(c,r,wakeToken);
+  }
+}
 function reportBodyPlacementStatus(message){if(typeof setStatus==='function')setStatus(message)}
 function normalizeBodyWorldArg(worldOrBody,maybeBody){
   if(maybeBody!==undefined){
