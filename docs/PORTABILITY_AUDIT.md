@@ -14,6 +14,9 @@ to reuse from a WebView, mini-program, or native shell.
   without defining `document`, `canvas`, or `localStorage`.
 - A browser smoke test still loads the full ordered script chain with fake DOM
   and canvas handles.
+- A real local browser smoke on `http://127.0.0.1:8787/index.html` loaded the
+  page without console errors and verified toolbar/canvas drawing after the
+  world-shell view-size migration.
 - The core candidate scan strips comments and strings, then checks for
   `document`, `window`, `canvas`, `localStorage`, DOM event binding, and
   `ImageData`. It currently finds no real browser API calls inside the reusable
