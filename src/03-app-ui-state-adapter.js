@@ -25,9 +25,11 @@ function setStatus(t){appContext.statusText=t;updateStatus()}
 function resize(){
   // Resizing changes the cell size and reallocates all hot arrays. Existing
   // material is resampled by canvas position rather than copied by raw index.
-  const rect=canvas.getBoundingClientRect(),nextW=Math.max(320,Math.floor(rect.width)),nextH=Math.max(240,Math.floor(rect.height)); dpr=Math.max(1,Math.min(2,window.devicePixelRatio||1));
+  const rect=canvas.getBoundingClientRect(),nextW=Math.max(320,Math.floor(rect.width)),nextH=Math.max(240,Math.floor(rect.height));
+  const nextDpr=Math.max(1,Math.min(2,window.devicePixelRatio||1));
+  appContext.dpr=nextDpr;
   const newCell=Math.max(4,Math.ceil(Math.max(nextW/CELL_MAX_COLS,nextH/CELL_MAX_ROWS))),newCols=Math.max(1,Math.floor(nextW/newCell)),newRows=Math.max(1,Math.floor(nextH/newCell));
-  canvas.width=Math.floor(nextW*dpr); canvas.height=Math.floor(nextH*dpr); ctx.setTransform(dpr,0,0,dpr,0,0); viewW=nextW; viewH=nextH;
+  canvas.width=Math.floor(nextW*nextDpr); canvas.height=Math.floor(nextH*nextDpr); ctx.setTransform(nextDpr,0,0,nextDpr,0,0); viewW=nextW; viewH=nextH;
   const resized=resizeAppWorld(newCols,newRows,{cellSize:newCell,viewW:nextW,viewH:nextH});
   if(!resized.changed){renderApp();return}
   gridCanvas.width=cols; gridCanvas.height=rows; imageData=gridCtx.createImageData(cols,rows);

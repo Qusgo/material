@@ -21,6 +21,7 @@ const appContext={
   fillPreviewMaterial:0,
   placing:null,
   forceState:null,
+  dpr:1,
   lastFrame:0,
   accumulator:0
 };

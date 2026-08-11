@@ -459,7 +459,7 @@ const document={
   querySelectorAll(){return[]}
 };
 const window={
-  devicePixelRatio:1,
+  devicePixelRatio:3,
   addEventListener(type,handler){events.window[type]=handler}
 };
 function requestAnimationFrame(handler){calls.push('raf');requestAnimationFrame.last=handler}
@@ -467,6 +467,7 @@ const localStorage={getItem(){return null},setItem(){}};
 function testAssert(condition,message){if(!condition)throw new Error(message)}
 `+RUNTIME_FILES.map(read).join('\n')+`
 testAssert(cols>1&&rows>1&&count===cols*rows,'browser load did not resize/install grid');
+testAssert(appContext.dpr===2,'browser resize should clamp DPR in appContext');
 testAssert(!!events.window.resize,'resize handler was not bound');
 testAssert(!!requestAnimationFrame.last&&calls.includes('raf'),'animation frame was not scheduled');
 testAssert(!!events.canvas.pointerdown&&!!events.canvas.pointermove&&!!events.canvas.pointerup,'canvas pointer handlers were not bound');

@@ -8,7 +8,7 @@ const BODY_LIMIT=64,GRAVITY=.24,MAX_BODY_SPEED=7,MAX_ANGULAR_SPEED=.18,CELL_MAX_
 const SIM_STEP_MS=14;
 const WATER_RESIDUE_MAX_FRACTION=.025,WATER_RESIDUE_MAX_CELLS=96;
 const STABLE_SPEED=.18,WAKE_RADIUS=3;
-let viewW=1,viewH=1,dpr=1,cellSize=5,cols=1,rows=1,count=1;
+let viewW=1,viewH=1,cellSize=5,cols=1,rows=1,count=1;
 // Hot grid state. Keep these as typed arrays; most simulation code assumes
 // index = row * cols + col and mutates these arrays directly.
 let material,mass,vx,vy,bodyMask,flowDir,restAge,stableMask,tintR,tintG,tintB,tintA,bgTintR,bgTintG,bgTintB,bgTintA,sourceMat,lightMask;

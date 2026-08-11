@@ -105,7 +105,8 @@ and brush-size input.
 `src/03-app-context.js` owns the browser app-shell state object. This plain
 object holds status text, play/pause, debug display, tool/material selection,
 material menu/editor state, pointer/hover/placement/force-preview state, frame
-timing, and the browser-owned simulation engine facade. Its helpers
+timing, browser device-pixel ratio, and the browser-owned simulation engine
+facade. Its helpers
 (`appWorld()`, `applyAppEditCommand()`,
 `stepAppWorld()`, `resizeAppWorld()`, `applyAppMaterialCommand()`,
 `applyAppRuntimeSettingsCommand()`, `currentAppRuntimeSettings()`, and
