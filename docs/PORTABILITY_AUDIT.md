@@ -27,7 +27,7 @@ to reuse from a WebView, mini-program, or native shell.
 Use `createSimulationEngine()` as the adapter boundary. It currently exposes:
 
 - World lifecycle: `world`, `currentWorld()`, `resize()`, `clear()`.
-- Simulation: `edit(command)`, `step(iterations)`.
+- Simulation: `edit(command)`, `finishEdit()`, `step(iterations)`.
 - Rendering data: `renderBuffer(data)`.
 - Persistence: `serialize()`, `restore(snapshot)`.
 - Configuration: `materialCommand(command)`,

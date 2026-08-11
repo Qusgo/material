@@ -31,6 +31,12 @@ function createSimulationEngine(options={}){
   engine.edit=function(command){
     return applyEditCommand(engine.world,command);
   };
+  engine.finishEdit=function(){
+    engine.useWorld();
+    finishEditAsNewInitialState();
+    engine.world=currentWorldState();
+    return engine.world;
+  };
   engine.step=function(iterations=1){
     const steps=clampInt(iterations,1,1000,1);
     for(let i=0;i<steps;i++)engine.world=stepWorld(engine.world);

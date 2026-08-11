@@ -143,9 +143,9 @@ canvas adapter also accepts
 `createSimulationEngine()` in `src/03-simulation-engine.js` is the preferred
 portable facade for future adapters. It still installs its world into the
 classic-script compatibility shell internally, but external callers can use one
-object for `edit()`, `step()`, `renderBuffer()`, `serialize()`, `restore()`,
-`resize()`, `clear()`, `materialCommand()`, `runtimeSettingsCommand()`, and
-`runtimeSettings()`.
+object for `edit()`, `finishEdit()`, `step()`, `renderBuffer()`,
+`serialize()`, `restore()`, `resize()`, `clear()`, `materialCommand()`,
+`runtimeSettingsCommand()`, and `runtimeSettings()`.
 Browser app-shell state lives in `src/03-app-context.js`. UI adapters read and
 write that plain `appContext` object for play/pause, status text, debug display,
 tool/material selection, material menu/editor state,

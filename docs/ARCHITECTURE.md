@@ -514,6 +514,8 @@ current material positions but clears velocities, water direction preferences,
 oscillation history, and stable/rest state for all flow cells. Dynamic bodies are
 also stopped in place. The force tool is the exception because its purpose is to
 inject velocity.
+Portable adapters should call `engine.finishEdit()` instead of reaching for that
+compatibility hook directly.
 `finishEditAsNewInitialState()` must use `resetRuntimeClock()` instead of
 touching browser frame accumulator variables directly. Non-browser runners can
 leave the hook as a no-op or replace it with their own scheduler reset.

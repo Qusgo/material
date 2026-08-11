@@ -389,8 +389,14 @@ testAssert(typeof document==='undefined'&&typeof canvas==='undefined'&&typeof lo
 const engine=createSimulationEngine({cols:12,rows:10,cellSize:3});
 testAssert(currentWorldState()===engine.world&&cols===12&&rows===10,'engine did not install its world');
 testAssert(engine.world.viewW===36&&engine.world.viewH===30&&viewW===36&&viewH===30,'engine did not initialize view size');
-testAssert(engine.edit({type:'paint',x:6,y:6,radius:0,material:SAND}),'engine edit failed');
-testAssert(material.some(v=>v===SAND),'engine edit did not write material');
+testAssert(engine.edit({type:'paint',x:6,y:6,radius:0,material:WATER}),'engine edit failed');
+testAssert(material.some(v=>v===WATER),'engine edit did not write material');
+const editedCell=idx(2,2);
+vx[editedCell]=5;
+restAge[editedCell]=9;
+stableMask[editedCell]=1;
+engine.finishEdit();
+testAssert(currentWorldState()===engine.world&&editDirty===false&&vx[editedCell]===0&&restAge[editedCell]===0&&stableMask[editedCell]===0,'engine finishEdit should reset transient edited flow state');
 engine.step(3);
 testAssert(simTick===3&&currentWorldState()===engine.world,'engine step did not use its world');
 const buffer=engine.renderBuffer();
@@ -400,7 +406,7 @@ testAssert(snapshot.cols===12&&snapshot.rows===10,'engine serialize returned wro
 engine.clear();
 testAssert(!material.some(v=>v!==EMPTY),'engine clear failed');
 const restored=engine.restore(snapshot);
-testAssert(restored.ok&&material.some(v=>v===SAND),'engine restore failed');
+testAssert(restored.ok&&material.some(v=>v===WATER),'engine restore failed');
 const resized=engine.resize(8,6,{cellSize:4});
 testAssert(resized.changed&&engine.world.cols===8&&engine.world.rows===6&&cellSize===4,'engine resize failed');
 const custom=engine.materialCommand({type:'add',kind:MATERIAL_KIND_FLUID,name:'Engine Oil',density:3,color:[3,4,5]});

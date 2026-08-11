@@ -60,6 +60,8 @@ The facade currently exposes:
 - `engine.world` - the active world shell.
 - `engine.currentWorld()` - installs and returns the engine world.
 - `engine.edit(command)` - applies one edit command.
+- `engine.finishEdit()` - clears transient motion after a completed draw/erase
+  gesture so edited scenes restart cleanly.
 - `engine.step(iterations)` - advances one or more physics ticks.
 - `engine.materialCommand(command)` - adds, updates, or deletes runtime custom
   material definitions.
@@ -164,8 +166,7 @@ Common commands:
 - `force`
 - `placeBody`
 
-After direct editing, reset transient motion by calling
-`finishEditAsNewInitialState()` if that hook remains part of the core load set.
+After direct editing, reset transient motion by calling `engine.finishEdit()`.
 The browser adapter does this on pointer-up so edited scenes restart cleanly.
 
 ## Save And Load
