@@ -8,9 +8,9 @@ function stepWorld(world=currentWorldState()){
   if(typeof incrementSimTickState==='function')incrementSimTickState();
   else simTick++;
   rebuildBodyMask();
-  updateBodies();
+  updateBodies(world);
   rebuildBodyMask();
-  updateGridMaterials();
+  updateGridMaterials(world);
   rebuildBodyMask();
   return currentWorldState();
 }

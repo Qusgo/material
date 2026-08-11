@@ -66,7 +66,9 @@ while preserving the old no-argument simulation call.
 `src/03-source-render-adapter.js` owns only the canvas overlay for those source
 cells. `src/02-flow-and-water.js` owns algorithms:
 gravity/sliding, slope relaxation, water's surface-jitter escape logic,
-stable/wake logic, and the optional legacy basin code.
+stable/wake logic, and the optional legacy basin code. Its frame-level public
+entry is `updateGridMaterials(world)`, while the deeper flow helpers still use
+the classic installed world arrays internally.
 `src/02-erosion.js` owns lightweight carried-particle erosion.
 `src/04-save-codec.js` owns DOM-free snapshot serialization, restore, and
 editable-array resampling. `src/04-save-load.js` owns only the browser

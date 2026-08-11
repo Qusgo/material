@@ -328,6 +328,12 @@ viewH=alternateWorld.rows*alternateWorld.cellSize;
 installWorldState(savedActiveWorld);
 updateBodies(alternateWorld);
 testAssert(currentWorldState()===alternateWorld&&bodies[0].y>12,'explicit-world updateBodies should install and update the supplied world');
+installWorldState(alternateWorld);
+clearEditableGridState();
+sourceMat[idx(1,1)]=WATER;
+installWorldState(savedActiveWorld);
+updateGridMaterials(alternateWorld);
+testAssert(currentWorldState()===alternateWorld&&material.some(v=>v===WATER),'explicit-world updateGridMaterials should install and update the supplied world');
 `;
   runIsolated('headless core smoke regression',source);
 }

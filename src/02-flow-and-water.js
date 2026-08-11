@@ -1442,7 +1442,8 @@ function drainOpenBoundaries(){
   }
 }
 
-function updateGridMaterials(){
+function updateGridMaterials(world){
+  if(world&&typeof useWorldState==='function')useWorldState(world);
   if(typeof applySources==='function')applySources();
   const order=[...Array(cols).keys()];
   for(const mat of FLOW_ORDER){
