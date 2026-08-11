@@ -28,7 +28,7 @@ function resize(){
   const rect=canvas.getBoundingClientRect(),nextW=Math.max(320,Math.floor(rect.width)),nextH=Math.max(240,Math.floor(rect.height)); dpr=Math.max(1,Math.min(2,window.devicePixelRatio||1));
   const newCell=Math.max(4,Math.ceil(Math.max(nextW/CELL_MAX_COLS,nextH/CELL_MAX_ROWS))),newCols=Math.max(1,Math.floor(nextW/newCell)),newRows=Math.max(1,Math.floor(nextH/newCell));
   canvas.width=Math.floor(nextW*dpr); canvas.height=Math.floor(nextH*dpr); ctx.setTransform(dpr,0,0,dpr,0,0); viewW=nextW; viewH=nextH;
-  const resized=resizeAppWorld(newCols,newRows,{cellSize:newCell});
+  const resized=resizeAppWorld(newCols,newRows,{cellSize:newCell,viewW:nextW,viewH:nextH});
   if(!resized.changed){renderApp();return}
   gridCanvas.width=cols; gridCanvas.height=rows; imageData=gridCtx.createImageData(cols,rows);
   rebuildBodyMask(); renderApp();

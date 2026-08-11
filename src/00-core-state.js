@@ -18,7 +18,7 @@ let waterSpaceToken=1,waterComponentToken=1,waterBasinToken=1,waterTargetToken=1
 let bodies=[],nextBodyId=1;
 let airColor=[255,255,255];
 let simTick=0,editDirty=false;
-installWorldState(createWorldState(cols,rows,{cellSize,bodies,nextBodyId,airColor,simTick,editDirty}));
+installWorldState(createWorldState(cols,rows,{cellSize,viewW,viewH,bodies,nextBodyId,airColor,simTick,editDirty}));
 let tool='brush',selected='water';
 let sourceInterval=1;
 let lightingEnabled=true,lightStrength=.18,sideLightStrength=1,shadowStrength=.16;

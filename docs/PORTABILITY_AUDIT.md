@@ -69,6 +69,10 @@ to work while migration continues.
 - Runtime flags now live on `WorldState` as `simTick` and `editDirty`, but the
   old globals are still synchronized mirrors because source generation, motion
   traces, and edit-reset hooks still read classic-script names directly.
+- View size now lives on `WorldState` as `viewW` and `viewH`, but the old
+  globals are still synchronized mirrors because body bounds, force radius
+  clamping, browser coordinate conversion, and canvas rendering still read
+  classic-script names directly.
 - Some core helpers intentionally keep optional browser hooks, such as
   `resetRuntimeClock()` and optional status reporting. Non-browser adapters may
   leave those hooks as no-ops.

@@ -40,16 +40,18 @@ state with `clearEditableGridState()` instead of hand-writing long fill blocks.
 This keeps resize, clear, and load on one lifecycle path.
 
 `src/00-world-state.js` is the current world boundary. `createWorldState()`
-groups dimensions, cell size, typed arrays, dynamic body state, air color,
-runtime flags (`simTick` and `editDirty`), and water scratch tokens.
+groups dimensions, cell size, view size (`viewW` and `viewH`), typed arrays,
+dynamic body state, air color, runtime flags (`simTick` and `editDirty`), and
+water scratch tokens.
 `installWorldState()` deliberately installs that world back into the legacy
 global bindings (`cols`, `material`, `mass`, `bodies`, and so on) so existing
 physics code keeps running unchanged. `currentWorldState()` refreshes the active
 shell from the globals. `resizeWorldGrid()` owns DOM-free grid resize resampling
 for materials, flow state, tint layers, and source cells, while preserving body
-state, air color, and runtime flags; browser resize code should only supply the
-new dimensions and rebuild presentation buffers. Treat this as a bridge toward
-a real `World` object, not as permission to mix DOM state into the core.
+state, view size, air color, and runtime flags; browser resize code should only
+supply the new dimensions and rebuild presentation buffers. Treat this as a
+bridge toward a real `World` object, not as permission to mix DOM state into the
+core.
 
 ## Material Configuration
 

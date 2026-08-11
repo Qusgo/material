@@ -10,6 +10,11 @@ function normalizeWorldDimension(value,fallback=1){
   return Number.isFinite(n)&&n>0?n:fallback;
 }
 
+function normalizeViewSize(value,fallback=1){
+  const n=Number(value);
+  return Number.isFinite(n)&&n>0?n:fallback;
+}
+
 function createWaterScratchTokens(){
   return{
     waterSpaceToken:1,
@@ -161,13 +166,61 @@ function setEditDirtyState(value=true){
   return setRuntimeFlagsState({editDirty:value}).editDirty;
 }
 
+function captureViewSizeState(world=currentWorld){
+  try{
+    if(typeof viewW!=='undefined'&&typeof viewH!=='undefined'){
+      return{
+        viewW:normalizeViewSize(viewW,world&&world.viewW||1),
+        viewH:normalizeViewSize(viewH,world&&world.viewH||1)
+      };
+    }
+  }catch(e){}
+  return{
+    viewW:normalizeViewSize(world&&world.viewW,world?world.cols*world.cellSize:1),
+    viewH:normalizeViewSize(world&&world.viewH,world?world.rows*world.cellSize:1)
+  };
+}
+
+function installViewSizeState(world){
+  const fallbackW=world.cols*world.cellSize,fallbackH=world.rows*world.cellSize;
+  world.viewW=normalizeViewSize(world.viewW,fallbackW);
+  world.viewH=normalizeViewSize(world.viewH,fallbackH);
+  try{
+    if(typeof viewW!=='undefined'){
+      viewW=world.viewW;
+      viewH=world.viewH;
+    }
+  }catch(e){}
+}
+
+function setViewSizeState(nextW,nextH){
+  const state={
+    viewW:normalizeViewSize(nextW,currentWorld?currentWorld.cols*currentWorld.cellSize:1),
+    viewH:normalizeViewSize(nextH,currentWorld?currentWorld.rows*currentWorld.cellSize:1)
+  };
+  try{
+    if(typeof viewW!=='undefined'){
+      viewW=state.viewW;
+      viewH=state.viewH;
+    }
+  }catch(e){}
+  if(currentWorld){
+    currentWorld.viewW=state.viewW;
+    currentWorld.viewH=state.viewH;
+  }
+  return state;
+}
+
 function createWorldState(worldCols,worldRows,options={}){
   const nextCols=normalizeWorldDimension(worldCols,1),nextRows=normalizeWorldDimension(worldRows,1);
+  const nextCellSize=normalizeWorldDimension(options.cellSize,1);
   const world={
     cols:nextCols,
     rows:nextRows,
     count:nextCols*nextRows,
-    cellSize:normalizeWorldDimension(options.cellSize,1),
+    cellSize:nextCellSize,
+    viewW:normalizeViewSize(options.viewW,nextCols*nextCellSize),
+    viewH:normalizeViewSize(options.viewH,nextRows*nextCellSize),
     arrays:createGridArrays(nextCols*nextRows,nextRows),
     tokens:createWaterScratchTokens(),
     bodies:Array.isArray(options.bodies)?options.bodies:[],
@@ -207,6 +260,7 @@ function installWorldState(world){
   rows=world.rows;
   count=world.count;
   cellSize=world.cellSize;
+  installViewSizeState(world);
   installGridArrays(world.arrays);
   installWaterScratchTokens(world.tokens);
   installBodyRuntimeState(world);
@@ -226,6 +280,9 @@ function currentWorldState(){
   currentWorld.rows=rows;
   currentWorld.count=count;
   currentWorld.cellSize=cellSize;
+  const viewState=captureViewSizeState(currentWorld);
+  currentWorld.viewW=viewState.viewW;
+  currentWorld.viewH=viewState.viewH;
   currentWorld.arrays={
     material,mass,vx,vy,bodyMask,flowDir,restAge,stableMask,
     tintR,tintG,tintB,tintA,bgTintR,bgTintG,bgTintB,bgTintA,
@@ -304,13 +361,25 @@ function resizeWorldGrid(nextCols,nextRows,options={}){
   const normalizedRows=normalizeWorldDimension(nextRows,rows);
   const normalizedCell=normalizeWorldDimension(options.cellSize,cellSize);
   if(normalizedCols===cols&&normalizedRows===rows&&normalizedCell===cellSize){
+    if(Object.prototype.hasOwnProperty.call(options,'viewW')||Object.prototype.hasOwnProperty.call(options,'viewH')){
+      const currentView=captureViewSizeState();
+      setViewSizeState(
+        Object.prototype.hasOwnProperty.call(options,'viewW')?options.viewW:currentView.viewW,
+        Object.prototype.hasOwnProperty.call(options,'viewH')?options.viewH:currentView.viewH
+      );
+    }
     return{changed:false,world:currentWorldState()};
   }
   const source=material&&material.length?captureResizeSource():null;
   const bodyState=captureBodyRuntimeState();
   const nextAirColor=currentAirColorState();
   const flags=captureRuntimeFlagsState();
-  installWorldState(createWorldState(normalizedCols,normalizedRows,{cellSize:normalizedCell,bodies:bodyState.bodies,nextBodyId:bodyState.nextBodyId,airColor:nextAirColor,simTick:flags.simTick,editDirty:flags.editDirty}));
+  const capturedViewState=captureViewSizeState();
+  const viewState={
+    viewW:normalizeViewSize(options.viewW,capturedViewState.viewW),
+    viewH:normalizeViewSize(options.viewH,capturedViewState.viewH)
+  };
+  installWorldState(createWorldState(normalizedCols,normalizedRows,{cellSize:normalizedCell,viewW:viewState.viewW,viewH:viewState.viewH,bodies:bodyState.bodies,nextBodyId:bodyState.nextBodyId,airColor:nextAirColor,simTick:flags.simTick,editDirty:flags.editDirty}));
   if(source){
     for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
       restoreResizeCell(r*cols+c,sampleResizeSourceIndex(c,r,source),source);

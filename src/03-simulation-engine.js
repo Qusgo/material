@@ -5,11 +5,18 @@
 // the existing core boundary functions.
 
 function createSimulationEngine(options={}){
+  const initialCols=normalizeWorldDimension(options.cols,cols);
+  const initialRows=normalizeWorldDimension(options.rows,rows);
+  const initialCellSize=normalizeWorldDimension(options.cellSize,cellSize);
   const engine={
     world:options.world||createWorldState(
-      normalizeWorldDimension(options.cols,cols),
-      normalizeWorldDimension(options.rows,rows),
-      {cellSize:normalizeWorldDimension(options.cellSize,cellSize)}
+      initialCols,
+      initialRows,
+      {
+        cellSize:initialCellSize,
+        viewW:normalizeViewSize(options.viewW,initialCols*initialCellSize),
+        viewH:normalizeViewSize(options.viewH,initialRows*initialCellSize)
+      }
     )
   };
   if(options.install!==false)useWorldState(engine.world);
