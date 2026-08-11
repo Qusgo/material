@@ -78,8 +78,10 @@ genuinely new algorithm.
 `src/02-force.js` owns DOM-free force application for flow cells and dynamic
 bodies, and accepts either `applyForce(circle, arrow)` or
 `applyForce(world, circle, arrow)`. `src/02-body-runtime.js` owns dynamic-body
-physics and grid displacement for non-fixed stone bodies. It is called from
-`src/02-step-world.js` and should stay free of browser events and drawing.
+physics and grid displacement for non-fixed stone bodies. Its public entry is
+`updateBodies(world)`, which still delegates to classic global-backed helper
+functions internally. It is called from `src/02-step-world.js` and should stay
+free of browser events and drawing.
 `src/03-lighting.js` owns DOM-free render preparation such as base material
 color, light masks, and simple light/shadow blending. `src/03-render-buffer.js`
 converts the current arrays into an RGBA buffer without touching `canvas` or

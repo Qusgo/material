@@ -42,7 +42,8 @@ function displaceGridUnderBody(b){
   }
 }
 function resolveBodyBodyCollisions(){for(let a=0;a<bodies.length;a++)for(let b=a+1;b<bodies.length;b++){const A=bodies[a],B=bodies[b];if(!bodiesOverlap(A,B))continue;let dx=B.x-A.x,dy=B.y-A.y,d=Math.hypot(dx,dy)||1;dx/=d;dy/=d;const push=Math.min(8,(A.radius+B.radius-d)*.22+1);A.x-=dx*push;A.y-=dy*push;B.x+=dx*push;B.y+=dy*push;const avx=A.vx,avy=A.vy;A.vx=B.vx*.65;A.vy=B.vy*.65;B.vx=avx*.65;B.vy=avy*.65;A.av*=.75;B.av*=.75}}
-function updateBodies(){
+function updateBodies(world){
+  if(world&&typeof useWorldState==='function')useWorldState(world);
   // Bodies are continuous shapes. They interact with particles by rasterizing
   // into bodyMask and displacing any grid material they overlap.
   for(const b of bodies){

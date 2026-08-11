@@ -321,6 +321,13 @@ const explicitFill=computeFill(alternateWorld,2,2);
 testAssert(currentWorldState()===alternateWorld&&explicitFill.cells.length>0&&explicitFill.target===WATER,'explicit-world computeFill should install and read the supplied world');
 installWorldState(savedActiveWorld);
 testAssert(fillAtCell(alternateWorld,2,2,SAND)>0&&currentWorldState()===alternateWorld&&material[idx(2,2)]===SAND,'explicit-world fillAtCell should install and mutate the supplied world');
+alternateWorld.bodies=[{id:42,type:'circle',x:20,y:12,vx:0,vy:0,angle:0,av:0,radius:3,hw:3,hh:3,mass:10,invMass:.1,inertia:45,invInertia:1/45}];
+alternateWorld.nextBodyId=43;
+viewW=alternateWorld.cols*alternateWorld.cellSize;
+viewH=alternateWorld.rows*alternateWorld.cellSize;
+installWorldState(savedActiveWorld);
+updateBodies(alternateWorld);
+testAssert(currentWorldState()===alternateWorld&&bodies[0].y>12,'explicit-world updateBodies should install and update the supplied world');
 `;
   runIsolated('headless core smoke regression',source);
 }
