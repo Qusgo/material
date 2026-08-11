@@ -83,8 +83,9 @@ to work while migration continues.
    context explicitly. Source generation, force application, fill computation,
    fill application, and save/restore now have explicit-world entry points; the
    body runtime and frame-level flow-update public entries also accept explicit
-   worlds. The next low-risk targets are body runtime internals and deeper
-   flow-update helpers.
+   worlds, and body add/mask geometry can be called with an explicit world. The
+   next low-risk targets are body runtime internals and deeper flow-update
+   helpers.
 2. Move body physics functions toward explicit `world` or body-state arguments
    before exposing dynamic stones in another platform.
 3. Keep browser adapters thin: they should translate platform input into engine

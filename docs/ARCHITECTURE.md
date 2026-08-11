@@ -149,7 +149,9 @@ through the engine command boundary; browser preview cells are stored in
 `appContext` with legacy globals kept only as a compatibility fallback.
 `src/01-body-geometry.js` owns dynamic-body
 construction, shape intersection tests, placement checks, grid clearing under a
-placed body, and body-mask rasterization.
+placed body, and body-mask rasterization. `addBody(world, body)` and
+`rebuildBodyMask(world)` support explicit world calls while preserving their old
+single-argument/no-argument forms.
 `src/01-edit-commands.js` is the command-style boundary for editor operations:
 point/line `paint`, `source`, `tint`, `erase`, plus `fill`, `fillAir`, `clear`,
 `force`, and `placeBody`. It accepts both the legacy
