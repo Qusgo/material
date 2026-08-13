@@ -162,8 +162,121 @@ function incrementSimTickState(){
   return setRuntimeFlagsState({simTick:state.simTick+1}).simTick;
 }
 
+function worldStateHasWorldArg(value){
+  return !!(value&&typeof value==='object'&&value.arrays&&Number.isFinite(value.cols));
+}
+
+function worldStateIsActive(world){
+  try{
+    return worldStateHasWorldArg(world)&&typeof currentWorld!=='undefined'&&currentWorld===world;
+  }catch(e){}
+  return false;
+}
+
+function incrementWorldSimTick(world){
+  if(worldStateHasWorldArg(world)){
+    world.simTick=normalizeSimTick(world.simTick)+1;
+    if(worldStateIsActive(world))setRuntimeFlagsState({simTick:world.simTick});
+    return world.simTick;
+  }
+  return incrementSimTickState();
+}
+
 function setEditDirtyState(value=true){
   return setRuntimeFlagsState({editDirty:value}).editDirty;
+}
+
+function normalizeRuntimeSettingsState(settings={}){
+  const source=settings||{};
+  return{
+    sourceInterval:clampInt(source.sourceInterval,1,60,1),
+    lightingEnabled:source.lightingEnabled===undefined?true:!!source.lightingEnabled,
+    lightStrength:Number.isFinite(Number(source.lightStrength))?clamp(Number(source.lightStrength),0,1):.18,
+    sideLightStrength:Number.isFinite(Number(source.sideLightStrength))?clamp(Number(source.sideLightStrength),0,2):1,
+    shadowStrength:Number.isFinite(Number(source.shadowStrength))?clamp(Number(source.shadowStrength),0,1):.16
+  };
+}
+
+function captureRuntimeSettingsState(world=currentWorld){
+  const base=normalizeRuntimeSettingsState(world&&world.runtimeSettings),settings={...base};
+  let found=false;
+  try{
+    if(typeof sourceInterval!=='undefined'){settings.sourceInterval=sourceInterval;found=true;}
+  }catch(e){}
+  try{
+    if(typeof lightingEnabled!=='undefined'){settings.lightingEnabled=lightingEnabled;found=true;}
+  }catch(e){}
+  try{
+    if(typeof lightStrength!=='undefined'){settings.lightStrength=lightStrength;found=true;}
+  }catch(e){}
+  try{
+    if(typeof sideLightStrength!=='undefined'){settings.sideLightStrength=sideLightStrength;found=true;}
+  }catch(e){}
+  try{
+    if(typeof shadowStrength!=='undefined'){settings.shadowStrength=shadowStrength;found=true;}
+  }catch(e){}
+  return found?normalizeRuntimeSettingsState(settings):base;
+}
+
+function installRuntimeSettingsState(world){
+  world.runtimeSettings=normalizeRuntimeSettingsState(world.runtimeSettings);
+  try{
+    if(typeof syncRuntimeSettingsToGlobals==='function')syncRuntimeSettingsToGlobals(world.runtimeSettings);
+  }catch(e){}
+}
+
+function currentRuntimeSettingsState(){
+  const next=captureRuntimeSettingsState(currentWorld);
+  if(currentWorld)currentWorld.runtimeSettings=next;
+  return next;
+}
+
+function setRuntimeSettingsState(patch={}){
+  const current=captureRuntimeSettingsState(currentWorld);
+  const state=normalizeRuntimeSettingsState({
+    sourceInterval:Object.prototype.hasOwnProperty.call(patch,'sourceInterval')?patch.sourceInterval:current.sourceInterval,
+    lightingEnabled:Object.prototype.hasOwnProperty.call(patch,'lightingEnabled')?patch.lightingEnabled:current.lightingEnabled,
+    lightStrength:Object.prototype.hasOwnProperty.call(patch,'lightStrength')?patch.lightStrength:current.lightStrength,
+    sideLightStrength:Object.prototype.hasOwnProperty.call(patch,'sideLightStrength')?patch.sideLightStrength:current.sideLightStrength,
+    shadowStrength:Object.prototype.hasOwnProperty.call(patch,'shadowStrength')?patch.shadowStrength:current.shadowStrength
+  });
+  try{
+    if(typeof syncRuntimeSettingsToGlobals==='function')syncRuntimeSettingsToGlobals(state);
+  }catch(e){}
+  if(currentWorld)currentWorld.runtimeSettings=state;
+  return state;
+}
+
+function applyRuntimeSettingsState(patch={}){
+  return setRuntimeSettingsState(patch);
+}
+
+function copyCustomMaterialState(saved=[]){
+  if(!Array.isArray(saved))return[];
+  return saved.map(item=>({
+    ...item,
+    color:Array.isArray(item&&item.color)?item.color.slice(0,3):item&&item.color
+  }));
+}
+
+function captureCustomMaterialState(world=currentWorld){
+  try{
+    if(typeof exportCustomMaterials==='function')return copyCustomMaterialState(exportCustomMaterials());
+  }catch(e){}
+  return copyCustomMaterialState(world&&world.customMaterials);
+}
+
+function installCustomMaterialState(world){
+  world.customMaterials=copyCustomMaterialState(world.customMaterials);
+  try{
+    if(typeof restoreCustomMaterials==='function')restoreCustomMaterials(world.customMaterials);
+  }catch(e){}
+}
+
+function currentCustomMaterialState(){
+  const next=captureCustomMaterialState(currentWorld);
+  if(currentWorld)currentWorld.customMaterials=next;
+  return next;
 }
 
 function captureViewSizeState(world=currentWorld){
@@ -227,7 +340,9 @@ function createWorldState(worldCols,worldRows,options={}){
     nextBodyId:normalizeBodyId(options.nextBodyId),
     airColor:normalizeAirColorState(options.airColor),
     simTick:normalizeSimTick(options.simTick),
-    editDirty:!!options.editDirty
+    editDirty:!!options.editDirty,
+    runtimeSettings:normalizeRuntimeSettingsState(options.runtimeSettings),
+    customMaterials:copyCustomMaterialState(options.customMaterials)
   };
   return world;
 }
@@ -255,17 +370,24 @@ function captureWaterScratchTokens(world=currentWorld){
 
 function installWorldState(world){
   if(!world||!world.arrays)throw new Error('Invalid world state');
+  if(currentWorld&&currentWorld!==world){
+    currentWorld.runtimeSettings=currentRuntimeSettingsState();
+    currentWorld.customMaterials=currentCustomMaterialState();
+  }
+  else if(currentWorld===world)world.customMaterials=captureCustomMaterialState(world);
   currentWorld=world;
   cols=world.cols;
   rows=world.rows;
   count=world.count;
   cellSize=world.cellSize;
+  installCustomMaterialState(world);
   installViewSizeState(world);
   installGridArrays(world.arrays);
   installWaterScratchTokens(world.tokens);
   installBodyRuntimeState(world);
   installAirColorState(world);
   installRuntimeFlagsState(world);
+  installRuntimeSettingsState(world);
   return world;
 }
 
@@ -299,6 +421,8 @@ function currentWorldState(){
   const flags=captureRuntimeFlagsState(currentWorld);
   currentWorld.simTick=flags.simTick;
   currentWorld.editDirty=flags.editDirty;
+  currentWorld.runtimeSettings=currentRuntimeSettingsState();
+  currentWorld.customMaterials=currentCustomMaterialState();
   return currentWorld;
 }
 
@@ -328,35 +452,145 @@ function captureResizeSource(){
   };
 }
 
-function sampleResizeSourceIndex(c,r,source){
-  const x=(c+.5)*cellSize,y=(r+.5)*cellSize;
+function captureResizeSourceFromWorld(world){
+  if(!world||!world.arrays)return captureResizeSource();
+  const a=world.arrays;
+  return{
+    cols:world.cols,
+    rows:world.rows,
+    cellSize:world.cellSize,
+    material:a.material,
+    mass:a.mass,
+    vx:a.vx,
+    vy:a.vy,
+    flowDir:a.flowDir,
+    tintR:a.tintR,
+    tintG:a.tintG,
+    tintB:a.tintB,
+    tintA:a.tintA,
+    bgTintR:a.bgTintR,
+    bgTintG:a.bgTintG,
+    bgTintB:a.bgTintB,
+    bgTintA:a.bgTintA,
+    sourceMat:a.sourceMat
+  };
+}
+
+function sampleResizeSourceIndex(c,r,source,targetCellSize=cellSize){
+  const x=(c+.5)*targetCellSize,y=(r+.5)*targetCellSize;
   const oldC=clampWorldNumber(Math.floor(x/source.cellSize),0,source.cols-1);
   const oldR=clampWorldNumber(Math.floor(y/source.cellSize),0,source.rows-1);
   return oldR*source.cols+oldC;
 }
 
-function restoreResizeCell(targetIndex,sourceIndex,source){
+function restoreResizeCellToArrays(target,targetIndex,sourceIndex,source){
   const mat=isKnownMaterial(source.material[sourceIndex])?source.material[sourceIndex]:EMPTY;
   const src=isKnownMaterial(source.sourceMat[sourceIndex])?source.sourceMat[sourceIndex]:EMPTY;
-  material[targetIndex]=mat;
-  mass[targetIndex]=materialCarriesMass(mat)?source.mass[sourceIndex]:defaultMassForMaterial(mat);
-  vx[targetIndex]=source.vx[sourceIndex]||0;
-  vy[targetIndex]=source.vy[sourceIndex]||0;
-  flowDir[targetIndex]=materialUsesDirectedFlow(mat)
+  target.material[targetIndex]=mat;
+  target.mass[targetIndex]=materialCarriesMass(mat)?source.mass[sourceIndex]:defaultMassForMaterial(mat);
+  target.vx[targetIndex]=source.vx[sourceIndex]||0;
+  target.vy[targetIndex]=source.vy[sourceIndex]||0;
+  target.flowDir[targetIndex]=materialUsesDirectedFlow(mat)
     ?(source.flowDir[sourceIndex]||defaultFlowDirForMaterial(mat))
     :defaultFlowDirForMaterial(mat);
-  tintR[targetIndex]=source.tintR[sourceIndex]||0;
-  tintG[targetIndex]=source.tintG[sourceIndex]||0;
-  tintB[targetIndex]=source.tintB[sourceIndex]||0;
-  tintA[targetIndex]=source.tintA[sourceIndex]||0;
-  bgTintR[targetIndex]=source.bgTintR[sourceIndex]||0;
-  bgTintG[targetIndex]=source.bgTintG[sourceIndex]||0;
-  bgTintB[targetIndex]=source.bgTintB[sourceIndex]||0;
-  bgTintA[targetIndex]=source.bgTintA[sourceIndex]||0;
-  sourceMat[targetIndex]=isFlowMaterial(src)?src:EMPTY;
+  target.tintR[targetIndex]=source.tintR[sourceIndex]||0;
+  target.tintG[targetIndex]=source.tintG[sourceIndex]||0;
+  target.tintB[targetIndex]=source.tintB[sourceIndex]||0;
+  target.tintA[targetIndex]=source.tintA[sourceIndex]||0;
+  target.bgTintR[targetIndex]=source.bgTintR[sourceIndex]||0;
+  target.bgTintG[targetIndex]=source.bgTintG[sourceIndex]||0;
+  target.bgTintB[targetIndex]=source.bgTintB[sourceIndex]||0;
+  target.bgTintA[targetIndex]=source.bgTintA[sourceIndex]||0;
+  target.sourceMat[targetIndex]=isFlowMaterial(src)?src:EMPTY;
 }
 
-function resizeWorldGrid(nextCols,nextRows,options={}){
+function restoreResizeCell(targetIndex,sourceIndex,source){
+  restoreResizeCellToArrays({material,mass,vx,vy,flowDir,tintR,tintG,tintB,tintA,bgTintR,bgTintG,bgTintB,bgTintA,sourceMat},targetIndex,sourceIndex,source);
+}
+
+function resizeWorldGridHasWorldArg(value){
+  return !!(value&&typeof value==='object'&&value.arrays&&Number.isFinite(value.cols));
+}
+
+function normalizeResizeWorldArgs(worldOrCols,colsOrRows,rowsOrOptions,maybeOptions){
+  if(resizeWorldGridHasWorldArg(worldOrCols)){
+    return{world:worldOrCols,nextCols:colsOrRows,nextRows:rowsOrOptions,options:maybeOptions||{}};
+  }
+  return{world:null,nextCols:worldOrCols,nextRows:colsOrRows,options:rowsOrOptions||{}};
+}
+
+function applyResizedWorldState(target,sourceWorld){
+  target.cols=sourceWorld.cols;
+  target.rows=sourceWorld.rows;
+  target.count=sourceWorld.count;
+  target.cellSize=sourceWorld.cellSize;
+  target.viewW=sourceWorld.viewW;
+  target.viewH=sourceWorld.viewH;
+  target.arrays=sourceWorld.arrays;
+  target.tokens=sourceWorld.tokens;
+  target.bodies=sourceWorld.bodies;
+  target.nextBodyId=sourceWorld.nextBodyId;
+  target.airColor=sourceWorld.airColor;
+  target.simTick=sourceWorld.simTick;
+  target.editDirty=sourceWorld.editDirty;
+  target.runtimeSettings=sourceWorld.runtimeSettings;
+  target.customMaterials=sourceWorld.customMaterials;
+  return target;
+}
+
+function resizeExplicitWorldGrid(world,nextCols,nextRows,options={}){
+  const run=()=>{
+    const normalizedCols=normalizeWorldDimension(nextCols,world.cols);
+    const normalizedRows=normalizeWorldDimension(nextRows,world.rows);
+    const normalizedCell=normalizeWorldDimension(options.cellSize,world.cellSize);
+    if(normalizedCols===world.cols&&normalizedRows===world.rows&&normalizedCell===world.cellSize){
+      if(Object.prototype.hasOwnProperty.call(options,'viewW')||Object.prototype.hasOwnProperty.call(options,'viewH')){
+        world.viewW=normalizeViewSize(
+          Object.prototype.hasOwnProperty.call(options,'viewW')?options.viewW:world.viewW,
+          world.cols*world.cellSize
+        );
+        world.viewH=normalizeViewSize(
+          Object.prototype.hasOwnProperty.call(options,'viewH')?options.viewH:world.viewH,
+          world.rows*world.cellSize
+        );
+        if(worldStateIsActive(world))setViewSizeState(world.viewW,world.viewH);
+      }
+      return{changed:false,world};
+    }
+    const source=world.arrays&&world.arrays.material&&world.arrays.material.length?captureResizeSourceFromWorld(world):null;
+    const viewState={
+      viewW:normalizeViewSize(options.viewW,world.viewW),
+      viewH:normalizeViewSize(options.viewH,world.viewH)
+    };
+    const resized=createWorldState(normalizedCols,normalizedRows,{
+      cellSize:normalizedCell,
+      viewW:viewState.viewW,
+      viewH:viewState.viewH,
+      bodies:Array.isArray(world.bodies)?world.bodies:[],
+      nextBodyId:world.nextBodyId,
+      airColor:world.airColor,
+      simTick:world.simTick,
+      editDirty:world.editDirty,
+      runtimeSettings:world.runtimeSettings,
+      customMaterials:world.customMaterials
+    });
+    if(source){
+      for(let r=0;r<resized.rows;r++)for(let c=0;c<resized.cols;c++){
+        restoreResizeCellToArrays(resized.arrays,r*resized.cols+c,sampleResizeSourceIndex(c,r,source,resized.cellSize),source);
+      }
+    }
+    applyResizedWorldState(world,resized);
+    if(worldStateIsActive(world))installWorldState(world);
+    return{changed:true,world,oldCols:source&&source.cols,oldRows:source&&source.rows};
+  };
+  if(typeof withMaterialRegistryForWorld==='function')return withMaterialRegistryForWorld(world,run);
+  return run();
+}
+
+function resizeWorldGrid(worldOrCols,colsOrRows,rowsOrOptions,maybeOptions){
+  const args=normalizeResizeWorldArgs(worldOrCols,colsOrRows,rowsOrOptions,maybeOptions);
+  if(args.world)return resizeExplicitWorldGrid(args.world,args.nextCols,args.nextRows,args.options);
+  const nextCols=args.nextCols,nextRows=args.nextRows,options=args.options;
   const normalizedCols=normalizeWorldDimension(nextCols,cols);
   const normalizedRows=normalizeWorldDimension(nextRows,rows);
   const normalizedCell=normalizeWorldDimension(options.cellSize,cellSize);
@@ -374,12 +608,14 @@ function resizeWorldGrid(nextCols,nextRows,options={}){
   const bodyState=captureBodyRuntimeState();
   const nextAirColor=currentAirColorState();
   const flags=captureRuntimeFlagsState();
+  const nextRuntimeSettings=currentRuntimeSettingsState();
+  const nextCustomMaterials=currentCustomMaterialState();
   const capturedViewState=captureViewSizeState();
   const viewState={
     viewW:normalizeViewSize(options.viewW,capturedViewState.viewW),
     viewH:normalizeViewSize(options.viewH,capturedViewState.viewH)
   };
-  installWorldState(createWorldState(normalizedCols,normalizedRows,{cellSize:normalizedCell,viewW:viewState.viewW,viewH:viewState.viewH,bodies:bodyState.bodies,nextBodyId:bodyState.nextBodyId,airColor:nextAirColor,simTick:flags.simTick,editDirty:flags.editDirty}));
+  installWorldState(createWorldState(normalizedCols,normalizedRows,{cellSize:normalizedCell,viewW:viewState.viewW,viewH:viewState.viewH,bodies:bodyState.bodies,nextBodyId:bodyState.nextBodyId,airColor:nextAirColor,simTick:flags.simTick,editDirty:flags.editDirty,runtimeSettings:nextRuntimeSettings,customMaterials:nextCustomMaterials}));
   if(source){
     for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
       restoreResizeCell(r*cols+c,sampleResizeSourceIndex(c,r,source),source);

@@ -24,26 +24,25 @@ function getTintColor(){
 }
 
 function materialUiSelectedKey(){
-  return typeof currentSelectedKey==='function'?currentSelectedKey():selected;
+  return appSelectedKey(appContext);
 }
 
 function setMaterialUiSelectedKey(key){
-  if(typeof setCurrentSelectedKey==='function')return setCurrentSelectedKey(key);
-  selected=key;
-  if(typeof appContext!=='undefined'&&appContext)appContext.selected=key;
-  return selected;
+  const next=typeof setCurrentSelectedKey==='function'?setCurrentSelectedKey(key):(selected=key);
+  if(typeof appContext!=='undefined'&&appContext)appContext.selected=next;
+  return next;
 }
 
 function renderMaterialMenu(){
   if(!materialButton)return;
-  if(!MATERIAL_FROM_NAME[materialUiSelectedKey()])setMaterialUiSelectedKey(materialKeyFromId(WATER));
-  const activeSelected=materialUiSelectedKey(),selectedMat=MATERIAL_FROM_NAME[activeSelected]||WATER,def=materialDef(selectedMat),col=def.color;
+  if(!appMaterialKeyExists(materialUiSelectedKey()))setMaterialUiSelectedKey(appDefaultMaterialKey());
+  const activeSelected=materialUiSelectedKey(),selectedMat=appMaterialIdFromKey(activeSelected),def=appMaterialDefinition(selectedMat),col=def.color;
   materialSwatchEl.style.background=`rgb(${col[0]},${col[1]},${col[2]})`;
   materialLabelEl.textContent=def.name;
   materialButton.classList.toggle('active',appContext.materialMenuOpen);
   materialMenu.classList.toggle('hidden',!appContext.materialMenuOpen);
   materialListEl.innerHTML='';
-  for(const item of listSelectableMaterials()){
+  for(const item of appSelectableMaterialItems()){
     const row=document.createElement('div');
     row.className='material-row';
     const b=document.createElement('button');
@@ -60,7 +59,7 @@ function renderMaterialMenu(){
     b.addEventListener('click',()=>{appContext.materialMenuOpen=false;setSelected(item.key)});
     row.appendChild(b);
     if(item.custom){
-      const edit=document.createElement('button'),del=document.createElement('button'),used=countMaterialUses(item.id);
+      const edit=document.createElement('button'),del=document.createElement('button'),used=item.uses||0;
       edit.type='button';
       edit.className='btn';
       edit.textContent='Edit';
@@ -83,7 +82,7 @@ function renderMaterialMenu(){
   materialSlopeRow.classList.toggle('hidden',appContext.materialEditorMode!==MATERIAL_KIND_GRANULAR);
   materialErosionRow.classList.toggle('hidden',appContext.materialEditorMode!==MATERIAL_KIND_GRANULAR);
   deleteMaterialBtn.classList.toggle('hidden',!appContext.materialEditorTarget);
-  if(appContext.materialEditorTarget)deleteMaterialBtn.disabled=countMaterialUses(appContext.materialEditorTarget)>0;
+  if(appContext.materialEditorTarget)deleteMaterialBtn.disabled=appMaterialUseCount(appContext.materialEditorTarget)>0;
 }
 
 function openMaterialEditor(mode){
@@ -112,7 +111,7 @@ function openMaterialEditor(mode){
 }
 
 function openExistingMaterialEditor(id){
-  const def=materialDef(id);
+  const def=appMaterialDefinition(id);
   if(!def.custom){
     setStatus('Built-in materials are locked');
     return;
@@ -125,8 +124,9 @@ function openExistingMaterialEditor(id){
   materialDensityInput.value=String(def.density);
   materialBlocksLightInput.checked=!!def.blocksLight;
   materialEmissiveInput.checked=!!def.emissive;
-  materialSlopeInput.value=String(FLOW_RULES[id]&&FLOW_RULES[id].maxSlope!==undefined?FLOW_RULES[id].maxSlope:1);
-  materialErosionInput.value=String(FLOW_RULES[id]&&FLOW_RULES[id].erosionResistance!==undefined?FLOW_RULES[id].erosionResistance:SAND_LIKE_FLOW.erosionResistance);
+  const rule=appMaterialFlowRule(id);
+  materialSlopeInput.value=String(rule&&rule.maxSlope!==undefined?rule.maxSlope:1);
+  materialErosionInput.value=String(rule&&rule.erosionResistance!==undefined?rule.erosionResistance:SAND_LIKE_FLOW.erosionResistance);
   renderMaterialMenu();
 }
 
@@ -164,7 +164,7 @@ function saveCustomMaterial(){
 }
 
 function deleteExistingMaterial(id){
-  const def=materialDef(id);
+  const def=appMaterialDefinition(id);
   const result=applyAppMaterialCommand({type:'delete',id});
   if(!result.ok){
     if(result.reason==='in-use')setStatus(`Erase ${result.uses} cells or sources of ${def.name} before deleting`);
@@ -172,7 +172,7 @@ function deleteExistingMaterial(id){
     renderMaterialMenu();
     return;
   }
-  if(materialUiSelectedKey()===def.key)setMaterialUiSelectedKey(materialKeyFromId(WATER));
+  if(materialUiSelectedKey()===def.key)setMaterialUiSelectedKey(appDefaultMaterialKey());
   appContext.materialEditorMode=null;
   appContext.materialEditorTarget=0;
   setStatus('Custom material deleted');

@@ -20,7 +20,7 @@ function bindBrowserControls(){
   if(fillAirColorBtn)fillAirColorBtn.addEventListener('click',()=>{applyAppEditCommand({type:'fillAir',color:getTintColor()});setStatus('Air color filled');renderApp()});
   if(saveCanvasBtn)saveCanvasBtn.addEventListener('click',()=>{const result=saveCanvasSnapshot();setStatus(result.message);renderApp()});
   if(loadCanvasBtn)loadCanvasBtn.addEventListener('click',()=>{const result=loadCanvasSnapshot();setStatus(result.message);renderApp()});
-  document.getElementById('clear').addEventListener('click',()=>{appContext.running=false;applyAppEditCommand({type:'clear'});rebuildBodyMask();syncButtons();setStatus('Cleared');renderApp()});
+  document.getElementById('clear').addEventListener('click',()=>{appContext.running=false;applyAppEditCommand({type:'clear'});if(typeof clearTransientEditUiState==='function')clearTransientEditUiState(appContext);rebuildAppBodyMask(appContext);syncButtons();setStatus('Cleared');renderApp()});
   bindBrushSizeControls();
   bindEraserSizeControls();
   bindSourceRateControls();

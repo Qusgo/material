@@ -58,90 +58,111 @@ function commandBodyPlacement(command){
   return{kind:command.kind,start,current};
 }
 
+function editCommandHasWorldArg(value){
+  return !!(value&&typeof value==='object'&&value.arrays&&Number.isFinite(value.cols));
+}
+
+function editCommandPointToCell(world,x,y){
+  const size=Math.max(1,world.cellSize||1);
+  return{
+    c:clamp(Math.floor(x/size),0,world.cols-1),
+    r:clamp(Math.floor(y/size),0,world.rows-1)
+  };
+}
+
 function normalizeEditCommandArgs(worldOrCommand,maybeCommand){
   if(maybeCommand!==undefined){
-    useWorldState(worldOrCommand);
-    return maybeCommand;
+    return{world:worldOrCommand,command:maybeCommand};
   }
-  return worldOrCommand;
+  return{world:null,command:worldOrCommand};
 }
 
 function applyEditCommand(worldOrCommand,maybeCommand){
-  const command=normalizeEditCommandArgs(worldOrCommand,maybeCommand);
+  const args=normalizeEditCommandArgs(worldOrCommand,maybeCommand),world=args.world,command=args.command;
   if(!command||typeof command.type!=='string')return false;
   const radius=commandRadius(command);
   if(command.type==='paint'){
     if(!commandHasPoint(command))return false;
     if(!isKnownMaterial(command.material))return false;
-    stampAt(command.x,command.y,radius,command.material);
+    if(world)stampAt(world,command.x,command.y,radius,command.material);
+    else stampAt(command.x,command.y,radius,command.material);
     return true;
   }
   if(command.type==='paintLine'){
     const line=commandLine(command);
     if(!line||!isKnownMaterial(command.material))return false;
-    drawMaterialLine(line.from,line.to,radius,command.material);
+    if(world)drawMaterialLine(world,line.from,line.to,radius,command.material);
+    else drawMaterialLine(line.from,line.to,radius,command.material);
     return true;
   }
   if(command.type==='source'){
     if(!commandHasPoint(command))return false;
     if(!canSourceMaterial(command.material))return false;
-    return stampSourceAt(command.x,command.y,radius,command.material)>0;
+    return world?stampSourceAt(world,command.x,command.y,radius,command.material)>0:stampSourceAt(command.x,command.y,radius,command.material)>0;
   }
   if(command.type==='sourceLine'){
     const line=commandLine(command);
     if(!line||!canSourceMaterial(command.material))return false;
-    return drawSourceLine(line.from,line.to,radius,command.material)>0;
+    return world?drawSourceLine(world,line.from,line.to,radius,command.material)>0:drawSourceLine(line.from,line.to,radius,command.material)>0;
   }
   if(command.type==='tint'){
     if(!commandHasPoint(command))return false;
     const color=commandColor(command);
     if(!color)return false;
-    stampTintAt(command.x,command.y,radius,color);
+    if(world)stampTintAt(world,command.x,command.y,radius,color);
+    else stampTintAt(command.x,command.y,radius,color);
     return true;
   }
   if(command.type==='tintLine'){
     const line=commandLine(command),color=commandColor(command);
     if(!line||!color)return false;
-    drawTintLine(line.from,line.to,radius,color);
+    if(world)drawTintLine(world,line.from,line.to,radius,color);
+    else drawTintLine(line.from,line.to,radius,color);
     return true;
   }
   if(command.type==='erase'){
     if(!commandHasPoint(command))return false;
-    eraseAtRadius(command.x,command.y,radius);
+    if(world)eraseAtRadius(world,command.x,command.y,radius);
+    else eraseAtRadius(command.x,command.y,radius);
     return true;
   }
   if(command.type==='eraseLine'){
     const line=commandLine(command);
     if(!line)return false;
-    eraseLine(line.from,line.to,radius);
+    if(world)eraseLine(world,line.from,line.to,radius);
+    else eraseLine(line.from,line.to,radius);
     return true;
   }
   if(command.type==='fill'){
     if(!commandHasPoint(command))return false;
     if(!isKnownMaterial(command.material))return false;
-    const p=pointToCell(command.x,command.y);
-    return fillAtCell(p.c,p.r,command.material)>0;
+    const p=world?editCommandPointToCell(world,command.x,command.y):pointToCell(command.x,command.y);
+    return world?fillAtCell(world,p.c,p.r,command.material)>0:fillAtCell(p.c,p.r,command.material)>0;
   }
   if(command.type==='fillAir'){
     const color=commandColor(command);
     if(!color)return false;
-    setAllAirColor(color);
+    if(world)setAllAirColor(world,color);
+    else setAllAirColor(color);
     return true;
   }
   if(command.type==='clear'){
-    clearSimulationState();
+    if(world)clearSimulationState(world);
+    else clearSimulationState();
     return true;
   }
   if(command.type==='force'){
     const circle=commandCircle(command),arrow=commandArrow(command);
     if(!circle||!arrow)return false;
-    return applyForce(circle,arrow);
+    return world?applyForce(world,circle,arrow):applyForce(circle,arrow);
   }
   if(command.type==='placeBody'){
     const placement=commandBodyPlacement(command);
     if(!placement)return false;
-    const body=makeBodyFromPlacement(placement,true);
-    return !!(body&&addBody(body));
+    const body=world&&typeof makeBodyFromPlacementForWorld==='function'
+      ?makeBodyFromPlacementForWorld(world,placement,true)
+      :makeBodyFromPlacement(placement,true);
+    return !!(body&&(world?addBody(world,body):addBody(body)));
   }
   return false;
 }

@@ -48,11 +48,12 @@ accept explicit world shells while keeping their legacy call forms. Browser
 step/edit/resize/render call sites now go through app engine helpers in
 `src/03-app-context.js` instead of calling those core wrappers directly.
 `src/01-runtime-config.js` exposes DOM-free
-material configuration and runtime setting commands. `src/04-save-codec.js`
+material configuration and runtime setting commands, including explicit-world
+forms for lower-level adapters and tests. `src/04-save-codec.js`
 exposes portable
-`serializeWorldSnapshot()`/`restoreWorldSnapshot()` APIs; `src/04-save-load.js`
+`serializeWorldSnapshot()`/`restoreWorldSnapshot()` APIs; `src/03-save-storage-adapter.js`
 is only the browser `localStorage` adapter and now reaches snapshots through app
-engine helpers instead of direct codec calls. `src/04-save-ui-adapter.js`
+engine helpers instead of direct codec calls. `src/03-save-ui-adapter.js`
 contains the browser-only post-load UI sync hook. `src/03-app-context.js` now
 groups browser app-shell state such as play/pause, status, debug display,
 tool/material selection, material editor/menu state, pointer previews, and frame
@@ -64,13 +65,25 @@ create/edit/step/material config/runtime settings/render
 buffer/serialize/restore/resize/clear while still using the classic-script
 world shell internally. The browser app context owns an engine instance and
 exposes helper functions around it.
+Runtime settings now live on the world shell as `WorldState.runtimeSettings`,
+so separate engine surfaces can keep source-rate and lighting settings isolated
+while legacy globals remain synchronized mirrors. Explicit runtime setting
+commands and reads now operate on supplied worlds without installing them.
+Material/source use-count queries also read supplied worlds without installing
+them.
+Custom material definitions now live on the world shell as
+`WorldState.customMaterials`; installing a world restores its custom material
+registry into the legacy global tables used by the hot-path helpers. Explicit
+material add/update/delete commands now use a temporary supplied-world registry
+and restore the previously active registry afterward.
 `docs/PORTABLE_ADAPTER_GUIDE.md` describes how a WebView, mini-program, or
 native shell should connect to that facade.
 
 ## Migration Order
 
 1. Keep `index.html` and `material_sim.html` working with the current script
-   order.
+   order. The headless regression checks that they remain equivalent while
+   `material_sim.html` is kept as the legacy entry point.
 2. Add and maintain headless Node regressions for fragile behavior. Start with
    `tests/headless-regression.js`. It now includes a DOM-free core smoke test
    covering `createWorldState()`, `applyEditCommand(world, command)`,
@@ -88,11 +101,11 @@ native shell should connect to that facade.
    `applyEditCommand({type:'placeBody'})`.
    Material editing and source/light settings now route through
    `src/01-runtime-config.js`. Save/load post-restore UI synchronization now
-   lives in `src/04-save-ui-adapter.js`. Browser DOM refs now live in
+   lives in `src/03-save-ui-adapter.js`. Browser DOM refs now live in
    `src/03-dom-refs.js`, material menu/edit-field sync now lives in
    `src/03-material-ui-adapter.js`, and toolbar/settings event binding lives in
-   `src/03-controls-adapter.js`. Early browser app-shell DOM refs now live in
-   `src/00-app-dom-refs.js`. Canvas pointer binding now lives in
+   `src/03-controls-adapter.js`. Browser app-shell DOM refs now live in
+   `src/03-app-dom-refs.js`. Canvas pointer binding now lives in
    `src/03-canvas-input-adapter.js`, and resize/animation startup lives in
    `src/03-app-bootstrap.js`. Source-rate and lighting form synchronization now
    lives in `src/03-settings-sync-adapter.js`. Dynamic-body runtime now lives in
@@ -102,17 +115,60 @@ native shell should connect to that facade.
    helpers live in `src/03-app-ui-state-adapter.js`. Material menu/editor field
    sync lives in `src/03-material-ui-adapter.js`, canvas pointer binding lives
    in `src/03-canvas-input-adapter.js`, and browser fill preview state now lives
-   in `appContext` with compatibility helpers in `src/01-fill-editing.js`.
+   in `appContext` with helper functions in `src/03-app-ui-state-adapter.js`.
+   Fill preview uses `engine.computeFill()`; fill and body-placement helpers
+   return structured results/counts, and browser adapters own the status text
+   for clipped previews, fill counts, and placement failures.
    Tool/material selection now lives in `appContext` too, with `tool` and
    `selected` kept only as synchronized classic-script compatibility globals.
+   Browser UI helpers now read tool/material state through explicit app-context
+   selection helpers, so fill preview and source-brush material lookup can use a
+   supplied context instead of assuming the singleton browser app.
    Browser fill commits now call the app edit helper instead of directly
    mutating fill cells. Browser frame timing lives behind
-   `resetRuntimeClock()` in `src/03-app-bootstrap.js` and stores timing fields
-   in `appContext`. Browser adapter entry points now use `appContext` engine
-   helpers for edit, material config, runtime settings, step, resize, and
-   render. Explicit-world compatibility forms are now in place for step, edit,
-   render buffer, the browser canvas render call, body geometry helpers, and
-   body runtime helpers.
+   `resetRuntimeClock()` in `src/03-app-bootstrap.js`, stores timing fields
+   in `appContext`, and is reset by `finishAppEdit()` rather than core edit
+   code. Browser adapter entry points now use `appContext` engine
+   helpers for edit, edit finalization, material config, runtime settings, step,
+   resize, render-buffer generation, and render. Explicit-world compatibility
+   forms are now in place for
+   step, edit, render buffer, the browser canvas render call, body geometry
+   helpers, body runtime helpers, source generation, and erosion/carry cleanup.
+   Browser material-menu reads now also go through app-context helpers for
+   selectable material rows, definitions, use counts, default selection, and
+   flow-rule display data instead of reaching directly into the material
+   registry from the DOM adapter. Browser debug-basin overlay data also goes
+   through `appDebugBasins(world, context)`, while source overlay drawing only
+   reads the supplied world arrays.
+   The step wrapper now passes its explicit world to mask/body/flow sub-stages
+   instead of relying only on the initial world installation.
+   Flow movement primitives and open-boundary draining now also have an
+   explicit grid path, so adapters/tests can move or drain cells in a supplied
+   world without installing it first. Surface/landing/slope queries and
+   `trySlopeRelax(..., world)` also have explicit grid paths. Gravity/drop,
+   velocity, escape, optional surface-level spreading, and component-settling
+   helpers now support explicit worlds too. Frame-level flow-cell dispatch,
+   stability, and oscillation cleanup now accept explicit worlds.
+   Carried-particle erosion hooks now accept explicit worlds too. Legacy basin
+   geometry scanning, basin intake/overflow candidate collection, tray settling,
+   basin overflow transfer, basin overflow runout, and the legacy basin pass
+   scheduler now accept explicit worlds too. `updateGridMaterials(world)` no
+   longer installs the supplied world. Source brush editing and low-level
+   cell-state helpers now avoid installing supplied worlds too. Ordinary
+   grid-editing helpers now avoid installing supplied worlds as well. The edit
+   dispatcher now avoids installing supplied worlds for
+   paint/source/tint/erase/fill/fillAir/clear/force/placeBody commands, and
+   body-geometry placement/mask rebuild helpers now mutate supplied worlds
+   directly. Dynamic-body runtime helpers now also operate directly on supplied
+   worlds. Render-buffer preparation now also reads supplied worlds without
+   installing them. Save/load codecs now also serialize and restore supplied
+   worlds without installing them. The browser canvas render adapter's
+   explicit-world render path now also draws supplied worlds without installing
+   them. Simulation-engine `cellAt`, `computeFill`, `finishEdit`, `step`,
+   `renderBuffer`, `serialize`, `restore`, and `resize` now also use an
+   `install:false` engine world without installing it. The intentional install
+   bridge is `engine.currentWorld()`, plus legacy auto-install behavior for
+   browser-owned engines.
    `createSimulationEngine()` now wraps those boundaries for browser and future
    adapters.
 6. Only after the command boundary exists, migrate to TypeScript or a bundler
@@ -133,8 +189,8 @@ native shell should connect to that facade.
 - `src/02-erosion.js`
 - `src/01-cell-state.js` for low-level cell mutation and cleanup
 - `src/01-grid-editing.js` for DOM-free grid edit helpers
-- `src/01-fill-editing.js` for connected-region fill selection/application and
-  compatibility helpers for browser-owned fill preview state
+- `src/01-fill-editing.js` for DOM-free connected-region fill selection and
+  application
 - `src/01-body-geometry.js` for dynamic-body construction and body masks
 - `src/04-save-codec.js` for portable snapshot serialize/restore and
   editable-array resampling
@@ -154,6 +210,18 @@ native shell should connect to that facade.
 - The simulation engine regression repeats that chain through
   `createSimulationEngine()` and also verifies engine resize, material commands,
   and runtime setting commands.
+- The portable adapter contract regression creates two `install:false` engine
+  surfaces and verifies edit/finalize/step/render/save/restore isolation,
+  runtime-setting isolation, and custom-material isolation through the facade,
+  matching how a WebView, mini-program, or native shell should call the core.
+- `tests/portable-adapter-smoke.js` is a smaller runnable adapter example that
+  loads only the DOM-free core files, creates one engine-backed surface, edits,
+  previews, steps, renders, saves, restores, resizes, and renders again without
+  browser globals.
+- `tests/portable-core-files.js` is the shared ordered file-list source for both
+  the portable smoke and headless regression boundary scans, so the two tests do
+  not drift apart as files move. The headless regression also checks
+  `index.html` and `material_sim.html` against that shared browser runtime order.
 - Browser smoke regression still loads the full ordered script chain with fake
   DOM/canvas handles, so direct browser use remains covered while the headless
   boundary grows.
@@ -167,10 +235,10 @@ Use `docs/PORTABILITY_AUDIT.md` as the current checklist for proven boundaries
 and remaining compatibility bridges.
 
 - Browser app-shell state in `src/03-app-context.js`
-- `src/04-save-load.js` for localStorage messages and persistence.
-- `src/04-save-ui-adapter.js` for post-load browser control/render sync.
+- `src/03-save-storage-adapter.js` for localStorage messages and persistence.
+- `src/03-save-ui-adapter.js` for post-load browser control/render sync.
 
-- Early app-shell DOM handles in `src/00-app-dom-refs.js`
+- App-shell DOM handles in `src/03-app-dom-refs.js`
 - Shared browser UI handles in `src/03-dom-refs.js`
 - Status display, resize, coordinate, brush/eraser radius, selection, and button sync helpers in
   `src/03-app-ui-state-adapter.js`
@@ -183,7 +251,7 @@ and remaining compatibility bridges.
 - Offscreen grid canvas, visible canvas drawing, and overlays in
   `src/03-canvas-render-adapter.js`
 - Source overlay drawing in `src/03-source-render-adapter.js`
-- `localStorage` calls in `src/04-save-load.js`
+- `localStorage` calls in `src/03-save-storage-adapter.js`
 - CSS and HTML entry points
 
 ## Invariants For Future Agents
@@ -201,5 +269,5 @@ and remaining compatibility bridges.
 Run this before and after each migration step:
 
 ```powershell
-node tests/headless-regression.js
+node tests/verify.js
 ```

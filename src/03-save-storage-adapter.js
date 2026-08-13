@@ -1,7 +1,8 @@
 'use strict';
 
-// Single-slot local save/load. This stores the editable canvas state, not the
-// transient physics state, so loading behaves like reopening a drawn scene.
+// Browser-only single-slot localStorage save/load adapter. It stores the
+// editable canvas state, not transient physics state, so loading behaves like
+// reopening a drawn scene.
 
 const CANVAS_SAVE_KEY='material-force-lab.canvas.v1';
 

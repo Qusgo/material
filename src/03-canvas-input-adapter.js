@@ -12,11 +12,11 @@ function clearCanvasInteractionState(){
 }
 
 function canvasInputTool(){
-  return typeof currentTool==='function'?currentTool():tool;
+  return appTool(appContext);
 }
 
 function canvasInputSelectedKey(){
-  return typeof currentSelectedKey==='function'?currentSelectedKey():selected;
+  return appSelectedKey(appContext);
 }
 
 function bindCanvasPointerInput(){
@@ -27,26 +27,27 @@ function bindCanvasPointerInput(){
     appContext.hoverPoint=p;
     pauseForEdit();
     if(activeTool==='brush'){
-      if(isBodyMaterial())appContext.placing={kind:activeSelected,start:p,current:p};
+      if(appSelectionIsBodyMaterial(appContext))appContext.placing={kind:activeSelected,start:p,current:p};
       else{
-        const mat=MATERIAL_FROM_NAME[activeSelected]||WATER;
-        applyAppEditCommand({type:'paint',x:p.x,y:p.y,radius:getBrushRadius(),material:mat});
+        const mat=appSelectedMaterialId(appContext);
+        applyAppEditCommand({type:'paint',x:p.x,y:p.y,radius:getBrushRadius(),material:mat},appContext);
       }
       appContext.lastPoint=p;
     }else if(activeTool==='source'){
-      const mat=selectedSourceMaterial();
+      const mat=selectedSourceMaterial(appContext);
       if(mat){
-        applyAppEditCommand({type:'source',x:p.x,y:p.y,radius:getBrushRadius(),material:mat});
+        applyAppEditCommand({type:'source',x:p.x,y:p.y,radius:getBrushRadius(),material:mat},appContext);
         appContext.lastPoint=p;
       }else setStatus('Source requires a flow material');
     }else if(activeTool==='color'){
-      applyAppEditCommand({type:'tint',x:p.x,y:p.y,radius:getBrushRadius(),color:getTintColor()});
+      applyAppEditCommand({type:'tint',x:p.x,y:p.y,radius:getBrushRadius(),color:getTintColor()},appContext);
       appContext.lastPoint=p;
     }else if(activeTool==='fill'){
-      updateFillPreview(appContext.hoverPoint);
-      applyFill(appContext.hoverPoint,applyAppEditCommand);
+      updateBrowserFillPreview(appContext.hoverPoint,appContext);
+      const filled=applyBrowserFill(appContext.hoverPoint,appContext);
+      setStatus(`Filled ${filled} cells`);
     }else if(activeTool==='eraser'){
-      applyAppEditCommand({type:'erase',x:p.x,y:p.y,radius:getEraserRadius()});
+      applyAppEditCommand({type:'erase',x:p.x,y:p.y,radius:getEraserRadius()},appContext);
     }else if(activeTool==='force'){
       if(!appContext.forceState||appContext.forceState.done)appContext.forceState={phase:'circle',start:p,current:p};
       else if(appContext.forceState.phase==='arrow')appContext.forceState.arrowEnd=p;
@@ -56,7 +57,7 @@ function bindCanvasPointerInput(){
   canvas.addEventListener('pointermove',e=>{
     const p=canvasPoint(e),activeTool=canvasInputTool(),activeSelected=canvasInputSelectedKey();
     appContext.hoverPoint=p;
-    if(activeTool==='fill')updateFillPreview(appContext.hoverPoint);
+    if(activeTool==='fill')updateBrowserFillPreview(appContext.hoverPoint,appContext);
     if(!appContext.pointerDown){
       renderApp();
       return;
@@ -64,19 +65,19 @@ function bindCanvasPointerInput(){
     if(activeTool==='brush'){
       if(appContext.placing)appContext.placing.current=p;
       else if(appContext.lastPoint){
-        const mat=MATERIAL_FROM_NAME[activeSelected]||WATER;
-        applyAppEditCommand({type:'paintLine',x1:appContext.lastPoint.x,y1:appContext.lastPoint.y,x2:p.x,y2:p.y,radius:getBrushRadius(),material:mat});
+        const mat=appSelectedMaterialId(appContext);
+        applyAppEditCommand({type:'paintLine',x1:appContext.lastPoint.x,y1:appContext.lastPoint.y,x2:p.x,y2:p.y,radius:getBrushRadius(),material:mat},appContext);
       }
       appContext.lastPoint=p;
     }else if(activeTool==='source'){
-      const mat=selectedSourceMaterial();
-      if(mat&&appContext.lastPoint)applyAppEditCommand({type:'sourceLine',x1:appContext.lastPoint.x,y1:appContext.lastPoint.y,x2:p.x,y2:p.y,radius:getBrushRadius(),material:mat});
+      const mat=selectedSourceMaterial(appContext);
+      if(mat&&appContext.lastPoint)applyAppEditCommand({type:'sourceLine',x1:appContext.lastPoint.x,y1:appContext.lastPoint.y,x2:p.x,y2:p.y,radius:getBrushRadius(),material:mat},appContext);
       appContext.lastPoint=p;
     }else if(activeTool==='color'){
-      if(appContext.lastPoint)applyAppEditCommand({type:'tintLine',x1:appContext.lastPoint.x,y1:appContext.lastPoint.y,x2:p.x,y2:p.y,radius:getBrushRadius(),color:getTintColor()});
+      if(appContext.lastPoint)applyAppEditCommand({type:'tintLine',x1:appContext.lastPoint.x,y1:appContext.lastPoint.y,x2:p.x,y2:p.y,radius:getBrushRadius(),color:getTintColor()},appContext);
       appContext.lastPoint=p;
     }else if(activeTool==='eraser'){
-      applyAppEditCommand({type:'erase',x:p.x,y:p.y,radius:getEraserRadius()});
+      applyAppEditCommand({type:'erase',x:p.x,y:p.y,radius:getEraserRadius()},appContext);
     }else if(activeTool==='force'&&appContext.forceState){
       if(appContext.forceState.phase==='circle')appContext.forceState.current=p;
       else if(appContext.forceState.phase==='arrow')appContext.forceState.arrowEnd=p;
@@ -88,7 +89,8 @@ function bindCanvasPointerInput(){
     const p=canvasPoint(e),activeTool=canvasInputTool();
     if(appContext.placing){
       appContext.placing.current=p;
-      if(applyAppEditCommand({type:'placeBody',kind:appContext.placing.kind,start:appContext.placing.start,current:appContext.placing.current}))setStatus('Dynamic stone placed');
+      if(applyAppEditCommand({type:'placeBody',kind:appContext.placing.kind,start:appContext.placing.start,current:appContext.placing.current},appContext))setStatus('Dynamic stone placed');
+      else setStatus('Dynamic stones cannot overlap or start outside the canvas');
       appContext.placing=null;
     }
     if(activeTool==='force'&&appContext.forceState){
@@ -98,19 +100,19 @@ function bindCanvasPointerInput(){
         setStatus('Force: now drag arrow direction and strength');
       }else if(appContext.forceState.phase==='arrow'&&appContext.forceState.arrowEnd){
         const arrow={x:appContext.forceState.arrowEnd.x-appContext.forceState.circle.x,y:appContext.forceState.arrowEnd.y-appContext.forceState.circle.y};
-        if(applyAppEditCommand({type:'force',circle:appContext.forceState.circle,arrow}))setStatus('Force applied');
+        if(applyAppEditCommand({type:'force',circle:appContext.forceState.circle,arrow},appContext))setStatus('Force applied');
         appContext.forceState=null;
       }
     }
-    finishEditAsNewInitialState();
+    finishAppEdit(appContext);
     appContext.lastPoint=null;
     if(canvas.hasPointerCapture(e.pointerId))canvas.releasePointerCapture(e.pointerId);
-    rebuildBodyMask();
-    updateFillPreview(appContext.hoverPoint);
+    rebuildAppBodyMask(appContext);
+    updateBrowserFillPreview(appContext.hoverPoint,appContext);
     renderApp();
   });
-  canvas.addEventListener('pointercancel',e=>{clearCanvasInteractionState();finishEditAsNewInitialState();if(canvas.hasPointerCapture(e.pointerId))canvas.releasePointerCapture(e.pointerId);renderApp()});
-  canvas.addEventListener('pointerleave',()=>{appContext.hoverPoint=null;clearFillPreview();renderApp()});
+  canvas.addEventListener('pointercancel',e=>{clearCanvasInteractionState();finishAppEdit(appContext);if(canvas.hasPointerCapture(e.pointerId))canvas.releasePointerCapture(e.pointerId);renderApp()});
+  canvas.addEventListener('pointerleave',()=>{appContext.hoverPoint=null;clearFillPreview(appContext);renderApp()});
 }
 
 bindCanvasPointerInput();

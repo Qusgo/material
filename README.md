@@ -30,20 +30,18 @@ between save and load.
 - `src/00-world-state.js` - DOM-free world shell that groups dimensions, view
   size, grid arrays, dynamic body state, air color, runtime flags, water scratch
   tokens, and resize resampling while still installing compatible globals.
-- `src/00-app-dom-refs.js` - Browser-only app shell DOM handles needed by early
-  runtime state.
 - `src/00-core-state.js` - Runtime constants, mutable simulation state, and
   basic coordinate helpers.
 - `src/01-cell-state.js` - Low-level cell mutation, transient motion cleanup,
   tint/source clearing, and cell normalization.
 - `src/01-grid-editing.js` - Brush, erase, tint, grid mutation, and whole-grid
   edit commands.
-- `src/01-fill-editing.js` - Connected-region fill selection/application and
-  browser-preview helpers backed by `appContext` when available.
+- `src/01-fill-editing.js` - DOM-free connected-region fill calculation and
+  fill application.
 - `src/01-body-geometry.js` - Dynamic-body construction, shape tests, placement,
   and body-mask rasterization.
 - `src/02-sources.js` - DOM-free infinite source layer editing and material
-  generation.
+  generation. Browser source-material selection lives in the UI adapter.
 - `src/01-edit-commands.js` - Small command wrapper for non-DOM adapters:
   point/line paint, source, tint, erase, fill, fill-air, clear, force, and
   dynamic body placement.
@@ -61,9 +59,6 @@ between save and load.
   order.
 - `src/04-save-codec.js` - DOM-free snapshot serialization, restore, and
   editable-array resampling.
-- `src/04-save-load.js` - One-slot `localStorage` save/load wrapper.
-- `src/04-save-ui-adapter.js` - Browser-only UI synchronization after loading
-  a snapshot.
 - `src/03-lighting.js` - DOM-free base color and light-mask helpers.
 - `src/03-render-buffer.js` - DOM-free RGBA buffer construction from material
   color, tint, and lighting state.
@@ -74,17 +69,23 @@ between save and load.
   visible canvas drawing, and transient overlays.
 - `src/03-source-render-adapter.js` - Browser-only canvas overlay for source
   cells.
+- `src/03-app-dom-refs.js` - Browser-only app shell DOM handles shared by canvas
+  and toolbar adapters.
 - `src/03-dom-refs.js` - Browser-only DOM handles shared by UI adapters.
 - `src/03-app-context.js` - Browser-only app-shell state object for status,
   play/pause, debug display, tool/material selection, material editor/menu
   state, pointer previews, and frame timing.
 - `src/03-app-ui-state-adapter.js` - Browser-only status display, resize,
-  brush/eraser radius, tool selection, button sync, and canvas coordinate
-  helpers.
+  brush/eraser radius, tool selection, transient UI clearing, fill-preview
+  status reporting, button sync, and canvas coordinate helpers.
 - `src/03-material-ui-adapter.js` - Browser-only material menu/editor field
   synchronization backed by `appContext` and app engine material commands.
 - `src/03-settings-sync-adapter.js` - Browser-only source-rate and lighting
   form value synchronization through app engine runtime-setting commands.
+- `src/03-save-ui-adapter.js` - Browser-only UI synchronization after loading
+  a snapshot.
+- `src/03-save-storage-adapter.js` - One-slot browser `localStorage` save/load
+  adapter.
 - `src/03-controls-adapter.js` - Browser-only toolbar, material menu, save/load,
   and settings control bindings.
 - `src/03-canvas-input-adapter.js` - Browser-only canvas pointer gestures routed
@@ -99,6 +100,11 @@ between save and load.
   engine facade into WebView, mini-program, or native shells.
 - `docs/PORTABILITY_AUDIT.md` - Current evidence, remaining bridges, and next
   migration steps for the portable boundary.
+- `tests/verify.js` - Single local and CI verification entry point.
+- `tests/portable-core-files.js` - Shared ordered file lists for the portable
+  core and browser runtime smoke tests.
+- `tests/portable-adapter-smoke.js` - Minimal runnable non-browser adapter
+  example using only the DOM-free core and `createSimulationEngine()`.
 
 ## Development Notes
 
@@ -108,19 +114,33 @@ global scope and must be loaded in the order shown in the HTML files.
 After edits, run:
 
 ```powershell
-node tests/headless-regression.js
+node tests/verify.js
 ```
 
-That script checks syntax, browser-style bootstrap, and focused behavior for
+GitHub Actions runs the same verification entry point on push and pull request
+through `.github/workflows/ci.yml`.
+
+The verification script runs `tests/headless-regression.js` and
+`tests/portable-adapter-smoke.js`. The headless regression checks syntax,
+browser-style bootstrap, and focused behavior for
 material registration, world-array lifecycle, world-state installation,
 runtime config commands, lighting, render buffers, sources, tint movement, and
 portable snapshot save/load. It also includes a DOM-free core smoke regression
 that creates a world, applies edit commands, steps physics, builds a render
 buffer, serializes, clears, and restores without defining `document`, `canvas`,
 or `localStorage`. The separate simulation engine regression covers the same
-core chain through `createSimulationEngine()`. A portability boundary regression
-also scans core candidate files after stripping comments and strings, and fails
-if real browser API identifiers are reintroduced there.
+core chain through `createSimulationEngine()`, and the portable adapter contract
+regression verifies that two `install:false` engine surfaces can edit, step,
+render, save, and restore independently through the facade. A portability
+boundary regression also scans core candidate files after stripping comments and
+strings, and fails if real browser API identifiers are reintroduced there.
+`tests/portable-core-files.js` is the shared test-side source of truth for the
+ordered portable core and browser runtime file lists. The headless regression
+also checks that `index.html` and `material_sim.html` remain equivalent and load
+scripts in that browser runtime order. `tests/portable-adapter-smoke.js` is a
+smaller, readable smoke test that loads only those portable core files, creates
+one engine-backed surface, edits, steps, renders, saves, restores, resizes, and
+renders again without defining browser globals.
 
 The migration path toward a portable simulation core is documented in
 `docs/PORTABILITY_PLAN.md`. `docs/PORTABLE_ADAPTER_GUIDE.md` describes how a
@@ -131,32 +151,37 @@ or engine rewrite.
 The code is still loaded as classic scripts and still shares global typed
 arrays. `src/00-world-state.js` is a compatibility shell, not a full portable
 engine yet: it creates a world object, installs its arrays, dynamic body state,
-view size, air color, and runtime flags into the existing global names, handles
-DOM-free grid resize resampling, and lets
+view size, air color, runtime flags, runtime settings, and custom material
+definitions into the existing global names, handles DOM-free grid resize
+resampling, and lets
 `stepWorld(world)`, `applyEditCommand(world, command)`, and
 `buildRenderBuffer(world, data)` preserve the current update/edit/render order
 without changing gameplay in the same step. The old one-argument browser calls
 still work, but browser adapters now go through the app engine helpers in
-`src/03-app-context.js` for edit, step, resize, and render calls. The browser
-canvas adapter also accepts
+`src/03-app-context.js` for edit, edit finalization, step, resize, and render
+calls. The browser canvas adapter also accepts
 `render(world, appContext)` while keeping the old `render()` convenience form.
 `createSimulationEngine()` in `src/03-simulation-engine.js` is the preferred
-portable facade for future adapters. It still installs its world into the
-classic-script compatibility shell internally, but external callers can use one
-object for `edit()`, `finishEdit()`, `step()`, `renderBuffer()`,
-`serialize()`, `restore()`, `resize()`, `clear()`, `materialCommand()`,
-`runtimeSettingsCommand()`, and `runtimeSettings()`.
+portable facade for future adapters. Common calls such as `edit()`,
+`finishEdit()`, `step()`, `renderBuffer()`, `serialize()`, `restore()`, and
+`resize()` operate on an `install:false` engine world without making it the
+global active world; `currentWorld()` intentionally selects the engine world
+while the compatibility shell remains. External callers can use one object for
+`edit()`, `finishEdit()`, `step()`, `renderBuffer()`, `serialize()`,
+`restore()`, `resize()`, `clear()`, `cellAt()`, `computeFill()`,
+`materialCommand()`, `runtimeSettingsCommand()`, and `runtimeSettings()`.
 Browser app-shell state lives in `src/03-app-context.js`. UI adapters read and
 write that plain `appContext` object for play/pause, status text, debug display,
 tool/material selection, material menu/editor state,
 pointer/placement/force-preview state, browser device-pixel ratio, frame timing,
 and the browser-owned
-engine facade. The old `tool` and `selected` globals are synchronized as a
-classic-script compatibility mirror. App helper functions default to the
-browser singleton but also accept an explicit context object for future
-platform shells. Frame timing is still controlled through
-`resetRuntimeClock()` in `src/03-app-bootstrap.js`; core/edit code should call
-that hook instead of touching RAF accumulator state.
+engine facade. The `tool` and `selected` globals now live beside `appContext` as
+browser classic-script compatibility mirrors, while browser adapters explicitly
+copy selection into `appContext`. App helper functions default to the browser
+singleton but also accept an explicit context object for future platform
+shells. Frame timing is controlled through browser adapter helpers in
+`src/03-app-bootstrap.js`; `finishAppEdit()` resets the browser runtime clock
+after an edit without making core edit code depend on RAF accumulator state.
 
 When changing water behavior, read `docs/ARCHITECTURE.md` first. Most previous
 bugs came from local water rules fighting the component-level water stabilizer.
@@ -164,11 +189,13 @@ bugs came from local water rules fighting the component-level water stabilizer.
 Built-in selectable materials are `Water`, `Sand`, and `Fixed Stone`. Extra
 fluid or granular materials can be added at runtime from the Material menu.
 Custom materials are temporary during ordinary page use, but `Save` stores the
-custom material definitions that the saved canvas needs. Custom fluids default
-to integer density `1`; custom granular materials default to integer density
-`2` and integer `maxSlope: 1`. Built-in materials are locked; custom materials
-can be edited and can be deleted only while no cells on the canvas or source
-layer use them.
+custom material definitions that the saved canvas needs. Internally those
+definitions now live on `WorldState.customMaterials`, while the legacy global
+material registry mirrors the active world. Custom fluids default to integer
+density `1`; custom granular materials default to integer density `2` and
+integer `maxSlope: 1`. Built-in materials are locked; custom materials can be
+edited and can be deleted only while no cells on the canvas or source layer use
+them.
 Custom fluids default to transparent-to-light, while custom granular materials
 default to blocking light. The custom material editor can toggle `Blocks Light`
 and `Emissive`.
@@ -198,13 +225,15 @@ When a source cell is empty during simulation, it creates one material cell.
 frames.
 
 `Save` writes one local browser slot and `Load` restores it. Saving again
-overwrites the previous slot. Browser storage lives in `src/04-save-load.js`,
+overwrites the previous slot. Browser storage lives in
+`src/03-save-storage-adapter.js`,
 which now calls the app snapshot helpers in `src/03-app-context.js`; those
-helpers delegate to the browser-owned engine. `serializeWorldSnapshot()` and
-`restoreWorldSnapshot()` in `src/04-save-codec.js` own the portable snapshot
-format and can operate on an explicit world for non-browser adapters. The saved
-state includes material cells, source cells, background tint, particle tint,
-custom material definitions, selected material, air color, light settings, and
+helpers delegate to the browser-owned engine and add browser UI metadata such
+as the selected material. `serializeWorldSnapshot()` and
+`restoreWorldSnapshot()` in `src/04-save-codec.js` own the portable core
+snapshot format and can operate on an explicit world for non-browser adapters.
+The core saved state includes material cells, source cells, background tint,
+particle tint, custom material definitions, air color, light settings, and
 source speed. Transient physics state such as velocity, sleep, oscillation
 history, and carried-particle timers is reset on load so the restored scene
 starts cleanly.

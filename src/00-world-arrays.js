@@ -101,7 +101,36 @@ function resetWaterScratchTokens(){
   }
 }
 
-function clearTransientGridState(){
+function resetWaterScratchTokensForWorld(world){
+  if(!world||!world.tokens)return resetWaterScratchTokens();
+  world.tokens.waterSpaceToken=1;
+  world.tokens.waterComponentToken=1;
+  world.tokens.waterBasinToken=1;
+  world.tokens.waterTargetToken=1;
+  world.tokens.waterWakeToken=1;
+}
+
+function clearTransientGridState(world){
+  if(world&&world.arrays){
+    const a=world.arrays;
+    a.vx.fill(0);
+    a.vy.fill(0);
+    a.flowDir.fill(0);
+    a.restAge.fill(0);
+    a.stableMask.fill(0);
+    a.moveHistory.fill(-1);
+    a.moveFlip.fill(0);
+    a.horizontalDir.fill(0);
+    a.horizontalTurns.fill(0);
+    a.escapeDir.fill(0);
+    a.escapeTarget.fill(-1);
+    a.carriedBy.fill(0);
+    a.carriedTTL.fill(0);
+    a.lastMoveTick.fill(0);
+    a.lightMask.fill(0);
+    resetWaterScratchTokensForWorld(world);
+    return;
+  }
   vx.fill(0);
   vy.fill(0);
   flowDir.fill(0);
@@ -120,7 +149,24 @@ function clearTransientGridState(){
   resetWaterScratchTokens();
 }
 
-function clearEditableGridState(){
+function clearEditableGridState(world){
+  if(world&&world.arrays){
+    const a=world.arrays;
+    a.material.fill(EMPTY);
+    a.mass.fill(0);
+    a.bodyMask.fill(0);
+    a.sourceMat.fill(EMPTY);
+    a.tintR.fill(0);
+    a.tintG.fill(0);
+    a.tintB.fill(0);
+    a.tintA.fill(0);
+    a.bgTintR.fill(0);
+    a.bgTintG.fill(0);
+    a.bgTintB.fill(0);
+    a.bgTintA.fill(0);
+    clearTransientGridState(world);
+    return;
+  }
   material.fill(EMPTY);
   mass.fill(0);
   bodyMask.fill(0);
